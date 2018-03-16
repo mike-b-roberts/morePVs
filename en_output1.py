@@ -73,6 +73,9 @@ class Output():
 
     def plot_output(self):
         """Plot chart from en model results"""
+
+        # NB These are very project-specific and need adaptation
+        # put here for use as templates
         for type in self.output_list:
             print(type)
             if type == 'bar_total_vs_site_arrangement':
