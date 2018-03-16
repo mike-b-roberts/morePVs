@@ -1,6 +1,9 @@
-NOTES FOR COMPLETING STUDY .csv file for en model
+#Apartment Network Model
+###Setup Instructions
 
-output_type:
+All input parameters for each study are contained or referenced in `study_xxxxxxx.csv` file.
+
+`1output_type`:
 This column lists output formats required, applied to the whole study, not individual scenarios.
 
 ---

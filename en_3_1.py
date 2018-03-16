@@ -1,4 +1,5 @@
-# en model for variable numbers of units
+# apartment network model
+# (c) mike roberts 2017-2018
 
 # IMPORT Modules
 import numpy as np
@@ -1196,9 +1197,9 @@ if __name__ == "__main__":
    main(project='past_papers',
         study_name='apsrc2017',
         base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
-   main(project='past_papers',
-        study_name='energyCON',
-        base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+   # main(project='past_papers',
+   #      study_name='energyCON',
+   #      base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
    # main(project='p_testing',
    #      study_name='test7',
    #      base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
