@@ -1,2 +1,2 @@
 # apartment_network_model
-Technofinancial model of apartment buildings electricity network
+Techno-economic model of apartment buildings electricity network
