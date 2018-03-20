@@ -1,3 +1,5 @@
+# morePVs
+# multi-occupancy residential electricity with PV and storage
 # apartment network model
 # (c) mike roberts 2017-2018
 

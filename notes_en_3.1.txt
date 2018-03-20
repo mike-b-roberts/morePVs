@@ -181,3 +181,4 @@ Except: APSRC en total costs are higher now than previously.
 en_capex settings:
 previously: capex was null or cp5 (2000+400n), 250, 12yrs, 6%)
 now: capex is capex_6: (50000 + 400n),	250, 12 yrs, 6%. Should be capex_5
+rerun. finally fu**ing sorted

@@ -50,7 +50,24 @@ If all_residents tariff is not given, each houshold can have its own tariff code
 -----------
 In en scenarios, If ENO = stratabaody, cp tariff = TIDNULL,
 		If ENO is not the strata  cp tariff is what strata pays ENO for cp load
+		
+Discount
+--------
+% discount applied to fixed and volumetric charges
+		
+Solar Tariffs
+-------------
+STS_xx  Solar TOU Tariff based on peak, shoulder and off-peak solar periods with rates at xx% discount from EASO TOU rates
+STC_xx  Solar TOU Combined tariff based on EASO TOU periods, with additional off-peak solar period and xx% off EASO TOU rates
+
+SBTd_xx Solar block tariff (nominal) each customer having a fixed daily quota of solar energy, based on total annual generation during peak solar period
+SBTi_xx Solar block tariff (instantaneous) each customer having a quota of solar energy, based on % of instantaneous generation at that timestamp
+
+CostPlus_xx     Based on bills paid at parent tariff + xx%. Fixed costs (and CP?) shared evenly; Volumetric costs shared by usage; 
+                How best to deal with demand charges? 
+
+
 
 'parent' tariff
 ---------------
-For Non EN scenarios (bau, btm, cp_only, etc.), parent tariff must be TIDNULL, while cp tariff is paid by strata.DNULL
+For Non EN scenarios (bau, btm, cp_only, etc.), parent tariff must be TIDNULL, while cp tariff is paid by strata.
