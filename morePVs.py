@@ -11,6 +11,7 @@ import os
 import pdb, traceback
 import pandas as pd
 import en_utilities as um
+import morePVs_output as opm
 
 # Set up constants
 # timezone ='Australia/Sydney'
@@ -62,169 +63,60 @@ class TariffData():
         """ Creates time-based rates for all load-independent tariffs."""
         for tid in self.all_tariffs:
             # apply discounts to all tariffs:
+            # -------------------------------
             if not np.isnan(self.lookup.loc[tid, 'discount']):
                 discount = self.lookup.loc[tid, 'discount']
                 rates = [c for c in self.lookup.columns if 'rate' in c and not 'fit' in c]
                 valid_rates = [c for c in rates if not np.isnan(self.lookup.loc[tid, c])]
                 self.lookup.loc[tid, valid_rates] = self.lookup.loc[tid, valid_rates] * (100 - discount) / 100
-            # if they are flat rate or TOU:
+            # Allocate Flat rate and Zero Tariffs
+            # -----------------------------------:
             if self.lookup.loc[tid, 'tariff_type'] == 'Zero_Rate':
                 self.static_imports[tid] = 0
             elif 'Flat_Rate' in self.lookup.loc[tid, 'tariff_type']:
                 self.static_imports[tid] = self.lookup.loc[tid, 'flat_rate']
+            # Allocate TOU tariffs:
+            # --------------------
+            # including residual (non-solar) rates for Solar_Block_TOU
             elif 'TOU' in self.lookup.loc[tid, 'tariff_type']:
                 # calculate timeseries TOU tariff based on up to 8 periods (n=1 to 8)
                 # volumetric tariff is rate_n, between times start_n and end_n
                 # week_n is 'day' for weekself.self.days, 'end' for weekend, 'both' for both
                 # NB times stored in csv in form 'h:mm'. Midnight saved as 23:59
-                if not pd.isnull(self.lookup.loc[tid, 'start_1']):
-                    if self.lookup.loc[tid, 'start_1'] == '0:00':
-                        period_1 = \
-                            self.days[self.lookup.loc[tid, 'week_1']][
-                                (self.days[self.lookup.loc[tid, 'week_1']].time >= pd.Timestamp(
-                                    self.lookup.loc[tid, 'start_1']).time())
-                                & (self.days[self.lookup.loc[tid, 'week_1']].time <= pd.Timestamp(
-                                    self.lookup.loc[tid, 'end_1']).time())
-                                ]
-                    else:
-                        period_1 = \
-                            self.days[self.lookup.loc[tid, 'week_1']][
-                                (self.days[self.lookup.loc[tid, 'week_1']].time > pd.Timestamp(
-                                    self.lookup.loc[tid, 'start_1']).time())
-                                & (self.days[self.lookup.loc[tid, 'week_1']].time <= pd.Timestamp(
-                                    self.lookup.loc[tid, 'end_1']).time())
-                                ]
-                    self.static_imports.loc[period_1, tid] = self.lookup.loc[tid, 'rate_1']
+                # Solar TOU rates are ignored and saved at the end.
 
-                    if not pd.isnull(self.lookup.loc[tid, 'start_2']):
-                        if self.lookup.loc[tid, 'start_2'] == '0:00':
-                            period_2 = \
-                                self.days[self.lookup.loc[tid, 'week_2']][
-                                    (self.days[self.lookup.loc[tid, 'week_2']].time >= pd.Timestamp(
-                                        self.lookup.loc[tid, 'start_2']).time())
-                                    & (self.days[self.lookup.loc[tid, 'week_2']].time <= pd.Timestamp(
-                                        self.lookup.loc[tid, 'end_2']).time())
+                self.tou_rate_list = {'name_1': ['rate_1','start_1','end_1','week_1'],
+                             'name_2': ['rate_2', 'start_2', 'end_2', 'week_2'],
+                             'name_3': ['rate_3', 'start_3', 'end_3', 'week_3'],
+                             'name_4': ['rate_4', 'start_4', 'end_4', 'week_4'],
+                             'name_5': ['rate_5', 'start_5', 'end_5', 'week_5'],
+                             'name_6': ['rate_6', 'start_6', 'end_6', 'week_6'],
+                             'name_7': ['rate_7', 'start_7', 'end_7', 'week_7'],
+                             'name_8': ['rate_8', 'start_8', 'end_8', 'week_8'],
+                             }
+                for name, parameter in self.tou_rate_list.items():
+                    if not pd.isnull(self.lookup.loc[tid, parameter[1]]):
+                        if self.lookup.loc[tid, parameter[1]] == '0:00':  # start_
+                            period_1 = \
+                                self.days[self.lookup.loc[tid, parameter[3]]][ # week_
+                                    (self.days[self.lookup.loc[tid, parameter[3]]].time >= pd.Timestamp( # week_
+                                        self.lookup.loc[tid,  parameter[1]]).time()) # start_
+                                    & (self.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp( # week_
+                                        self.lookup.loc[tid, parameter[2]]).time()) # end_
                                     ]
                         else:
-                            period_2 = \
-                                self.days[self.lookup.loc[tid, 'week_2']][
-                                    (self.days[self.lookup.loc[tid, 'week_2']].time > pd.Timestamp(
-                                        self.lookup.loc[tid, 'start_2']).time())
-                                    & (self.days[self.lookup.loc[tid, 'week_2']].time <= pd.Timestamp(
-                                        self.lookup.loc[tid, 'end_2']).time())
+                            period_1 = \
+                                self.days[self.lookup.loc[tid, parameter[3]]][ # week_
+                                    (self.days[self.lookup.loc[tid, parameter[3]]].time > pd.Timestamp( # week_
+                                        self.lookup.loc[tid, parameter[1]]).time()) # start_
+                                    & (self.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp( # week_
+                                        self.lookup.loc[tid, parameter[2]]).time()) #end_
                                     ]
-                        self.static_imports.loc[period_2, tid] = self.lookup.loc[tid, 'rate_2']
-                    if not pd.isnull(self.lookup.loc[tid, 'start_3']):
-                        if self.lookup.loc[tid, 'start_3'] == '0:00':
-                            period_3 = \
-                                self.days[self.lookup.loc[tid, 'week_3']][
-                                    (self.days[self.lookup.loc[tid, 'week_3']].time >= pd.Timestamp(
-                                        self.lookup.loc[tid, 'start_3']).time())
-                                    & (self.days[self.lookup.loc[tid, 'week_3']].time <= pd.Timestamp(
-                                        self.lookup.loc[tid, 'end_3']).time())
-                                    ]
-                        else:
-                            period_3 = \
-                                self.days[self.lookup.loc[tid, 'week_3']][
-                                    (self.days[self.lookup.loc[tid, 'week_3']].time > pd.Timestamp(
-                                        self.lookup.loc[tid, 'start_3']).time())
-                                    & (self.days[self.lookup.loc[tid, 'week_3']].time <= pd.Timestamp(
-                                        self.lookup.loc[tid, 'end_3']).time())
-                                    ]
-                        self.static_imports.loc[period_3, tid] = self.lookup.loc[tid, 'rate_3']
-                    if not pd.isnull(self.lookup.loc[tid, 'start_4']):
-                        if self.lookup.loc[tid, 'start_4'] == '0:00':
-                            period_4 = \
-                                self.days[self.lookup.loc[tid, 'week_4']][
-                                    (self.days[self.lookup.loc[tid, 'week_4']].time >= pd.Timestamp(
-                                        self.lookup.loc[tid, 'start_4']).time())
-                                    & (self.days[self.lookup.loc[tid, 'week_4']].time <= pd.Timestamp(
-                                        self.lookup.loc[tid, 'end_4']).time())
-                                    ]
-                        else:
-                            period_4 = \
-                                self.days[self.lookup.loc[tid, 'week_4']][
-                                    (self.days[self.lookup.loc[tid, 'week_4']].time > pd.Timestamp(
-                                        self.lookup.loc[tid, 'start_4']).time())
-                                    & (self.days[self.lookup.loc[tid, 'week_4']].time <= pd.Timestamp(
-                                        self.lookup.loc[tid, 'end_4']).time())
-                                    ]
-                        self.static_imports.loc[period_4, tid] = self.lookup.loc[tid, 'rate_4']
-                    if not pd.isnull(self.lookup.loc[tid, 'start_5']):
-                        if self.lookup.loc[tid, 'start_5'] == '0:00':
-                            period_5 = \
-                                self.days[self.lookup.loc[tid, 'week_5']][
-                                    (self.days[self.lookup.loc[tid, 'week_5']].time >= pd.Timestamp(
-                                        self.lookup.loc[tid, 'start_5']).time())
-                                    & (self.days[self.lookup.loc[tid, 'week_5']].time <= pd.Timestamp(
-                                        self.lookup.loc[tid, 'end_5']).time())
-                                    ]
-                        else:
-                            period_5 = \
-                                self.days[self.lookup.loc[tid, 'week_5']][
-                                    (self.days[self.lookup.loc[tid, 'week_5']].time > pd.Timestamp(
-                                        self.lookup.loc[tid, 'start_5']).time())
-                                    & (self.days[self.lookup.loc[tid, 'week_5']].time <= pd.Timestamp(
-                                        self.lookup.loc[tid, 'end_5']).time())
-                                    ]
-                        self.static_imports.loc[period_5, tid] = self.lookup.loc[tid, 'rate_5']
-                    if not pd.isnull(self.lookup.loc[tid, 'start_6']):
-                        if self.lookup.loc[tid, 'start_6'] == '0:00':
-                            period_6 = \
-                                self.days[self.lookup.loc[tid, 'week_6']][
-                                    (self.days[self.lookup.loc[tid, 'week_6']].time >= pd.Timestamp(
-                                        self.lookup.loc[tid, 'start_6']).time())
-                                    & (self.days[self.lookup.loc[tid, 'week_6']].time <= pd.Timestamp(
-                                        self.lookup.loc[tid, 'end_6']).time())
-                                    ]
-                        else:
-                            period_6 = \
-                                self.days[self.lookup.loc[tid, 'week_6']][
-                                    (self.days[self.lookup.loc[tid, 'week_6']].time > pd.Timestamp(
-                                        self.lookup.loc[tid, 'start_6']).time())
-                                    & (self.days[self.lookup.loc[tid, 'week_6']].time <= pd.Timestamp(
-                                        self.lookup.loc[tid, 'end_6']).time())
-                                    ]
-                        self.static_imports.loc[period_6, tid] = self.lookup.loc[tid, 'rate_6']
-                    if not pd.isnull(self.lookup.loc[tid, 'start_7']):
-                        if self.lookup.loc[tid, 'start_7'] == '0:00':
-                            period_7 = \
-                                self.days[self.lookup.loc[tid, 'week_7']][
-                                    (self.days[self.lookup.loc[tid, 'week_7']].time >= pd.Timestamp(
-                                        self.lookup.loc[tid, 'start_7']).time())
-                                    & (self.days[self.lookup.loc[tid, 'week_7']].time <= pd.Timestamp(
-                                        self.lookup.loc[tid, 'end_7']).time())
-                                    ]
-                        else:
-                            period_7 = \
-                                self.days[self.lookup.loc[tid, 'week_7']][
-                                    (self.days[self.lookup.loc[tid, 'week_7']].time > pd.Timestamp(
-                                        self.lookup.loc[tid, 'start_7']).time())
-                                    & (self.days[self.lookup.loc[tid, 'week_7']].time <= pd.Timestamp(
-                                        self.lookup.loc[tid, 'end_7']).time())
-                                    ]
-                        self.static_imports.loc[period_7, tid] = self.lookup.loc[tid, 'rate_7']
-                    if not pd.isnull(self.lookup.loc[tid, 'start_8']):
-                        if self.lookup.loc[tid, 'start_8'] == '0:00':
-                            period_8 = \
-                                self.days[self.lookup.loc[tid, 'week_8']][
-                                    (self.days[self.lookup.loc[tid, 'week_8']].time >= pd.Timestamp(
-                                        self.lookup.loc[tid, 'start_8']).time())
-                                    & (self.days[self.lookup.loc[tid, 'week_8']].time <= pd.Timestamp(
-                                        self.lookup.loc[tid, 'end_8']).time())
-                                    ]
-                        else:
-                            period_8 = \
-                                self.days[self.lookup.loc[tid, 'week_8']][
-                                    (self.days[self.lookup.loc[tid, 'week_8']].time > pd.Timestamp(
-                                        self.lookup.loc[tid, 'start_8']).time())
-                                    & (self.days[self.lookup.loc[tid, 'week_8']].time <= pd.Timestamp(
-                                        self.lookup.loc[tid, 'end_8']).time())
-                                    ]
-                        self.static_imports.loc[period_8, tid] = self.lookup.loc[tid, 'rate_8']
+                        self.static_imports.loc[period_1, tid] = self.lookup.loc[tid, parameter[0]] # rate_
                     pass
+
             # todo: create timeseries for FiT Tariffs in the same way
-            # currently only for zero or flat rate)
+            # currently only zero or flat rate FiTs)
             if self.lookup.loc[tid, 'fit_type'] == 'Zero_Rate':
                 self.static_exports[tid] = 0
             elif self.lookup.loc[tid, 'fit_type'] == 'Flat_Rate':
@@ -283,17 +175,22 @@ class Tariff():
         # otherwise copy from scenario
         if tariff_id not in scenario.dynamic_list:
             self.import_tariff = (scenario.static_imports[tariff_id]).values
+            ##TODO: @@@@@@@@@@@@@@ MAYBE initialise SBT tariffs to TOU rates here?
         else:
             self.import_tariff = np.zeros(ts.num_steps)
+        # TODO: @@@@@@@@  MAYBE initialise daily / inst allocations here?
 
-    def calcCustomerTariff(self,
-                           tariff_id,
-                           scenario,
-                           step,
-                           customer_load):
+    def calcDynamicTariff(self,
+                          tariff_id,
+                          scenario,
+                          step,
+                          customer_load,
+                          pv_daily_allocation,
+                          pv_instantaneous_allocation):
         """Dynamically calculate tariffs by timestep according to cumulative load for, eg, block tariffs."""
         if tariff_id in scenario.dynamic_list:
             if scenario.lookup.loc[tariff_id, 'tariff_type'] == 'Block_Quarterly':
+                # Block Quarterly tariff has fixed load tariff blocks per quarter
                 self.steps_since_reset = np.mod((step - scenario.block_quarterly_billing_start),
                                                 scenario.steps_in_block)
                 self.cumulative_energy = customer_load[step - self.steps_since_reset:step + 1].sum()
@@ -304,6 +201,13 @@ class Tariff():
                     self.import_tariff[step] = scenario.lookup.loc[tariff_id, 'block_rate_2']
                 elif self.cumulative_energy > scenario.lookup.loc[tariff_id, 'high_2']:
                     self.import_tariff[step] = scenario.lookup.loc[tariff_id, 'block_rate_3']
+            elif scenario.lookup.loc[tariff_id, 'tariff_type'] == 'Solar_Block_Daily':
+                # Solar_Block_Daily tariff has daily solar limit during solar time period
+                # Limit is based on annual generation shared bewteen all customers
+                #TODO  Details tbc......
+                #TODO @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
             else:
                 logging.info("*****************Dynamic Tariff %s of unknown Tariff type", tariff_id)
 
@@ -351,12 +255,15 @@ class Customer():
 
     def calcCustomerTariff (self,step):
         """Calculates import rates for timestep for dynamic (eg block) tariff."""
-        self.tariff.calcCustomerTariff(
+        self.tariff.calcDynamicTariff(
                                       tariff_id = self.tariff_id,
                                       scenario=self.scenario,
                                       step = step,
-                                      customer_load = self.imports
+                                      customer_load = self.imports,
+                                      pv_daily_allocation = self.pv_daily_allocation,
+                                      pv_instantaneous_allocation = self.pv_instantaneous_allocation
                                       )
+        #TODO @@@@@@@@@@@@ Are these allocations % or kWh??
 
     def calcDemandCharge(self):
         if self.tariff.is_demand:
@@ -616,7 +523,7 @@ class Network(Customer):
     def calcDynamicTariffs(self,step):
         """Dynamic calcs of (eg block) tariffs by timestep for ENO and for all residents."""
         for c in self.resident_list:
-            self.resident[c].calcCustomerTariff(step)
+            self.resident[c].calcDynamicTariff(step)
         self.calcCustomerTariff(step)
 
     def calcDynamicValues(self):
@@ -764,6 +671,9 @@ class Scenario():
         self.dynamic_list = [
                 t for t in self.tariff_short_list
                 if 'Block' in self.lookup.loc[t, 'tariff_type']
+                   or 'block' in self.lookup.loc[t, 'tariff_type']
+                   or 'Dynamic' in self.lookup.loc[t, 'tariff_type']
+                   or 'dynamic' in self.lookup.loc[t, 'tariff_type']
                 ] # Currently only includes block,
                 # could also add demand tariffs
                 # if needed - i.e. for demand tariffs on < 12 month period
@@ -1177,12 +1087,12 @@ def main(base_path,project,study_name):
             # collate / log data for all loads in scenario
             scenario.logScenarioData()
         st.logStudyData()
-        # if len(st.output_list)>0:
-        #     op = en_output.Output(base_path = base_path,
-        #                     project = project,
-        #                     study_name = study_name)
-        #     op.csv_output()
-            #op.plot_output()
+        if len(st.output_list)>0:
+            op = opm.Output(base_path = base_path,
+                            project = project,
+                            study_name = study_name)
+            op.csv_output()
+            op.plot_output()
 
         pass
 
