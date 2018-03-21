@@ -334,7 +334,7 @@ class Network(Customer):
         #  initialise the customers / members within the network
         # (includes residents and cp)
         self.resident = {c: Customer(name = c,study=study) for c in self.resident_list}
-
+        self.retailer = Customer(name='retailer', study=study)
     def initialiseBuildingLoads(self,
                                 loadName,  # file name only
                                 scenario
@@ -375,7 +375,6 @@ class Network(Customer):
         # initialise internal customer tariffs
         for c in self.resident_list:
             self.resident[c].initialiseCustomerTariff(scenario.tariff_in_use[c],scenario)
-            #
         # initialise retailer's network tariff
         self.retailer.initialiseCustomerTariff(scenario.dnsp_tariff, scenario)
         # copy tariff parameter(s) from scenario
@@ -516,7 +515,7 @@ class Network(Customer):
 
     def setupRetailerFlows(self):
         # NB retailer acts like a customer too, buying from DNSP
-        # These are the load and generation tat it presents to DNSP
+        # These are the load and generation that it presents to DNSP
         self.retailer.initialiseCustomerLoad(self.imports)
         self.retailer.initialiseCustomerPv(self.exports)
 
@@ -1074,8 +1073,6 @@ def main(base_path,project,study_name):
             eno = Network(study=st,scenario = scenario)
             # N.B. in embedded network scenarios, eno is the actual embedded network operator,
             # but in other scenarios, it is a virtual intermediary to organise energy and cash flows
-            eno.retailer = Customer(name='retailer',
-                                   study=st)
             eno.initialiseAllTariffs(scenario)
             eno.initailiseBuildingBattery(scenario)
 
