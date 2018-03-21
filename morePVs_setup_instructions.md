@@ -64,13 +64,15 @@ Solar Tariffs
 `STS_xx`  Solar TOU Tariff based on peak, shoulder and off-peak solar periods with rates at xx% discount from EASO TOU rates
 `STC_xx`  Solar TOU Combined tariff based on EASO TOU periods, with additional off-peak solar period and xx% off EASO TOU rates
 
-`SBTd_xx` Solar block tariff (daily):
-                each customer having a fixed daily quota of solar energy, based on total annual generation during solar period
-                cp allocated a fixed % (`cp_solar_allocation` in `tariff_lookup.csv`) and 
+`SBTd_xx_yy` Solar block TOU tariff (daily):
+                Based on TOU with `xx%` discount 
+                and each customer having a fixed daily quota of solar energy, based on total annual generation during solar period
+                cp allocated a fixed % (`cp_solar_allocation` given as decimal (`0.yy`)in `tariff_lookup.csv`) and 
                 the remainder shared equally between units.
                 
-`SBTi_xx` Solar block tariff (instantaneous): 
-                each customer having a quota of solar energy, based on % of instantaneous generation at that timestamp 
+`SBTi_xx` Solar block TOU tariff (instantaneous): 
+                Based on TOU with `xx%` discount
+                and each customer having a quota of solar energy, based on % of instantaneous generation at that timestamp 
                 after cp load has been satisfied                                        
 
 `CostPlus_xx`   Based on bills paid at parent tariff + xx%. Fixed costs (and CP?) shared evenly; Volumetric costs shared by usage; 

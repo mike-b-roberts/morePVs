@@ -58,6 +58,15 @@ class TariffData():
         }
         self.block_quarterly_billing_start = 0  # timestep to start cumulative energy calc
         self.steps_in_block = 4380  # quarterly half-hour steps
+        self.tou_rate_list = {'name_1': ['rate_1', 'start_1', 'end_1', 'week_1'],
+                              'name_2': ['rate_2', 'start_2', 'end_2', 'week_2'],
+                              'name_3': ['rate_3', 'start_3', 'end_3', 'week_3'],
+                              'name_4': ['rate_4', 'start_4', 'end_4', 'week_4'],
+                              'name_5': ['rate_5', 'start_5', 'end_5', 'week_5'],
+                              'name_6': ['rate_6', 'start_6', 'end_6', 'week_6'],
+                              'name_7': ['rate_7', 'start_7', 'end_7', 'week_7'],
+                              'name_8': ['rate_8', 'start_8', 'end_8', 'week_8'],
+                              }
 
     def generateStaticTariffs(self):
         """ Creates time-based rates for all load-independent tariffs."""
@@ -78,41 +87,41 @@ class TariffData():
             # Allocate TOU tariffs:
             # --------------------
             # including residual (non-solar) rates for Solar_Block_TOU
-            elif 'TOU' in self.lookup.loc[tid, 'tariff_type']:
+            elif 'TOU' in self.lookup.loc[tid, 'tariff_type'] or 'Solar_Block' in self.lookup.loc[tid, 'tariff_type'] :
                 # calculate timeseries TOU tariff based on up to 8 periods (n=1 to 8)
                 # volumetric tariff is rate_n, between times start_n and end_n
                 # week_n is 'day' for weekself.self.days, 'end' for weekend, 'both' for both
                 # NB times stored in csv in form 'h:mm'. Midnight saved as 23:59
-                # Solar TOU rates are ignored and saved at the end.
-
-                self.tou_rate_list = {'name_1': ['rate_1','start_1','end_1','week_1'],
-                             'name_2': ['rate_2', 'start_2', 'end_2', 'week_2'],
-                             'name_3': ['rate_3', 'start_3', 'end_3', 'week_3'],
-                             'name_4': ['rate_4', 'start_4', 'end_4', 'week_4'],
-                             'name_5': ['rate_5', 'start_5', 'end_5', 'week_5'],
-                             'name_6': ['rate_6', 'start_6', 'end_6', 'week_6'],
-                             'name_7': ['rate_7', 'start_7', 'end_7', 'week_7'],
-                             'name_8': ['rate_8', 'start_8', 'end_8', 'week_8'],
-                             }
                 for name, parameter in self.tou_rate_list.items():
-                    if not pd.isnull(self.lookup.loc[tid, parameter[1]]):
-                        if self.lookup.loc[tid, parameter[1]] == '0:00':  # start_
-                            period_1 = \
-                                self.days[self.lookup.loc[tid, parameter[3]]][ # week_
-                                    (self.days[self.lookup.loc[tid, parameter[3]]].time >= pd.Timestamp( # week_
-                                        self.lookup.loc[tid,  parameter[1]]).time()) # start_
-                                    & (self.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp( # week_
-                                        self.lookup.loc[tid, parameter[2]]).time()) # end_
-                                    ]
-                        else:
-                            period_1 = \
+                    if not pd.isnull(self.lookup.loc[tid, parameter[1]]): # parameter[1] is rate_
+                        if 'solar' in name or 'Solar' in name: # Store solar rate and period seperately
+                            self.solar_period =  \
                                 self.days[self.lookup.loc[tid, parameter[3]]][ # week_
                                     (self.days[self.lookup.loc[tid, parameter[3]]].time > pd.Timestamp( # week_
                                         self.lookup.loc[tid, parameter[1]]).time()) # start_
                                     & (self.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp( # week_
                                         self.lookup.loc[tid, parameter[2]]).time()) #end_
                                     ]
-                        self.static_imports.loc[period_1, tid] = self.lookup.loc[tid, parameter[0]] # rate_
+                            self.solar_rate = self.lookup.loc[tid, parameter[0]] # rate_
+                            self.cp_solar_allocation = self.lookup.loc[tid, 'cp_solar_allocation'].fillna(0)  # % of total solar generation allocated to cp
+                        else: # For non-solar periods and rates:
+                            if self.lookup.loc[tid, parameter[1]] == '0:00':  # start_
+                                period = \
+                                    self.days[self.lookup.loc[tid, parameter[3]]][ # week_
+                                        (self.days[self.lookup.loc[tid, parameter[3]]].time >= pd.Timestamp( # week_
+                                            self.lookup.loc[tid,  parameter[1]]).time()) # start_
+                                        & (self.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp( # week_
+                                            self.lookup.loc[tid, parameter[2]]).time()) # end_
+                                        ]
+                            else:
+                                period = \
+                                    self.days[self.lookup.loc[tid, parameter[3]]][ # week_
+                                        (self.days[self.lookup.loc[tid, parameter[3]]].time > pd.Timestamp( # week_
+                                            self.lookup.loc[tid, parameter[1]]).time()) # start_
+                                        & (self.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp( # week_
+                                            self.lookup.loc[tid, parameter[2]]).time()) #end_
+                                        ]
+                            self.static_imports.loc[period, tid] = self.lookup.loc[tid, parameter[0]] # rate_
                     pass
 
             # todo: create timeseries for FiT Tariffs in the same way
@@ -187,7 +196,7 @@ class Tariff():
                           customer_load,
                           pv_daily_allocation,
                           pv_instantaneous_allocation):
-        """Dynamically calculate tariffs by timestep according to cumulative load for, eg, block tariffs."""
+        """Dynamically calculate tariffs by timestep according to status (eg cumulative load for block tariffs)."""
         if tariff_id in scenario.dynamic_list:
             if scenario.lookup.loc[tariff_id, 'tariff_type'] == 'Block_Quarterly':
                 # Block Quarterly tariff has fixed load tariff blocks per quarter
@@ -204,9 +213,14 @@ class Tariff():
             elif scenario.lookup.loc[tariff_id, 'tariff_type'] == 'Solar_Block_Daily':
                 # Solar_Block_Daily tariff has daily solar limit during solar time period
                 # Limit is based on annual generation shared bewteen all customers
-                #TODO  Details tbc......
+                self.solar_rated_load = customer_load[step] - pv_instantaneous_allocation
+                pass
                 #TODO @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
+            elif scenario.lookup.loc[tariff_id, 'tariff_type'] == 'Solar_Block_Instantaneous':
+                # TODO Move this, it's NOT a block tariff, not dynamic tariff
+                # Solar_Block_Instantaneous tariff has solar limit equal to % of inst generation
+                # after cp load has been satisfied
+                self.solar_rated_load = customer_load[step] - pv_instantaneous_allocation
 
             else:
                 logging.info("*****************Dynamic Tariff %s of unknown Tariff type", tariff_id)
