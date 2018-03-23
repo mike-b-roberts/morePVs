@@ -177,3 +177,4 @@ OK, first run it doesn't look broken. But some error in morePVs_output line 102,
 For now, comment out output
 Git again and 
 Now set up test data    
+Also need to add `solar_imports` to output file
