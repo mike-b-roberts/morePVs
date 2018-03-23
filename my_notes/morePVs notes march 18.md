@@ -131,11 +131,34 @@ For __Solar_Instantaneous__:
 * In `Customer.calcCashflow`, `local_imports` (and `local_exports`) are used to calc `Customer.cashflows` as 17520 array, 
             using `solar_tariff` for local_imports` and residual tariffs for `imports`'
 
-
+* For both, `Customer.Tariff.solar_import_tariff` is set as a 1x17520 array with the solar tariff rate, and non-solar reverts to `import_tariff` rates
 So, it *looks* __good__
 
-Tidy up: Then git, then test.
+###Tidy up: Then git, then test.
+Start by running previous study to check it's not broken.
+(Then set up trial data for solar tariffs,. May need to make some of the above changes *conditional*.)
+2 problems in `Network.initialiseBuildingLoads`
+        `if self.pv['cp'] > self.resident['cp'].load:
+            for c in self.households:
+                self.resident[c].local_quota = (self.pv['cp'] - self.resident['cp'].load) / len(self.households) # for all timesteps
+        else:
+            self.resident[c].local_quota = np.zeros(self.study.ts.num_steps)`
 
-    
+* 1 This calc is happening and ot doesnt need to, should be if `has_solar_instantaneous_tariff`
+* 2 Need to compare individual timesteps
 
+en_notebooks/solar_tariffs.ipynb 
+    `        for c in self.households:
+            self.resident[c].local_quota = np.where((self.pv['cp'] > self.resident['cp'].load), \
+                                                    (self.pv['cp']- self.resident['cp'].load)/len(self.households),0)`
+is much neater too. Q what format do i want? array or df or series?? I think `np.array` is good
  
+ Issue because `local_quota` is not set for `'cp'` but it needs a vlaue in `Customer.calcStatic EnergyFlows`
+ Should calculate it for cp so `Network.initialiseBuildingLoads` iterates over `resident_list` instead of `households`
+ BUT, also then need to ensure `solar_rate` is zero for `'cp'` and `solar_import_tariff` is array of zeros
+ * BTW, above assumes that if one resident is on solar tariff, they all are... this could be changed later in calculating quotas
+ * but in any event, 'cp' can be on non-solar tariff (certainly `TIDNULL` but possibly others)
+ 
+ Issue: `Customer.calcStaticEnergyFlows` wants to calculate `Customer.local_imports` even when `Customer` is the `Network`
+    but `Network` doesn't have `local_quota` nor dies `retailer`
+    so set `self.local_quota = 0` in `network.initialiseBuildingLoads` 

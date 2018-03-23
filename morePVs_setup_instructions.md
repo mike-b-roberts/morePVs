@@ -52,7 +52,7 @@ If all_residents tariff is not given, each houshold can have its own tariff code
 
 'cp' tariff:
 -----------
-In `en` scenarios, If ENO  is the  stratabody, `cp tariff = TIDNULL`,
+In `en` scenarios, If ENO  is the  strata body, `cp tariff = TIDNULL`,
 		If ENO is not the strata  cp tariff is what strata pays ENO for cp load
 		
 Discount

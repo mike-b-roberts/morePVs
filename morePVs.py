@@ -50,6 +50,7 @@ class TariffData():
         # set up dfs for static import and export tariffs
         self.static_imports = pd.DataFrame(index=self.ts.timeseries)
         self.static_exports = pd.DataFrame(index=self.ts.timeseries)
+        self.static_solar_imports = pd.DataFrame(index=self.ts.timeseries)
         # Set up weekdays and weekends
         self.days = {
             'day': self.ts.timeseries[self.ts.timeseries.weekday.isin([0, 1, 2, 3, 4])],
@@ -94,25 +95,29 @@ class TariffData():
                 # NB times stored in csv in form 'h:mm'. Midnight saved as 23:59
                 for name, parameter in self.tou_rate_list.items():
                     if not pd.isnull(self.lookup.loc[tid, parameter[1]]): # parameter[1] is rate_
-                        if not ('solar' in name or 'Solar' in name): # Store solar rate and period separately
-                         # For non-solar periods and rates only:
-                            if self.lookup.loc[tid, parameter[1]] == '0:00':  # start_
-                                period = \
-                                    self.days[self.lookup.loc[tid, parameter[3]]][ # week_
-                                        (self.days[self.lookup.loc[tid, parameter[3]]].time >= pd.Timestamp( # week_
-                                            self.lookup.loc[tid,  parameter[1]]).time()) # start_
-                                        & (self.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp( # week_
-                                            self.lookup.loc[tid, parameter[2]]).time()) # end_
-                                        ]
-                            else:
-                                period = \
-                                    self.days[self.lookup.loc[tid, parameter[3]]][ # week_
-                                        (self.days[self.lookup.loc[tid, parameter[3]]].time > pd.Timestamp( # week_
-                                            self.lookup.loc[tid, parameter[1]]).time()) # start_
-                                        & (self.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp( # week_
-                                            self.lookup.loc[tid, parameter[2]]).time()) #end_
-                                        ]
+
+                        if self.lookup.loc[tid, parameter[1]] == '0:00':  # start_
+                            period = \
+                                self.days[self.lookup.loc[tid, parameter[3]]][ # week_
+                                    (self.days[self.lookup.loc[tid, parameter[3]]].time >= pd.Timestamp( # week_
+                                        self.lookup.loc[tid,  parameter[1]]).time()) # start_
+                                    & (self.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp( # week_
+                                        self.lookup.loc[tid, parameter[2]]).time()) # end_
+                                    ]
+                        else:
+                            period = \
+                                self.days[self.lookup.loc[tid, parameter[3]]][ # week_
+                                    (self.days[self.lookup.loc[tid, parameter[3]]].time > pd.Timestamp( # week_
+                                        self.lookup.loc[tid, parameter[1]]).time()) # start_
+                                    & (self.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp( # week_
+                                        self.lookup.loc[tid, parameter[2]]).time()) #end_
+                                    ]
+                        if not any(s in name for s in ['solar','Solar']):
+                            # Store solar rate and period separately
+                            # For non-solar periods and rates only:
                             self.static_imports.loc[period, tid] = self.lookup.loc[tid, parameter[0]] # rate_
+                        else: # Solar (local) periods and rates only:
+                            self.static_solar_imports.loc[period, tid] = self.lookup.loc[tid, parameter[0]]  # rate_
                     pass
 
             # todo: create timeseries for FiT Tariffs in the same way
@@ -123,8 +128,10 @@ class TariffData():
                 self.static_exports[tid] = self.lookup.loc[tid, 'fit_flat_rate']
         # Save tariffs as csvs
         import_name = os.path.join(self.reference_path, 'static_import_tariffs.csv')
+        solar_name = os.path.join(self.reference_path, 'static_solar_import_tariffs.csv')
         export_name = os.path.join(self.reference_path, 'static_export_tariffs.csv')
         self.static_imports.to_csv(import_name)
+        self.static_solar_imports.to_csv(solar_name)
         self.static_exports.to_csv(export_name)
 
 
@@ -172,9 +179,9 @@ class Tariff():
         # Solar tariff periods and rates (block or instantaneous)
         # ------------------------------------------------------
         # Get solar tariff data:
-        if 'solar' in scenario.lookup.loc[tariff_id, 'tariff_type'] or 'Solar' in scenario.lookup.loc[tariff_id, 'tariff_type']:
+        if any(s in scenario.lookup.loc[tariff_id, 'tariff_type'] for s in ['solar','Solar']):
             for name, parameter in scenario.study.tariff_data.tou_rate_list.items():
-                if 'solar' in name or 'Solar' in name:
+                if any(s in name for s in ['solar','Solar']):
                     self.solar_period = \
                         scenario.study.tariff_data.days[scenario.lookup.loc[tariff_id, parameter[3]]][  # week_
                             (scenario.study.tariff_data.days[scenario.lookup.loc[tariff_id, parameter[3]]].time > pd.Timestamp(  # week_
@@ -184,7 +191,9 @@ class Tariff():
                             ]
                     self.solar_rate = scenario.lookup.loc[tariff_id, parameter[0]]  # rate_
                     self.solar_cp_allocation = scenario.lookup.loc[tariff_id, 'solar_cp_allocation'].fillna(0) # % of total solar generation allocated to cp
-
+            self.solar_import_tariff = (scenario.static_solar_imports[tariff_id]).values
+        else:
+            self.solar_import_tariff = np.zeros(ts.num_steps)
         # -----------------------------
         # All volumetric import tariffs
         # -----------------------------
@@ -314,9 +323,9 @@ class Customer():
         self.total_payment includes opex & capex repayments"""
         self.cashflows = \
             np.multiply((self.imports - self.local_imports), self.tariff.import_tariff) \
-            + np.multiply(self.local_imports, self.tariff.local_import_tariff) \
-            - np.multiply((self.exports - self.local_exports), self.tariff.export_tariff) \
-            - np.multiply(self.local_exports, self.tariff.local_export_tariff)
+            + np.multiply(self.local_imports, self.tariff.solar_import_tariff) \
+            - np.multiply((self.exports - self.local_exports), self.tariff.export_tariff)
+            # - np.multiply(self.local_exports, self.tariff.local_export_tariff) could be added for LET / P2P
         # These are all 1x17520 Arrays.
         # local_tariffs are for, e.g. `solar_rate` energy,
         # maybe extandable for p2p later
@@ -391,11 +400,12 @@ class Network(Customer):
         # -----------------------------------------------
         # (NB Applies to EN arrangements only, so PV allocation is fixed and PV has already been initialised.)
         # This is for instantaneous solar tariff.
-        if self.pv['cp'] > self.resident['cp'].load:
-            for c in self.households:
-                self.resident[c].local_quota = (self.pv['cp'] - self.resident['cp'].load) / len(self.households) # for all timesteps
-        else:
-            self.resident[c].local_quota = np.zeros(self.study.ts.num_steps)
+        self.local_quota = 0
+        self.retailer.local_quota = 0
+        for c in self.resident_list:
+            self.resident[c].local_quota = np.where((self.pv['cp'] > self.resident['cp'].load), \
+                                                    (self.pv['cp']- self.resident['cp'].load)/len(self.households),0)
+
 
         # Initialise cash totals
         # ----------------------
@@ -727,37 +737,37 @@ class Scenario():
                     study.study_scenarios.loc[self.name,c] = study.study_scenarios.loc[self.name,'all_residents']
 
         # Create list of tariffs used in this scenario
+        # --------------------------------------------
         self.customers_with_tariffs = self.resident_list + ['parent']
         self.dnsp_tariff = study.study_scenarios.loc[self.name, 'network_tariff']
         self.tariff_in_use = study.study_scenarios.loc[self.name,self.customers_with_tariffs ] # tariff ids for each customer
         self.tariff_short_list = self.tariff_in_use.tolist()  + [self.dnsp_tariff]  # list of tariffs in use
         self.tariff_short_list = list(set(self.tariff_short_list)) # drop duplicates
-        #  Slice tariff lookup table and static tariffs for this scenario
+        #  Slice tariff lookup table for this scenario
         self.lookup = study.tariff_data.lookup.loc[self.tariff_short_list]
-        self.static_imports = study.tariff_data.static_imports[self.tariff_short_list]
-        self.static_exports = study.tariff_data.static_exports[self.tariff_short_list]
-        self.dynamic_list = [
-                t for t in self.tariff_short_list
-                if 'Block' in self.lookup.loc[t, 'tariff_type']
-                   or 'block' in self.lookup.loc[t, 'tariff_type']
-                   or 'Dynamic' in self.lookup.loc[t, 'tariff_type']
-                   or 'dynamic' in self.lookup.loc[t, 'tariff_type']
-                ] # Currently only includes block,
-                # could also add demand tariffs
+        self.dynamic_list = [t for t in self.tariff_short_list \
+                if any(word in self.lookup.loc[t, 'tariff_type'] for word in ['Block','block','Dynamic','dynamic'])]
+                # Currently only includes block, could also add demand tariffs
                 # if needed - i.e. for demand tariffs on < 12 month period
-        self.demand_list = [
-                t for t in self.tariff_short_list
-                if 'Demand' in self.lookup.loc[t, 'tariff_type']
-                ]
+        solar_list = [t for t in self.tariff_short_list \
+                if any(word in self.lookup.loc[t, 'tariff_type'] for word in ['Solar','solar'])]
+        solar_block_list = [t for t in solar_list \
+                if any(word in self.lookup.loc[t, 'tariff_type'] for word in ['Block','block'])]
+        self.demand_list = [t for t in self.tariff_short_list \
+                if 'Demand' in self.lookup.loc[t, 'tariff_type']]
         self.has_demand_charges = len(self.demand_list)>0
         self.has_dynamic_tariff = len(self.dynamic_list)>0 #TODO Check this change,
         #  previously:(list(set(self.tariff_short_list).intersection(self.dynamic_list)))
-        self.has_solar_block = len([t for t in self.dynamic_list if 'Solar_Block' in t] + \
-                               [t for t in self.dynamic_list if 'solar_block' in t])>0
-
+        self.has_solar_block = len(solar_block_list)>0
         self.block_quarterly_billing_start = study.tariff_data.block_quarterly_billing_start
         self.steps_in_block = study.tariff_data.steps_in_block
         self.steps_in_day = 48 # used for daily block tariffs eg solar block
+        #  Slice  static tariffs for this scenario
+        # ----------------------------------------
+        self.static_imports = study.tariff_data.static_imports[self.tariff_short_list]
+        self.static_exports = study.tariff_data.static_exports[self.tariff_short_list]
+        if len(solar_list) > 0:
+            self.static_solar_imports = study.tariff_data.static_solar_imports[self.solar_list]
 
         # ----------------------------------
         # identify battery for this scenario
