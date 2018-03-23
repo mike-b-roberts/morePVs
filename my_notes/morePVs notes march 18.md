@@ -162,3 +162,18 @@ is much neater too. Q what format do i want? array or df or series?? I think `np
  Issue: `Customer.calcStaticEnergyFlows` wants to calculate `Customer.local_imports` even when `Customer` is the `Network`
     but `Network` doesn't have `local_quota` nor dies `retailer`
     so set `self.local_quota = 0` in `network.initialiseBuildingLoads` 
+
+
+Issue:
+btm_icp - there is no `Network.pv`    maybe because `Network.allocatePv` is called before `resident.load` exists?
+Issue is for `pv_allocation = 'load_dependent'`
+- goes to `initialiseBuildingLoads` before `allocatePv`
+Need to take initialisation of instantaneous quotas OUT of `initialiseBuildingLoads` and make new function
+`Network.initialiseSolarInstQuotas`
+Also renameing the existing `initaliseLocalQuotas` to `initialiseDailySolarBlockQuotas` in the name
+
+
+OK, first run it doesn't look broken. But some error in morePVs_output line 102, looking up # units in building
+For now, comment out output
+Git again and 
+Now set up test data    

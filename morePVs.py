@@ -396,15 +396,7 @@ class Network(Customer):
         # --------------------------
         self.total_building_load = self.network_load.sum().sum()
 
-        # calculate local quotas for solar or LET tariffs
-        # -----------------------------------------------
-        # (NB Applies to EN arrangements only, so PV allocation is fixed and PV has already been initialised.)
-        # This is for instantaneous solar tariff.
-        self.local_quota = 0
-        self.retailer.local_quota = 0
-        for c in self.resident_list:
-            self.resident[c].local_quota = np.where((self.pv['cp'] > self.resident['cp'].load), \
-                                                    (self.pv['cp']- self.resident['cp'].load)/len(self.households),0)
+
 
 
         # Initialise cash totals
@@ -542,7 +534,7 @@ class Network(Customer):
         for c in self.resident_list:
             self.resident[c].initialiseCustomerPv(np.array(self.pv[c]).astype(np.float64))
 
-    def initialiseLocalQuotas(self, scenario):
+    def initialiseDailySolarBlockQuotas(self, scenario):
         """For Solar Block Daily tariff, allocate block limits for all residents."""
         # Check that all residents have same solar_cp_allocation basis , otherwise raise an exception:
         allocation_list = list(set((self.resident[c].tariff.solar_cp_allocation for c in self.resident_list)))
@@ -556,6 +548,18 @@ class Network(Customer):
         for c in self.households:
             self.resident[c].daily_local_quota = self.pv.loc[self.resident[c].solar_period, 'cp'] * (
                         1 - solar_cp_allocation) / (365 * len(self.households))
+
+    def initialiseSolarInstQuotas(self, scenario):
+        # calculate local quotas for solar or LET tariffs
+        # -----------------------------------------------
+        # (NB Applies to EN arrangements only, so PV allocation is fixed and PV has already been initialised.)
+        # This is for instantaneous solar tariff.
+        self.local_quota = 0
+        self.retailer.local_quota = 0
+        for c in self.resident_list:
+            self.resident[c].local_quota = np.where((self.pv['cp'] > self.resident['cp'].load), \
+                                                    (self.pv['cp'] - self.resident['cp'].load) / len(
+                                                        self.households), 0)
 
     def initailiseBuildingBattery(self, scenario):
         #self.battery =  Battery(scenario.bat_cap)
@@ -1150,13 +1154,14 @@ def main(base_path,project,study_name):
                 eno.allocatePv(scenario)
                 eno.initialiseAllCapex(scenario)
             if scenario.has_solar_block:
-                eno.initialiseLocalQuotas(scenario)
+                eno.initialiseDailySolarBlockQuotas(scenario)
             for loadFile in scenario.load_list :
                 eno.initialiseBuildingLoads(loadFile, scenario)
                 if scenario.pv_allocation =='load_dependent':
                     # ie. for btm_icp, btm_s_u and btm_s_c arrangements
                     eno.allocatePv(scenario)
                     eno.initialiseAllCapex(scenario)
+                eno.initialiseSolarInstQuotas(scenario) # depends on load and pv
                 # calc all internal energy flows (static & dynamic) & dynamic tariffs( assumes no demand management or individual batteries)
                 eno.calcBuildingStaticEnergyFlows()
                 eno.calcDynamicValues()
@@ -1169,12 +1174,12 @@ def main(base_path,project,study_name):
             # collate / log data for all loads in scenario
             scenario.logScenarioData()
         st.logStudyData()
-        if len(st.output_list)>0:
-            op = opm.Output(base_path = base_path,
-                            project = project,
-                            study_name = study_name)
-            op.csv_output()
-            op.plot_output()
+        # if len(st.output_list)>0:
+        #     op = opm.Output(base_path = base_path,
+        #                     project = project,
+        #                     study_name = study_name)
+        #     op.csv_output()
+        #     op.plot_output()
 
     except:
         logging.exception('\n\n\n Exception !!!!!!')
@@ -1186,19 +1191,19 @@ if __name__ == "__main__":
    # stuff only to run when not called via 'import' here
 
 
-   main(project='past_papers',
-        study_name='apsrc2017',
-        base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+   # main(project='past_papers',
+   #      study_name='apsrc2017',
+   #      base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
    # main(project='past_papers',
    #      study_name='energyCON',
    #      base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
-   # main(project='p_testing',
-   #      study_name='test7',
-   #      base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+   main(project='p_testing',
+        study_name='test_solar_tariffs1',
+        base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
 
 
 # TODO - FUTURE - Variable allocation of pv between cp and residents
 # TODO - en_external scenario: cp tariff != TIDNULL
 # TODO Set up logging throughout
-# TODO- Add CP only arrangement
 # TODO - ADD BATTERY
+# TODO: Add threading
