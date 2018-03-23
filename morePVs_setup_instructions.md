@@ -70,10 +70,10 @@ Solar Tariffs
                 cp allocated a fixed % (`cp_solar_allocation` given as decimal (`0.yy`)in `tariff_lookup.csv`) and 
                 the remainder shared equally between units.
                 
-`SBTi_xx` Solar block TOU tariff (instantaneous): 
+`SIT_xx` Solar Instantaneous TOU tariff : 
                 Based on TOU with `xx%` discount
                 and each customer having a quota of solar energy, based on % of instantaneous generation at that timestamp 
-                after cp load has been satisfied                                        
+                after cp load has been satisfied. This is *not* a block tariff. l`local_import` is calculated statically                                       
 
 `CostPlus_xx`   Based on bills paid at parent tariff + xx%. Fixed costs (and CP?) shared evenly; Volumetric costs shared by usage; 
                 How best to deal with demand charges? 
@@ -82,4 +82,4 @@ Solar Tariffs
 
 'parent' tariff
 ---------------
-For Non EN scenarios (bau, btm, cp_only, etc.), parent tariff must be `TIDNUL`, while cp tariff is paid by strata.
+For Non EN scenarios (bau, btm, cp_only, etc.), parent tariff must be `TIDNULL`, while cp tariff is paid by strata.
