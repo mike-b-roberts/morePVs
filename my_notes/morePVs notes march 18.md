@@ -134,11 +134,7 @@ For __Solar_Instantaneous__:
 
 So, it *looks* __good__
 
-Tidy up:
-
-
-
- Then git, then test.
+Tidy up: Then git, then test.
 
     
 

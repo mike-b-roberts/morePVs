@@ -217,13 +217,6 @@ class Tariff():
                     self.import_tariff[step] = scenario.lookup.loc[tariff_id, 'block_rate_2']
                 elif self.cumulative_energy > scenario.lookup.loc[tariff_id, 'high_2']:
                     self.import_tariff[step] = scenario.lookup.loc[tariff_id, 'block_rate_3']
-
-            # elif scenario.lookup.loc[tariff_id, 'tariff_type'] == 'Solar_Block_Instantaneous':
-            #     # TODO Move this, it's NOT a block tariff, not dynamic tariff
-            #     # Solar_Block_Instantaneous tariff has solar limit equal to % of inst generation
-            #     # after cp load has been satisfied
-            #     self.local_quota = customer_load[step] - pv_instantaneous_allocation
-
             else:
                 logging.info("*****************Dynamic Tariff %s of unknown Tariff type", tariff_id)
 
@@ -280,11 +273,8 @@ class Customer():
                                       tariff_id = self.tariff_id,
                                       scenario=self.scenario,
                                       step = step,
-                                      customer_load = self.imports,
-                                      pv_daily_allocation = self.pv_daily_allocation,
-                                      pv_instantaneous_allocation = self.pv_instantaneous_allocation
+                                      customer_load = self.imports
                                       )
-        #TODO @@@@@@@@@@@@ Are these allocations % or kWh??
         # For solar block daily tariff, calc kWh local import / solar allocation
         # ----------------------------------------------------------------------
         if self.scenario.lookup.loc[self.tariff_id, 'tariff_type'] == 'Solar_Block_Daily':
@@ -1175,8 +1165,6 @@ def main(base_path,project,study_name):
                             study_name = study_name)
             op.csv_output()
             op.plot_output()
-
-        pass
 
     except:
         logging.exception('\n\n\n Exception !!!!!!')
