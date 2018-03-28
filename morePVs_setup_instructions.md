@@ -1,10 +1,20 @@
-#Apartment Network Model
+#morePVs model
+morePVs Copyright (C) 2018 Mike B Roberts
+
+multi-occupancy residential electricity with PV and storage model
+ 
+*This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
+Contact: m.roberts@unsw.edu.au*
+
 ###Setup Instructions
 
 All input parameters for each study are contained or referenced in `study_xxxxxxx.csv` file.
 
 `output_type`:
 This column lists output formats required, applied to the whole study, not individual scenarios.
+All other parameters are given *per scenario* i.e. per line of `.csv` file.
 
 ---
 PV:
@@ -52,7 +62,7 @@ If all_residents tariff is not given, each houshold can have its own tariff code
 
 'cp' tariff:
 -----------
-In `en` scenarios, If ENO  is the  stratabody, `cp tariff = TIDNULL`,
+In `en` scenarios, If ENO  is the  strata body, `cp tariff = TIDNULL`,
 		If ENO is not the strata  cp tariff is what strata pays ENO for cp load
 		
 Discount
@@ -70,10 +80,10 @@ Solar Tariffs
                 cp allocated a fixed % (`cp_solar_allocation` given as decimal (`0.yy`)in `tariff_lookup.csv`) and 
                 the remainder shared equally between units.
                 
-`SBTi_xx` Solar block TOU tariff (instantaneous): 
+`SIT_xx` Solar Instantaneous TOU tariff : 
                 Based on TOU with `xx%` discount
                 and each customer having a quota of solar energy, based on % of instantaneous generation at that timestamp 
-                after cp load has been satisfied                                        
+                after cp load has been satisfied. This is *not* a block tariff. l`local_import` is calculated statically                                       
 
 `CostPlus_xx`   Based on bills paid at parent tariff + xx%. Fixed costs (and CP?) shared evenly; Volumetric costs shared by usage; 
                 How best to deal with demand charges? 
@@ -82,4 +92,9 @@ Solar Tariffs
 
 'parent' tariff
 ---------------
-For Non EN scenarios (bau, btm, cp_only, etc.), parent tariff must be `TIDNUL`, while cp tariff is paid by strata.
+For Non EN scenarios (bau, btm, cp_only, etc.), parent tariff must be `TIDNULL`, while cp tariff is paid by strata.
+
+-------
+BATTERY
+-------
+In `study_xxxxxxx.csv` file, battery is identified by `bat_scenario`
