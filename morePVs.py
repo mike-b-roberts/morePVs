@@ -772,9 +772,9 @@ class Scenario():
         # ----------------------------------
         # identify battery for this scenario
         # ----------------------------------
-        if 'bat_file' in study.study_scenarios.columns:
-            self.batteryFile = study.study_scenarios.loc[self.name,'bat_file']
-            self.has_battery = not np.isnan(self.batteryFile)
+        if 'bat_scenario' in study.study_scenarios.columns:
+            self.bat_scenario = study.study_scenarios.loc[self.name,'bat_scenario']
+            self.has_battery = not np.isnan(self.bat_scenario)
         else:
             self.has_battery = False
 
@@ -984,12 +984,15 @@ class Study():
         # reference files
         self.reference_path = os.path.join(self.base_path, 'reference')
         self.input_path = os.path.join(self.project_path, 'inputs')
-        self.tariff_name='tariff_lookup.csv'
-        self.t_lookupFile=os.path.join(self.reference_path, self.tariff_name)
-        self.capex_pv_name = 'capex_pv_lookup.csv'
-        self.capexpvFile = os.path.join(self.reference_path, self.capex_pv_name)
-        self.capex_en_name = 'capex_en_lookup.csv'
-        self.capexenFile = os.path.join(self.reference_path, self.capex_en_name)
+        tariff_name='tariff_lookup.csv'
+        self.t_lookupFile=os.path.join(self.reference_path, tariff_name)
+        capex_pv_name = 'capex_pv_lookup.csv'
+        self.capexpvFile = os.path.join(self.reference_path, capex_pv_name)
+        capex_en_name = 'capex_en_lookup.csv'
+        self.capexenFile = os.path.join(self.reference_path, capex_en_name)
+        battery_lookup_name='battery_lookup.csv'
+        self.batteryFile=os.path.join(self.reference_path, battery_lookup_name)
+
         #study file contains all scenarios
         self.study_filename = 'study_' + study_name + '.csv'
         self.studyFile= os.path.join(self.input_path, self.study_filename)
@@ -1048,6 +1051,10 @@ class Study():
             self.pv_capex_table = self.pv_capex_table.set_index('pv_cap_id')
             self.pv_capex_table.loc[:,['pv_capex', 'inverter_cost']] \
                     = self.pv_capex_table.loc[:,['pv_capex','inverter_cost']].fillna(0.0)
+        # read battery data into lookup file
+        # ----------------------------------
+        self.battery_lookup = pd.read_csv(self.batteryFile)
+
         # Identify load data
         # -------------------
         if len(self.study_scenarios['load_folder'].unique())==1:
