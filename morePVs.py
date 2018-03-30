@@ -563,7 +563,8 @@ class Network(Customer):
     def initailiseBuildingBattery(self, scenario):
         self.has_battery = scenario.has_battery
         if self.has_battery:
-            self.battery =  Battery(scenario.battery_id)
+            self.battery = Battery(study=self.study,
+                                   battery_id=scenario.battery_id)
 
 
     def calcBuildingStaticEnergyFlows(self):
@@ -605,20 +606,20 @@ class Network(Customer):
         # -------------------------------
         # 1) Use excess PV to charge
         # --------------------------
-        if self.flows(step) > 0:
+        if self.flows[step] > 0:
             self.flows[step] = \
             self.battery.charge(self.flows[step])
         # 2) Discharge if needed to meet load, within discharge period
         # ------------------------------------------------------------
-        elif self.flows < 0 and step in self.battery.discharge_period:
+        elif self.flows[step] < 0 and step in self.battery.discharge_period:
             self.flows[step] += \
                 self.battery_discharge(-self.flows[step])
         # 3) Charge from grid in additional charge period:
         # ------------------------------------------------
-        elif self.flows <=0 and step in self.battery.charge_period:
+        elif self.flows[step] <=0 and step in self.battery.charge_period:
             self.flows[step] += (self.battery.max_halfhour_charge -
                                  self.battery.charge(self.battery.max_halfhour_charge))
-        # TODO 4) Look at peak demand issues.......(later)
+        # TODO 4) Look at using battery to address peak demand ....(later)
         # Calc imports and exports
         # ------------------------
         self.exports[step] = self.flows[step].clip(0)
@@ -1271,7 +1272,7 @@ if __name__ == "__main__":
    #      study_name='energyCON',
    #      base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
    main(project='p_testing',
-        study_name='test_7',
+        study_name='test7',
         base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
 
 
