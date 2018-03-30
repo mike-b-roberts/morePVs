@@ -653,36 +653,48 @@ class Battery():
         ts=study.ts
         # Load battery parameters from battery lookup
         # -------------------------------------------
-        self.capacity_kWh = study.battery_lookup.loc(battery_id,capacity_kWh)
-        self.cycle_kW = study.battery_lookup.loc(battery_id,cycle_kW)
-        self.efficiency_cycle = study.battery_lookup.loc(battery_id,efficiency_cycle)
-        self.maxDOD = study.battery_lookup.loc(battery_id,maxDOD)
-        self.maxSOC = study.battery_lookup.loc(battery_id,maxSOC)
-        self.max_cycles = study.battery_lookup.loc(battery_id,max_cycles)
-        self.capex = study.battery_lookup.loc(battery_id,capex)
-        discharge_start= study.battery_lookup.loc(battery_id,discharge_start)
-        discharge_end= study.battery_lookup.loc(battery_id,discharge_end)
-        discharge_day = study.battery_lookup.loc(battery_id, discharge_day)
-        charge_start= study.battery_lookup.loc(battery_id,charge_start)
-        charge_end= study.battery_lookup.loc(battery_id,charge_end)
-        charge_day = study.battery_lookup.loc(battery_id,charge_day)
-        # TODO Calculate discharge period:
-        # --------------------------------
-        if discharge_start.isnull():
-            discharge_period = ts
+        self.capacity_kWh = study.battery_lookup.loc[battery_id, 'capacity_kWh']
+        self.cycle_kW = study.battery_lookup.loc[battery_id, 'cycle_kW']
+        self.efficiency_cycle = study.battery_lookup.loc[battery_id, 'efficiency_cycle']
+        self.maxDOD = study.battery_lookup.loc[battery_id, 'maxDOD']
+        self.maxSOC = study.battery_lookup.loc[battery_id, 'maxSOC']
+        self.max_cycles = study.battery_lookup.loc[battery_id,'max_cycles']
+        self.capex = study.battery_lookup.loc[battery_id, 'capex']
+        discharge_start= study.battery_lookup.loc[battery_id, 'discharge_start']
+        discharge_end= study.battery_lookup.loc[battery_id, 'discharge_end']
+        discharge_day = study.battery_lookup.loc[battery_id, 'discharge_day']
+        charge_start= study.battery_lookup.loc[battery_id, 'charge_start']
+        charge_end= study.battery_lookup.loc[battery_id, 'charge_end']
+        charge_day = study.battery_lookup.loc[battery_id, 'charge_day']
+        # Calculate discharge period:
+        # ---------------------------
+        if pd.isnull(discharge_start):
+            self.discharge_period = ts
         elif discharge_start == '0:00':
             self.discharge_period = \
-                ts.days[discharge_day][(ts.days[discharge_day].time >= pd.Timestamp(discharge_start))
+                ts.days[discharge_day][(ts.days[discharge_day].time >= pd.Timestamp(discharge_start).time())
                     & (ts.days[discharge_day].time <= pd.Timestamp(discharge_end).time())]
         else:
             self.discharge_period = \
-                ts.days[discharge_day][(ts.days[discharge_day].time > pd.Timestamp(discharge_start))
+                ts.days[discharge_day][(ts.days[discharge_day].time > pd.Timestamp(discharge_start).time())
                                & (ts.days[discharge_day].time <= pd.Timestamp(discharge_end).time())]
-
-
-
-        self.stateOfCharge = 0.0
+        # Calculate additional charging period:
+        # -------------------------------------
+        if pd.isnull(charge_start):
+            self.charge_period = pd.DatetimeIndex([])
+        elif charge_start == '0:00':
+            self.charge_period = \
+                ts.days[charge_day][(ts.days[charge_day].time >= pd.Timestamp(charge_start).time())
+                                       & (ts.days[charge_day].time <= pd.Timestamp(charge_end).time())]
+        else:
+            self.charge_period = \
+                ts.days[charge_day][(ts.days[charge_day].time > pd.Timestamp(charge_start).time())
+                                       & (ts.days[charge_day].time <= pd.Timestamp(charge_end).time())]
         self.maxHalfHourlyDischarge = 0.5
+
+        # Initialise battery variables
+        # ----------------------------
+        self.stateOfCharge = 0.0
         self.numCycles = 0
 
     def charge(self, desired_charge):
@@ -807,8 +819,8 @@ class Scenario():
         # identify battery for this scenario
         # ----------------------------------
         if 'battery_id' in study.study_scenarios.columns:
-            self.bat_id = study.study_scenarios.loc[self.name,'battery_id']
-            self.has_battery = not np.isnan(self.bat_id)
+            self.battery_id = study.study_scenarios.loc[self.name, 'battery_id']
+            self.has_battery = not pd.isnull(self.battery_id)
         else:
             self.has_battery = False
 
@@ -1087,7 +1099,7 @@ class Study():
                     = self.pv_capex_table.loc[:,['pv_capex','inverter_cost']].fillna(0.0)
         # read battery data into lookup file
         # ----------------------------------
-        self.battery_lookup = pd.read_csv(self.batteryFile)
+        self.battery_lookup = pd.read_csv(self.batteryFile,index_col='battery_id')
 
         # Identify load data
         # -------------------
@@ -1235,7 +1247,7 @@ if __name__ == "__main__":
    #      study_name='energyCON',
    #      base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
    main(project='p_testing',
-        study_name='test_solar_tariffs1',
+        study_name='test_7',
         base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
 
 
