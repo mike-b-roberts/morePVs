@@ -97,4 +97,22 @@ For Non EN scenarios (bau, btm, cp_only, etc.), parent tariff must be `TIDNULL`,
 -------
 BATTERY
 -------
-In `study_xxxxxxx.csv` file, battery is identified by `bat_scenario`
+In `study_xxxxxxx.csv` file, battery is identified by `bat_scenario` 
+All battery data is kept in `reference\battery_lookup.csv`
+__Battery Characteristics__
+`battery_scenario`  - identifier unique to battery characteristics and control strategy
+`capacity_kWh`      - Single capacity figure
+`efficiency_cycle`  - for charge and discharge OR `efficiency_charge` and `efficiency_discharge` (tbc)
+`power_cycle` -for charge and discharge OR `power_charge` and `power_discharge`
+`maxDOD`
+`maxSOC`
+`max_cycles`
+`capex`
+
+__Control Strategy__
+`discharge_start` and `discharge_end` (optional) Discharge *only* allowed between these hours 
+`charge_start` and `charge_end` (optional) Charge from grid in this *additional* period
+`discharge_day` and `charge_day` (=`both`) `week`, `end` or `both` : days to discharge / charge
+
+
+

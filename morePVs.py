@@ -1,9 +1,12 @@
 # morePVs Copyright (C) 2018 Mike B Roberts
 # multi-occupancy residential electricity with PV and storage model
 #
-# This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-# This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-# You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
+# This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+# License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+# version. # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+# details. You should have received a copy of the GNU General Public License along with this program. If not,
+# see <http://www.gnu.org/licenses/>.
 # Contact: m.roberts@unsw.edu.au
 
 # IMPORT Modules
@@ -14,7 +17,7 @@ import os
 import pdb, traceback
 import pandas as pd
 import en_utilities as um
-import morePVs_output as opm
+from en import morePVs_output as opm
 
 # Classes
 class Timeseries():
@@ -31,6 +34,11 @@ class Timeseries():
                 pd.infer_freq(self.timeseries)
                 )).total_seconds()
         self.num_days = int(self.num_steps * self.interval / (24*60*60))
+        # Set up weekdays and weekends
+        self.days = {
+            'day': self.timeseries[self.timeseries.weekday.isin([0, 1, 2, 3, 4])],
+            'end': self.timeseries[self.timeseries.weekday.isin([5, 6])],
+            'both': self.timeseries}
 
 class TariffData():
     """Reference resource with time-specific price data for multiple tariffs"""
@@ -50,12 +58,6 @@ class TariffData():
         self.static_imports = pd.DataFrame(index=self.ts.timeseries)
         self.static_exports = pd.DataFrame(index=self.ts.timeseries)
         self.static_solar_imports = pd.DataFrame(index=self.ts.timeseries)
-        # Set up weekdays and weekends
-        self.days = {
-            'day': self.ts.timeseries[self.ts.timeseries.weekday.isin([0, 1, 2, 3, 4])],
-            'end': self.ts.timeseries[self.ts.timeseries.weekday.isin([5, 6])],
-            'both': self.ts.timeseries
-        }
         self.block_quarterly_billing_start = 0  # timestep to start cumulative energy calc
         self.steps_in_block = 4380  # quarterly half-hour steps
         self.tou_rate_list = {'name_1': ['rate_1', 'start_1', 'end_1', 'week_1'],
@@ -90,25 +92,25 @@ class TariffData():
             elif 'TOU' in self.lookup.loc[tid, 'tariff_type'] or 'Solar_Block' in self.lookup.loc[tid, 'tariff_type'] :
                 # calculate timeseries TOU tariff based on up to 8 periods (n=1 to 8)
                 # volumetric tariff is rate_n, between times start_n and end_n
-                # week_n is 'day' for weekself.self.days, 'end' for weekend, 'both' for both
+                # week_n is 'day' for week, 'end' for weekend, 'both' for both
                 # NB times stored in csv in form 'h:mm'. Midnight saved as 23:59
                 for name, parameter in self.tou_rate_list.items():
                     if not pd.isnull(self.lookup.loc[tid, parameter[1]]): # parameter[1] is rate_
 
                         if self.lookup.loc[tid, parameter[1]] == '0:00':  # start_
                             period = \
-                                self.days[self.lookup.loc[tid, parameter[3]]][ # week_
-                                    (self.days[self.lookup.loc[tid, parameter[3]]].time >= pd.Timestamp( # week_
+                                self.ts.days[self.lookup.loc[tid, parameter[3]]][ # week_
+                                    (self.ts.days[self.lookup.loc[tid, parameter[3]]].time >= pd.Timestamp( # week_
                                         self.lookup.loc[tid,  parameter[1]]).time()) # start_
-                                    & (self.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp( # week_
+                                    & (self.ts.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp( # week_
                                         self.lookup.loc[tid, parameter[2]]).time()) # end_
                                     ]
                         else:
                             period = \
-                                self.days[self.lookup.loc[tid, parameter[3]]][ # week_
-                                    (self.days[self.lookup.loc[tid, parameter[3]]].time > pd.Timestamp( # week_
+                                self.ts.days[self.lookup.loc[tid, parameter[3]]][ # week_
+                                    (self.ts.days[self.lookup.loc[tid, parameter[3]]].time > pd.Timestamp( # week_
                                         self.lookup.loc[tid, parameter[1]]).time()) # start_
-                                    & (self.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp( # week_
+                                    & (self.ts.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp( # week_
                                         self.lookup.loc[tid, parameter[2]]).time()) #end_
                                     ]
                         if not any(s in name for s in ['solar','Solar']):
@@ -140,6 +142,7 @@ class Tariff():
                  scenario,
                  ts):
         """Create time-based rates for single specific tariff."""
+
         # ------------------------------
         # Export Tariff and Fixed Charge
         # ------------------------------
@@ -158,12 +161,12 @@ class Tariff():
             self.is_demand = True
             self.demand_type = scenario.lookup.loc[tariff_id, 'demand_type']
             # Demand period is weekday or weekend between demand_start and demand_end:
-            self.demand_period = scenario.study.tariff_data.days[
+            self.demand_period = ts.days[
                 scenario.lookup.loc[tariff_id, 'demand_week']][
-                (scenario.study.tariff_data.days[scenario.lookup.loc[tariff_id, 'demand_week']
+                (ts.days[scenario.lookup.loc[tariff_id, 'demand_week']
                  ].time > pd.Timestamp(
                     scenario.lookup.loc[tariff_id, 'demand_start']).time())
-                & (scenario.study.tariff_data.days[scenario.lookup.loc[tariff_id, 'demand_week']
+                & (ts.days[scenario.lookup.loc[tariff_id, 'demand_week']
                    ].time <= pd.Timestamp(
                     scenario.study.tariff_data.lookup.loc[tariff_id, 'demand_end']).time())
                 ]
@@ -182,10 +185,10 @@ class Tariff():
             for name, parameter in scenario.study.tariff_data.tou_rate_list.items():
                 if any(s in name for s in ['solar','Solar']):
                     self.solar_period = \
-                        scenario.study.tariff_data.days[scenario.lookup.loc[tariff_id, parameter[3]]][  # week_
-                            (scenario.study.tariff_data.days[scenario.lookup.loc[tariff_id, parameter[3]]].time > pd.Timestamp(  # week_
+                        ts.days[scenario.lookup.loc[tariff_id, parameter[3]]][  # week_
+                            (ts.days[scenario.lookup.loc[tariff_id, parameter[3]]].time > pd.Timestamp(  # week_
                                 scenario.lookup.loc[tariff_id, parameter[1]]).time())  # start_
-                            & (scenario.study.tariff_data.days[scenario.lookup.loc[tariff_id, parameter[3]]].time <= pd.Timestamp(  # week_
+                            & (ts.days[scenario.lookup.loc[tariff_id, parameter[3]]].time <= pd.Timestamp(  # week_
                                 scenario.lookup.loc[tariff_id, parameter[2]]).time())  # end_
                             ]
                     self.solar_rate = scenario.lookup.loc[tariff_id, parameter[0]]  # rate_
@@ -643,36 +646,67 @@ class Network(Customer):
         else:
             self.self_consumption=0
 
-# class Battery():
-#     # based on script by Luke Marshall
-#     def __init__(self, capacity):
-#         self.capacityMWh = capacity
-#         self.stateOfCharge = 0.0
-#         self.maxHalfHourlyDischarge = 0.5
-#         self.numCycles = 0
-#
-#     def charge(self, MWh):
-#         amountToCharge = min(self.capacityMWh - self.stateOfCharge, MWh)
-#         self.stateOfCharge = self.stateOfCharge + amountToCharge
-#         return MWh - amountToCharge
-#
-#     def discharge(self):
-#         cycleFraction = self.chargeFraction()
-#
-#         amountToDischarge = min(self.stateOfCharge, self.maxHalfHourlyDischarge)
-#         self.stateOfCharge = self.stateOfCharge - amountToDischarge
-#
-#         cycleFraction -= self.chargeFraction()
-#         self.numCycles += cycleFraction
-#
-#         return amountToDischarge
-#
-#     def chargeFraction(self):
-#         return self.stateOfCharge / self.capacityMWh
-#
-#     def getNumCycles(self):
-#          return self.numCycles
-#     pass
+class Battery():
+    # based on script by Luke Marshall
+    def __init__(self,study, battery_id):
+        self.battery_id = battery_id
+        ts=study.ts
+        # Load battery parameters from battery lookup
+        # -------------------------------------------
+        self.capacity_kWh = study.battery_lookup.loc(battery_id,capacity_kWh)
+        self.cycle_kW = study.battery_lookup.loc(battery_id,cycle_kW)
+        self.efficiency_cycle = study.battery_lookup.loc(battery_id,efficiency_cycle)
+        self.maxDOD = study.battery_lookup.loc(battery_id,maxDOD)
+        self.maxSOC = study.battery_lookup.loc(battery_id,maxSOC)
+        self.max_cycles = study.battery_lookup.loc(battery_id,max_cycles)
+        self.capex = study.battery_lookup.loc(battery_id,capex)
+        discharge_start= study.battery_lookup.loc(battery_id,discharge_start)
+        discharge_end= study.battery_lookup.loc(battery_id,discharge_end)
+        discharge_day = study.battery_lookup.loc(battery_id, discharge_day)
+        charge_start= study.battery_lookup.loc(battery_id,charge_start)
+        charge_end= study.battery_lookup.loc(battery_id,charge_end)
+        charge_day = study.battery_lookup.loc(battery_id,charge_day)
+        # TODO Calculate discharge period:
+        # --------------------------------
+        if discharge_start.isnull():
+            discharge_period = ts
+        elif discharge_start == '0:00':
+            self.discharge_period = \
+                ts.days[discharge_day][(ts.days[discharge_day].time >= pd.Timestamp(discharge_start))
+                    & (ts.days[discharge_day].time <= pd.Timestamp(discharge_end).time())]
+        else:
+            self.discharge_period = \
+                ts.days[discharge_day][(ts.days[discharge_day].time > pd.Timestamp(discharge_start))
+                               & (ts.days[discharge_day].time <= pd.Timestamp(discharge_end).time())]
+
+
+
+        self.stateOfCharge = 0.0
+        self.maxHalfHourlyDischarge = 0.5
+        self.numCycles = 0
+
+    def charge(self, desired_charge):
+        amountToCharge = min(self.cap_kWh - self.stateOfCharge, desired_charge)
+        self.stateOfCharge = self.stateOfCharge + amountToCharge
+        return desired_charge - amountToCharge
+
+    def discharge(self):
+        cycleFraction = self.chargeFraction()
+
+        amountToDischarge = min(self.stateOfCharge, self.maxHalfHourlyDischarge)
+        self.stateOfCharge = self.stateOfCharge - amountToDischarge
+
+        cycleFraction -= self.chargeFraction()
+        self.numCycles += cycleFraction
+
+        return amountToDischarge
+
+    def chargeFraction(self):
+        return self.stateOfCharge / self.capacityMWh
+
+    def getNumCycles(self):
+         return self.numCycles
+    pass
 
 class Scenario():
     """Contains a single set of input parameters, but may contain multiple load profiles."""
@@ -772,9 +806,9 @@ class Scenario():
         # ----------------------------------
         # identify battery for this scenario
         # ----------------------------------
-        if 'bat_scenario' in study.study_scenarios.columns:
-            self.bat_scenario = study.study_scenarios.loc[self.name,'bat_scenario']
-            self.has_battery = not np.isnan(self.bat_scenario)
+        if 'battery_id' in study.study_scenarios.columns:
+            self.bat_id = study.study_scenarios.loc[self.name,'battery_id']
+            self.has_battery = not np.isnan(self.bat_id)
         else:
             self.has_battery = False
 
