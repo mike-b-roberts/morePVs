@@ -102,11 +102,11 @@ All battery data is kept in `reference\battery_lookup.csv`
 __Battery Characteristics__
 `battery_scenario`  - identifier unique to battery characteristics and control strategy
 `capacity_kWh`      - Single capacity figure
-`efficiency_cycle`  - for charge and discharge OR `efficiency_charge` and `efficiency_discharge` (tbc)
-`power_cycle` -for charge and discharge OR `power_charge` and `power_discharge`
-`maxDOD`
-`maxSOC`
-`max_cycles`
+`efficiency_cycle`  - for charge and discharge (default `0.95`)
+`charge_kW` - for charge and discharge. constrained by inverter power and/or max ~0.8C for charging. Defaults to `0.5C`
+`maxDOD` (default `0.8`
+`maxSOC` (default `0.9`)
+`max_cycles`(default `2000`)
 `capex`
 
 __Control Strategy__

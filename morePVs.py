@@ -561,8 +561,10 @@ class Network(Customer):
                                                         self.households), 0)
 
     def initailiseBuildingBattery(self, scenario):
-        #self.battery =  Battery(scenario.bat_cap)
         self.has_battery = scenario.has_battery
+        if self.has_battery:
+            self.battery =  Battery(scenario.battery_id)
+
 
     def calcBuildingStaticEnergyFlows(self):
         """Calculate internal energy flows for all residents.
@@ -594,12 +596,33 @@ class Network(Customer):
             self.resident[c].calcDemandCharge()
         self.retailer.calcDemandCharge()
 
-    def calcDynamicEnergyFlows(self,step):
+    def calcDynamicStorageEnergyFlows(self, step):
         """Timestepped energy flows for scenarios with storage."""
+
         self.flows[step] = self.generation[step] - self.load[step]
+        # -------------------------------
+        # Make battery control decisions:
+        # -------------------------------
+        # 1) Use excess PV to charge
+        # --------------------------
+        if self.flows(step) > 0:
+            self.flows[step] = \
+            self.battery.charge(self.flows[step])
+        # 2) Discharge if needed to meet load, within discharge period
+        # ------------------------------------------------------------
+        elif self.flows < 0 and step in self.battery.discharge_period:
+            self.flows[step] += \
+                self.battery_discharge(-self.flows[step])
+        # 3) Charge from grid in additional charge period:
+        # ------------------------------------------------
+        elif self.flows <=0 and step in self.battery.charge_period:
+            self.flows[step] += (self.battery.max_halfhour_charge -
+                                 self.battery.charge(self.battery.max_halfhour_charge))
+        # TODO 4) Look at peak demand issues.......(later)
+        # Calc imports and exports
+        # ------------------------
         self.exports[step] = self.flows[step].clip(0)
         self.imports[step] = (-1 * self.flows[step]).clip(0)
-        pass
 
     def calcDynamicTariffs(self,step):
         """Dynamic calcs of (eg block) tariffs by timestep for ENO and for all residents."""
@@ -616,7 +639,7 @@ class Network(Customer):
 
         dynamic_calculations = [f for c, f in [
             (self.has_dynamic_tariff, self.calcDynamicTariffs),  # if condition, do calc iteratively
-            (self.has_battery, self.calcDynamicEnergyFlows),  # if condition, do calc iteratively
+            (self.has_battery, self.calcDynamicStorageEnergyFlows),  # if condition, do calc iteratively
             ] if c]
         if dynamic_calculations:
             for step in np.arange(0, self.study.ts.num_steps):
@@ -650,16 +673,28 @@ class Battery():
     # based on script by Luke Marshall
     def __init__(self,study, battery_id):
         self.battery_id = battery_id
-        ts=study.ts
+        ts = study.ts
         # Load battery parameters from battery lookup
         # -------------------------------------------
         self.capacity_kWh = study.battery_lookup.loc[battery_id, 'capacity_kWh']
-        self.cycle_kW = study.battery_lookup.loc[battery_id, 'cycle_kW']
+        self.charge_kW = study.battery_lookup.loc[battery_id, 'charge_kW']
         self.efficiency_cycle = study.battery_lookup.loc[battery_id, 'efficiency_cycle']
         self.maxDOD = study.battery_lookup.loc[battery_id, 'maxDOD']
         self.maxSOC = study.battery_lookup.loc[battery_id, 'maxSOC']
         self.max_cycles = study.battery_lookup.loc[battery_id,'max_cycles']
         self.capex = study.battery_lookup.loc[battery_id, 'capex']
+        # Use default values if missing:
+        # ------------------------------
+        if pd.isnull(self.charge_kW):
+            self.charge_kW = self.capacity_kWh * 0.5
+        if pd.isnull(self.maxDOD):
+            self.maxDOD =  0.8
+        if pd.isnull(self.efficiency_cycle):
+            self.efficiency_cycle = 0.95
+        if pd.isnull(self.max_cycles):
+            self.max_cycles = 2000
+        # Set up restricted discharge period and additional charge period
+        # ---------------------------------------------------------------
         discharge_start= study.battery_lookup.loc[battery_id, 'discharge_start']
         discharge_end= study.battery_lookup.loc[battery_id, 'discharge_end']
         discharge_day = study.battery_lookup.loc[battery_id, 'discharge_day']
@@ -690,35 +725,26 @@ class Battery():
             self.charge_period = \
                 ts.days[charge_day][(ts.days[charge_day].time > pd.Timestamp(charge_start).time())
                                        & (ts.days[charge_day].time <= pd.Timestamp(charge_end).time())]
-        self.maxHalfHourlyDischarge = 0.5
-
         # Initialise battery variables
         # ----------------------------
-        self.stateOfCharge = 0.0
-        self.numCycles = 0
+        self.charge_level_kWh = 0.0
+        self.number_cycles = 0
+        self.max_halfhour_discharge = 0.5 * self.charge_kW
+        self.max_halfhour_charge = 0.5 * self.charge_kW
 
     def charge(self, desired_charge):
-        amountToCharge = min(self.cap_kWh - self.stateOfCharge, desired_charge)
-        self.stateOfCharge = self.stateOfCharge + amountToCharge
-        return desired_charge - amountToCharge
+        amount_to_charge = min(self.cap_kWh * self.maxSOC - self.charge_level_kWh, desired_charge)
+        self.charge_level_kWh += amount_to_charge*self.efficiency_cycle
+        return desired_charge - amount_to_charge # returns unstored portion of energy
 
-    def discharge(self):
-        cycleFraction = self.chargeFraction()
+    def discharge(self,desired_discharge):
+        amount_to_discharge = min(desired_discharge,
+                                self.charge_level_kWh - self.capacity_kWh * (1 - self.maxDOD),
+                                self.max_halfhour_discharge)
+        self.charge_level_kWh -= amount_to_discharge
+        self.number_cycles += amount_to_discharge / self.capacity_kWh
+        return amount_to_discharge # returns delivered energy
 
-        amountToDischarge = min(self.stateOfCharge, self.maxHalfHourlyDischarge)
-        self.stateOfCharge = self.stateOfCharge - amountToDischarge
-
-        cycleFraction -= self.chargeFraction()
-        self.numCycles += cycleFraction
-
-        return amountToDischarge
-
-    def chargeFraction(self):
-        return self.stateOfCharge / self.capacityMWh
-
-    def getNumCycles(self):
-         return self.numCycles
-    pass
 
 class Scenario():
     """Contains a single set of input parameters, but may contain multiple load profiles."""
@@ -1211,7 +1237,8 @@ def main(base_path,project,study_name):
                     eno.allocatePv(scenario)
                     eno.initialiseAllCapex(scenario)
                 eno.initialiseSolarInstQuotas(scenario) # depends on load and pv
-                # calc all internal energy flows (static & dynamic) & dynamic tariffs( assumes no demand management or individual batteries)
+                # calc all internal energy flows (static & dynamic) & dynamic tariffs
+                # (currently assumes no demand management or individual batteries)
                 eno.calcBuildingStaticEnergyFlows()
                 eno.calcDynamicValues()
                 eno.setupRetailerFlows() # Move this??
@@ -1237,9 +1264,6 @@ def main(base_path,project,study_name):
         pdb.post_mortem(tb)
 
 if __name__ == "__main__":
-   # stuff only to run when not called via 'import' here
-
-
    # main(project='past_papers',
    #      study_name='apsrc2017',
    #      base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
@@ -1254,5 +1278,7 @@ if __name__ == "__main__":
 # TODO - FUTURE - Variable allocation of pv between cp and residents
 # TODO - en_external scenario: cp tariff != TIDNULL
 # TODO Set up logging throughout
-# TODO - ADD BATTERY
 # TODO: Add threading
+# TODO Add import-export plot to output module
+# TODO test solar tariffs
+# TODO Test battery
