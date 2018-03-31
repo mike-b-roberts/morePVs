@@ -116,3 +116,10 @@ __Control Strategy__
 
 
 
+------------
+OUTPUT TYPES
+------------
+Column `output_type` in `'study_...csv` 
+
+`log_timeseries_csv`: Creates a `.csv` for each scenario and load profile, containing:
+    

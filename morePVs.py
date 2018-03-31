@@ -370,15 +370,15 @@ class Network(Customer):
         self.retailer = Customer(name='retailer', study=study)
 
     def initialiseBuildingLoads(self,
-                                loadName,  # file name only
+                                load_name,  # file name only
                                 scenario
                                 ):
         """Initialise network for new load profiles."""
         # read load data
         # --------------
-        self.loadName = loadName
-        self.loadFile = os.path.join(scenario.load_path,self.loadName)
-        self.network_load = pd.read_csv(self.loadFile,
+        self.load_name = load_name
+        self.load_file = os.path.join(scenario.load_path, self.load_name)
+        self.network_load = pd.read_csv(self.load_file,
                                         parse_dates=['timestamp'],
                                         dayfirst=True)
         self.network_load.set_index('timestamp', inplace=True)
@@ -670,6 +670,22 @@ class Network(Customer):
         else:
             self.self_consumption=0
 
+    def logTimeseries(self,scenario):
+        """Logs timeseries data for whole building to csv file."""
+
+        timedata = pd.DataFrame(index=self.study.ts.timeseries)
+        timedata['network_load'] = self.load
+        timedata['pv_generation'] = self.generation
+        timedata['grid_import'] = self.imports
+        timedata['grid_export'] = self.exports
+        timedata['battery_charge__kWh'] = self.battery.charge_level_kWh
+        timedata['battery_SOC'] = self.battery.charge_level_kWh / self.battery.capacity_kWh *100
+        time_file = os.path.join(self.study.timeseries_path,
+                                 self.scenario.label + '_' +
+                                 self.load_name + '.csv')
+        timedata.to_csv(time_file)
+
+
 class Battery():
     # based on script by Luke Marshall
     def __init__(self,study, battery_id):
@@ -942,12 +958,9 @@ class Scenario():
             network.receipts_from_residents = 0
         elif 'en' in self.arrangement :
             network.retailer_receipt = network.energy_bill.copy()
-
         else:
             print ('************************Unknown network arrangement********************')
             logging.info ('************************Unknown network arrangement********************')
-
-
         # --------------------------------------------------------
         # Collate all results for network in one row of results df
         # --------------------------------------------------------
@@ -987,7 +1000,10 @@ class Scenario():
                         ['cust_bill_' + '%03d' % int(r) for r in network.resident_list if r != 'cp']  + \
                         ['cust_total$_cp'] + \
                         ['cust_total$_' + '%03d' % int(r) for r in network.resident_list if r != 'cp']
-        self.results = self.results.append(pd.Series(result_list,index = result_labels,name=network.loadName))
+
+        self.results = self.results.append(pd.Series(result_list,
+                                                     index=result_labels,
+                                                     name=network.loadName))
 
 
     def logScenarioData(self):
@@ -1055,6 +1071,7 @@ class Study():
         self.name = study_name
         self.project_path = os.path.join(self.base_path, project)
         # reference files
+        # ---------------
         self.reference_path = os.path.join(self.base_path, 'reference')
         self.input_path = os.path.join(self.project_path, 'inputs')
         tariff_name='tariff_lookup.csv'
@@ -1066,10 +1083,25 @@ class Study():
         battery_lookup_name='battery_lookup.csv'
         self.batteryFile=os.path.join(self.reference_path, battery_lookup_name)
 
-        #study file contains all scenarios
+        # study file contains all scenarios
+        # ---------------------------------
         self.study_filename = 'study_' + study_name + '.csv'
-        self.studyFile= os.path.join(self.input_path, self.study_filename)
-        # outputs
+        self.study_file= os.path.join(self.input_path, self.study_filename)
+
+        # --------------------
+        # read study scenarios
+        # --------------------
+        self.study_scenarios = pd.read_csv(self.study_file)
+        self.study_scenarios.set_index('scenario', inplace=True)
+        self.scenario_list = self.study_scenarios.index
+        # Read list of output requirements and strip from df
+        if 'output_types' in self.study_scenarios.columns:
+            self.output_list = self.study_scenarios['output_types'].dropna().tolist()
+        else:
+            self.output_list = []
+        # -------------------
+        # Set up output paths
+        # -------------------
         self.output_path = os.path.join(self.project_path, 'outputs')
         if not os.path.exists(self.output_path):
             os.makedirs(self.output_path)
@@ -1079,18 +1111,17 @@ class Study():
         self.scenario_path = os.path.join(self.output_path,'scenarios')
         if not os.path.exists(self.scenario_path):
             os.makedirs(self.scenario_path)
-        # ----------------------------------------------
-        #  Locate data for study and read initial values
-        # ----------------------------------------------
-        # read study scenarios
-        # --------------------
-        self.study_scenarios = pd.read_csv(self.studyFile)
-        self.study_scenarios.set_index('scenario', inplace=True)
-        self.scenario_list = self.study_scenarios.index
-        # Read list of output requirements and strip from df
-        if 'output_types' in self.study_scenarios.columns:
-            self.output_list = self.study_scenarios['output_types'].dropna().tolist()
-        # Locate pv data
+        if 'log_timeseries_csv' in self.output_list:
+            self.log_timeseries = True
+            self.timeseries_path = os.path.join(self.output_path, 'timeseries')
+            if not os.path.exists(self.timeseries_path):
+                os.makedirs(self.timeseries_path)
+        else:
+            self.log_timeseries = False
+
+        # --------------
+        #  Locate pv data
+        # --------------
         self.pv_path = os.path.join(self.base_path, 'pv_profiles')
         if os.path.exists(self.pv_path):
             self.pv_list = os.listdir(self.pv_path)
@@ -1104,7 +1135,8 @@ class Study():
             self.pv_exists = False
             logging.info('************Missing PV Profile ***************')
             sys.exit("Missing PV data")
-        # read capex costs into reference tables
+        # --------------------------------------
+        #  read capex costs into reference tables
         # --------------------------------------
         self.en_capex = pd.read_csv(self.capexenFile,
                                     dtype={'site_capex': np.float64,
@@ -1124,11 +1156,13 @@ class Study():
             self.pv_capex_table = self.pv_capex_table.set_index('pv_cap_id')
             self.pv_capex_table.loc[:,['pv_capex', 'inverter_cost']] \
                     = self.pv_capex_table.loc[:,['pv_capex','inverter_cost']].fillna(0.0)
+        # ----------------------------------
         # read battery data into lookup file
         # ----------------------------------
         self.battery_lookup = pd.read_csv(self.batteryFile,index_col='battery_id')
 
-        # Identify load data
+        # -------------------
+        #  Identify load data
         # -------------------
         if len(self.study_scenarios['load_folder'].unique())==1:
             self.different_loads = False # Same load or set of loads for each scenario
@@ -1147,8 +1181,8 @@ class Study():
         # Use first load profile to initialise timeseries and resident_list
         # -----------------------------------------------------------------
         # read first load to determine timeseries
-        self.loadFile = os.path.join(self.load_path, self.load_list[0])
-        self.load = pd.read_csv(self.loadFile,
+        self.load_file = os.path.join(self.load_path, self.load_list[0])
+        self.load = pd.read_csv(self.load_file,
                                 parse_dates=['timestamp'],
                                 dayfirst=True)
         self.load.set_index('timestamp', inplace=True)
@@ -1247,6 +1281,8 @@ def main(base_path,project,study_name):
                 eno.calcEnergyParameters(scenario)
                 eno.calcAllDemandCharges()
                 scenario.calcResults(eno)
+                if study.log_timeseries:
+                    eno.logTmeseries()
                 print(scenario_name, loadFile, eno.total_building_payment/100, (eno.receipts_from_residents - eno.total_payment)/100)
             # collate / log data for all loads in scenario
             scenario.logScenarioData()
