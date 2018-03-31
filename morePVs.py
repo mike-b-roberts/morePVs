@@ -123,7 +123,8 @@ class TariffData():
                         else: # Solar (local) periods and rates only:
                             self.static_solar_imports.loc[period, tid] = self.lookup.loc[tid, parameter[0]]  # rate_
                     pass
-
+            # TODO: rejig this section to allow tariff periods bridging midnight \
+            # (use method used for battery charge & discharge tariffs) and also change tariff_lookup.csv
             # todo: create timeseries for FiT Tariffs in the same way
             # currently only zero or flat rate FiTs)
             if self.lookup.loc[tid, 'fit_type'] == 'Zero_Rate':
@@ -236,8 +237,8 @@ class Tariff():
                 logging.info("*****************Dynamic Tariff %s of unknown Tariff type", tariff_id)
 
 class Battery():
-    # based on script by Luke Marshall
-    def __init__(self,study, battery_id):
+    # adapted from script by Luke Marshall
+    def __init__(self, study, battery_id, battery_strategy):
         self.battery_id = battery_id
         ts = study.ts
         # Load battery parameters from battery lookup
@@ -261,33 +262,36 @@ class Battery():
             self.max_cycles = 2000
         # Set up restricted discharge period and additional charge period
         # ---------------------------------------------------------------
-        discharge_start1 = study.battery_lookup.loc[battery_id, 'discharge_start1']
-        discharge_end1 = study.battery_lookup.loc[battery_id, 'discharge_end1']
-        discharge_day1 = study.battery_lookup.loc[battery_id, 'discharge_day1']
-        discharge_start2 = study.battery_lookup.loc[battery_id, 'discharge_start2']
-        discharge_end2 = study.battery_lookup.loc[battery_id, 'discharge_end2']
-        discharge_day2 = study.battery_lookup.loc[battery_id, 'discharge_day2']
-        charge_start = study.battery_lookup.loc[battery_id, 'charge_start']
-        charge_end = study.battery_lookup.loc[battery_id, 'charge_end']
-        charge_day = study.battery_lookup.loc[battery_id, 'charge_day']
+        discharge_start1 = study.battery_strategies.loc[battery_strategy, 'discharge_start1']
+        discharge_end1 = study.battery_strategies.loc[battery_strategy, 'discharge_end1']
+        discharge_day1 = study.battery_strategies.loc[battery_strategy, 'discharge_day1']
+        discharge_start2 = study.battery_strategies.loc[battery_strategy, 'discharge_start2']
+        discharge_end2 = study.battery_strategies.loc[battery_strategy, 'discharge_end2']
+        discharge_day2 = study.battery_strategies.loc[battery_strategy, 'discharge_day2']
+        charge_start = study.battery_strategies.loc[battery_strategy, 'charge_start']
+        charge_end = study.battery_strategies.loc[battery_strategy, 'charge_end']
+        charge_day = study.battery_strategies.loc[battery_strategy, 'charge_day']
         # Calculate discharge period(s):
         # -----------------------------
         if pd.isnull(discharge_start1):
-            discharge_period1 = ts.timeseries
-        elif discharge_start1 == '0:00':
-            discharge_period1 = \
-                ts.days[discharge_day1][(ts.days[discharge_day1].time >= pd.Timestamp(discharge_start1).time())
-                    & (ts.days[discharge_day1].time <= pd.Timestamp(discharge_end1).time())]
+            discharge_period1 = pd.DatetimeIndex([])
+        elif pd.Timestamp(discharge_start1) > pd.Timestamp(discharge_end1):
+            discharge_period1 = (ts.days[discharge_day1][(ts.days[discharge_day1].time > pd.Timestamp(discharge_start1).time()) & (
+                        ts.days[discharge_day1].time <= pd.Timestamp('23:59').time())].append(
+                ts.days[discharge_day1][(ts.days[discharge_day1].time >= pd.Timestamp('0:00').time()) & (
+                            ts.days[discharge_day1].time <= pd.Timestamp(discharge_end1).time())])).sort_values()
         else:
             discharge_period1 = \
                 ts.days[discharge_day1][(ts.days[discharge_day1].time > pd.Timestamp(discharge_start1).time())
-                               & (ts.days[discharge_day1].time <= pd.Timestamp(discharge_end1).time())]
+                                       & (ts.days[discharge_day1].time <= pd.Timestamp(discharge_end1).time())]
         if pd.isnull(discharge_start2):
-            discharge_period2 = ts.timeseries
-        elif discharge_start2 == '0:00':
-            discharge_period2 = \
-                ts.days[discharge_day2][(ts.days[discharge_day2].time >= pd.Timestamp(discharge_start2).time())
-                                        & (ts.days[discharge_day2].time <= pd.Timestamp(discharge_end2).time())]
+            discharge_period2 = pd.DatetimeIndex([])
+        elif pd.Timestamp(discharge_start2) > pd.Timestamp(discharge_end2):
+            discharge_period2 = (
+            ts.days[discharge_day2][(ts.days[discharge_day2].time > pd.Timestamp(discharge_start2).time()) & (
+                    ts.days[discharge_day2].time <= pd.Timestamp('23:59').time())].append(
+                ts.days[discharge_day2][(ts.days[discharge_day2].time >= pd.Timestamp('0:00').time()) & (
+                        ts.days[discharge_day2].time <= pd.Timestamp(discharge_end2).time())])).sort_values()
         else:
             discharge_period2 = \
                 ts.days[discharge_day2][(ts.days[discharge_day2].time > pd.Timestamp(discharge_start2).time())
@@ -298,10 +302,11 @@ class Battery():
         # -------------------------------------
         if pd.isnull(charge_start):
             self.charge_period = pd.DatetimeIndex([])
-        elif charge_start == '0:00':
-            self.charge_period = \
-                ts.days[charge_day][(ts.days[charge_day].time >= pd.Timestamp(charge_start).time())
-                                       & (ts.days[charge_day].time <= pd.Timestamp(charge_end).time())]
+        elif pd.Timestamp(charge_start) > pd.Timestamp(charge_end):
+            self.charge_period = (ts.days[charge_day][(ts.days[charge_day].time > pd.Timestamp(charge_start).time()) & (
+                        ts.days[charge_day].time <= pd.Timestamp('23:59').time())].append(
+                ts.days[charge_day][(ts.days[charge_day].time >= pd.Timestamp('0:00').time()) & (
+                            ts.days[charge_day].time <= pd.Timestamp(charge_end).time())])).sort_values()
         else:
             self.charge_period = \
                 ts.days[charge_day][(ts.days[charge_day].time > pd.Timestamp(charge_start).time())
@@ -665,7 +670,8 @@ class Network(Customer):
         self.has_battery = scenario.has_battery
         if self.has_battery:
             self.battery = Battery(study=self.study,
-                                   battery_id=scenario.battery_id)
+                                   battery_id=scenario.battery_id,
+                                   battery_strategy=scenario.battery_strategy)
 
 
     def calcBuildingStaticEnergyFlows(self):
@@ -895,6 +901,7 @@ class Scenario():
         # ----------------------------------
         if 'battery_id' in study.study_scenarios.columns:
             self.battery_id = study.study_scenarios.loc[self.name, 'battery_id']
+            self.battery_strategy = study.study_scenarios.loc[self.name, 'battery_strategy']
             self.has_battery = not pd.isnull(self.battery_id)
         else:
             self.has_battery = False
@@ -1109,12 +1116,13 @@ class Study():
         tariff_name='tariff_lookup.csv'
         self.t_lookupFile=os.path.join(self.reference_path, tariff_name)
         capex_pv_name = 'capex_pv_lookup.csv'
-        self.capexpvFile = os.path.join(self.reference_path, capex_pv_name)
+        self.capexpv_file = os.path.join(self.reference_path, capex_pv_name)
         capex_en_name = 'capex_en_lookup.csv'
-        self.capexenFile = os.path.join(self.reference_path, capex_en_name)
-        battery_lookup_name='battery_lookup.csv'
-        self.batteryFile=os.path.join(self.reference_path, battery_lookup_name)
-
+        self.capexen_file = os.path.join(self.reference_path, capex_en_name)
+        battery_lookup_name = 'battery_lookup.csv'
+        self.battery_file = os.path.join(self.reference_path, battery_lookup_name)
+        battery_strategies_name= 'battery_control_strategies.csv'
+        self.battery_strategies_file = os.path.join(self.reference_path, battery_strategies_name)
         # study file contains all scenarios
         # ---------------------------------
         self.study_filename = 'study_' + study_name + '.csv'
@@ -1170,7 +1178,7 @@ class Study():
         # --------------------------------------
         #  read capex costs into reference tables
         # --------------------------------------
-        self.en_capex = pd.read_csv(self.capexenFile,
+        self.en_capex = pd.read_csv(self.capexen_file,
                                     dtype={'site_capex': np.float64,
                                            'unit_capex': np.float64,
                                            'site_opex': np.float64,
@@ -1180,7 +1188,7 @@ class Study():
             = self.en_capex.loc[:,['site_capex','unit_capex','site_opex','unit_opex']].fillna(0.0)
         self.en_capex = self.en_capex.set_index('capex_id')
         if self.pv_exists:
-            self.pv_capex_table = pd.read_csv(self.capexpvFile,
+            self.pv_capex_table = pd.read_csv(self.capexpv_file,
                                               dtype = {'pv_capex' : np.float64,
                                                        'inverter_cost': np.float64,
                                                        'inverter_life' : np.float64,
@@ -1191,7 +1199,8 @@ class Study():
         # ----------------------------------
         # read battery data into lookup file
         # ----------------------------------
-        self.battery_lookup = pd.read_csv(self.batteryFile,index_col='battery_id')
+        self.battery_lookup = pd.read_csv(self.battery_file, index_col='battery_id')
+        self.battery_strategies = pd.read_csv(self.battery_strategies_file, index_col='battery_strategy')
 
         # -------------------
         #  Identify load data
