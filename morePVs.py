@@ -51,6 +51,9 @@ class TariffData():
         """Initialise tariff look-up table."""
         self.ts = timeseries
         self.reference_path = reference_path
+        self.saved_tariff_path = os.path.join(self.reference_path, 'saved_tariffs')
+        if not os.path.exists(self.saved_tariff_path):
+            os.makedirs(self.saved_tariff_path)
         # read csv of tariff parameters
         self.lookup = pd.read_csv(tariff_lookup_path, index_col=[0])
         self.all_tariffs = self.lookup.index  # list of all tariff ids
@@ -128,12 +131,13 @@ class TariffData():
             elif self.lookup.loc[tid, 'fit_type'] == 'Flat_Rate':
                 self.static_exports[tid] = self.lookup.loc[tid, 'fit_flat_rate']
         # Save tariffs as csvs
-        import_name = os.path.join(self.reference_path, 'static_import_tariffs.csv')
-        solar_name = os.path.join(self.reference_path, 'static_solar_import_tariffs.csv')
-        export_name = os.path.join(self.reference_path, 'static_export_tariffs.csv')
-        self.static_imports.to_csv(import_name)
-        self.static_solar_imports.to_csv(solar_name)
-        self.static_exports.to_csv(export_name)
+
+        import_name = os.path.join(self.saved_tariff_path, 'static_import_tariffs.csv')
+        solar_name = os.path.join(self.saved_tariff_path, 'static_solar_import_tariffs.csv')
+        export_name = os.path.join(self.saved_tariff_path, 'static_export_tariffs.csv')
+        um.df_to_csv(self.static_imports, import_name)
+        um.df_to_csv(self.static_solar_imports, solar_name)
+        um.df_to_csv(self.static_exports, export_name)
 
 
 class Tariff():
@@ -231,6 +235,81 @@ class Tariff():
             else:
                 logging.info("*****************Dynamic Tariff %s of unknown Tariff type", tariff_id)
 
+class Battery():
+    # based on script by Luke Marshall
+    def __init__(self,study, battery_id):
+        self.battery_id = battery_id
+        ts = study.ts
+        # Load battery parameters from battery lookup
+        # -------------------------------------------
+        self.capacity_kWh = study.battery_lookup.loc[battery_id, 'capacity_kWh']
+        self.charge_kW = study.battery_lookup.loc[battery_id, 'charge_kW']
+        self.efficiency_cycle = study.battery_lookup.loc[battery_id, 'efficiency_cycle']
+        self.maxDOD = study.battery_lookup.loc[battery_id, 'maxDOD']
+        self.maxSOC = study.battery_lookup.loc[battery_id, 'maxSOC']
+        self.max_cycles = study.battery_lookup.loc[battery_id,'max_cycles']
+        self.capex = study.battery_lookup.loc[battery_id, 'capex']
+        # Use default values if missing:
+        # ------------------------------
+        if pd.isnull(self.charge_kW):
+            self.charge_kW = self.capacity_kWh * 0.5
+        if pd.isnull(self.maxDOD):
+            self.maxDOD =  0.8
+        if pd.isnull(self.efficiency_cycle):
+            self.efficiency_cycle = 0.95
+        if pd.isnull(self.max_cycles):
+            self.max_cycles = 2000
+        # Set up restricted discharge period and additional charge period
+        # ---------------------------------------------------------------
+        discharge_start= study.battery_lookup.loc[battery_id, 'discharge_start']
+        discharge_end= study.battery_lookup.loc[battery_id, 'discharge_end']
+        discharge_day = study.battery_lookup.loc[battery_id, 'discharge_day']
+        charge_start= study.battery_lookup.loc[battery_id, 'charge_start']
+        charge_end= study.battery_lookup.loc[battery_id, 'charge_end']
+        charge_day = study.battery_lookup.loc[battery_id, 'charge_day']
+        # Calculate discharge period:
+        # ---------------------------
+        if pd.isnull(discharge_start):
+            self.discharge_period = ts.timeseries
+        elif discharge_start == '0:00':
+            self.discharge_period = \
+                ts.days[discharge_day][(ts.days[discharge_day].time >= pd.Timestamp(discharge_start).time())
+                    & (ts.days[discharge_day].time <= pd.Timestamp(discharge_end).time())]
+        else:
+            self.discharge_period = \
+                ts.days[discharge_day][(ts.days[discharge_day].time > pd.Timestamp(discharge_start).time())
+                               & (ts.days[discharge_day].time <= pd.Timestamp(discharge_end).time())]
+        # Calculate additional charging period:
+        # -------------------------------------
+        if pd.isnull(charge_start):
+            self.charge_period = pd.DatetimeIndex([])
+        elif charge_start == '0:00':
+            self.charge_period = \
+                ts.days[charge_day][(ts.days[charge_day].time >= pd.Timestamp(charge_start).time())
+                                       & (ts.days[charge_day].time <= pd.Timestamp(charge_end).time())]
+        else:
+            self.charge_period = \
+                ts.days[charge_day][(ts.days[charge_day].time > pd.Timestamp(charge_start).time())
+                                       & (ts.days[charge_day].time <= pd.Timestamp(charge_end).time())]
+        # Initialise battery variables
+        # ----------------------------
+        self.charge_level_kWh = 0.0
+        self.number_cycles = 0
+        self.max_timestep_discharge = self.charge_kW * study.ts.interval / 3600
+        self.max_timestep_charge = self.charge_kW * study.ts.interval / 3600
+
+    def charge(self, desired_charge):
+        amount_to_charge = min(self.capacity_kWh * self.maxSOC - self.charge_level_kWh, desired_charge)
+        self.charge_level_kWh += amount_to_charge*self.efficiency_cycle
+        return desired_charge - amount_to_charge # returns unstored portion of energy
+
+    def discharge(self, desired_discharge):
+        amount_to_discharge = min(desired_discharge,
+                                  self.charge_level_kWh - self.capacity_kWh * (1 - self.maxDOD),
+                                  self.max_timestep_discharge)
+        self.charge_level_kWh -= amount_to_discharge
+        self.number_cycles += amount_to_discharge / self.capacity_kWh
+        return amount_to_discharge # returns delivered energy
 
 class Customer():
     """Can be resident, strata body, or ENO representing aggregation of residents."""
@@ -281,10 +360,10 @@ class Customer():
         # For block tariffs, go calculate rate for timestep:
         # --------------------------------------------------
         self.tariff.calcDynamicTariff(
-                                      tariff_id = self.tariff_id,
+                                      tariff_id=self.tariff_id,
                                       scenario=self.scenario,
-                                      step = step,
-                                      customer_load = self.imports
+                                      step=step,
+                                      customer_load=self.imports
                                       )
         # For solar block daily tariff, calc kWh local import / solar allocation
         # ----------------------------------------------------------------------
@@ -459,7 +538,7 @@ class Network(Customer):
             self.pv_customers = []
         else:
             pvFile = os.path.join(self.study.pv_path,
-                                  self.study.study_scenarios.loc[scenario.name, 'pv_filename' ])
+                                  self.study.study_scenarios.loc[scenario.name, 'pv_filename'])
             if not os.path.exists(pvFile):
                 logging.info('***************Exception!!! PV file %s NOT FOUND', pvFile)
                 sys.exit("PV file missing")
@@ -617,8 +696,8 @@ class Network(Customer):
         # 3) Charge from grid in additional charge period:
         # ------------------------------------------------
         elif self.flows[step] <=0 and step in self.battery.charge_period:
-            self.flows[step] += (self.battery.max_halfhour_charge -
-                                 self.battery.charge(self.battery.max_halfhour_charge))
+            self.flows[step] += (self.battery.max_timestep_charge -
+                                 self.battery.charge(self.battery.max_timestep_charge))
         # TODO 4) Look at using battery to address peak demand ....(later)
         # Calc imports and exports
         # ------------------------
@@ -678,90 +757,13 @@ class Network(Customer):
         timedata['pv_generation'] = self.generation
         timedata['grid_import'] = self.imports
         timedata['grid_export'] = self.exports
-        timedata['battery_charge__kWh'] = self.battery.charge_level_kWh
-        timedata['battery_SOC'] = self.battery.charge_level_kWh / self.battery.capacity_kWh *100
+        if scenario.has_battery:
+            timedata['battery_charge__kWh'] = self.battery.charge_level_kWh
+            timedata['battery_SOC'] = self.battery.charge_level_kWh / self.battery.capacity_kWh *100
         time_file = os.path.join(self.study.timeseries_path,
                                  self.scenario.label + '_' +
                                  self.load_name + '.csv')
-        timedata.to_csv(time_file)
-
-
-class Battery():
-    # based on script by Luke Marshall
-    def __init__(self,study, battery_id):
-        self.battery_id = battery_id
-        ts = study.ts
-        # Load battery parameters from battery lookup
-        # -------------------------------------------
-        self.capacity_kWh = study.battery_lookup.loc[battery_id, 'capacity_kWh']
-        self.charge_kW = study.battery_lookup.loc[battery_id, 'charge_kW']
-        self.efficiency_cycle = study.battery_lookup.loc[battery_id, 'efficiency_cycle']
-        self.maxDOD = study.battery_lookup.loc[battery_id, 'maxDOD']
-        self.maxSOC = study.battery_lookup.loc[battery_id, 'maxSOC']
-        self.max_cycles = study.battery_lookup.loc[battery_id,'max_cycles']
-        self.capex = study.battery_lookup.loc[battery_id, 'capex']
-        # Use default values if missing:
-        # ------------------------------
-        if pd.isnull(self.charge_kW):
-            self.charge_kW = self.capacity_kWh * 0.5
-        if pd.isnull(self.maxDOD):
-            self.maxDOD =  0.8
-        if pd.isnull(self.efficiency_cycle):
-            self.efficiency_cycle = 0.95
-        if pd.isnull(self.max_cycles):
-            self.max_cycles = 2000
-        # Set up restricted discharge period and additional charge period
-        # ---------------------------------------------------------------
-        discharge_start= study.battery_lookup.loc[battery_id, 'discharge_start']
-        discharge_end= study.battery_lookup.loc[battery_id, 'discharge_end']
-        discharge_day = study.battery_lookup.loc[battery_id, 'discharge_day']
-        charge_start= study.battery_lookup.loc[battery_id, 'charge_start']
-        charge_end= study.battery_lookup.loc[battery_id, 'charge_end']
-        charge_day = study.battery_lookup.loc[battery_id, 'charge_day']
-        # Calculate discharge period:
-        # ---------------------------
-        if pd.isnull(discharge_start):
-            self.discharge_period = ts
-        elif discharge_start == '0:00':
-            self.discharge_period = \
-                ts.days[discharge_day][(ts.days[discharge_day].time >= pd.Timestamp(discharge_start).time())
-                    & (ts.days[discharge_day].time <= pd.Timestamp(discharge_end).time())]
-        else:
-            self.discharge_period = \
-                ts.days[discharge_day][(ts.days[discharge_day].time > pd.Timestamp(discharge_start).time())
-                               & (ts.days[discharge_day].time <= pd.Timestamp(discharge_end).time())]
-        # Calculate additional charging period:
-        # -------------------------------------
-        if pd.isnull(charge_start):
-            self.charge_period = pd.DatetimeIndex([])
-        elif charge_start == '0:00':
-            self.charge_period = \
-                ts.days[charge_day][(ts.days[charge_day].time >= pd.Timestamp(charge_start).time())
-                                       & (ts.days[charge_day].time <= pd.Timestamp(charge_end).time())]
-        else:
-            self.charge_period = \
-                ts.days[charge_day][(ts.days[charge_day].time > pd.Timestamp(charge_start).time())
-                                       & (ts.days[charge_day].time <= pd.Timestamp(charge_end).time())]
-        # Initialise battery variables
-        # ----------------------------
-        self.charge_level_kWh = 0.0
-        self.number_cycles = 0
-        self.max_halfhour_discharge = 0.5 * self.charge_kW
-        self.max_halfhour_charge = 0.5 * self.charge_kW
-
-    def charge(self, desired_charge):
-        amount_to_charge = min(self.cap_kWh * self.maxSOC - self.charge_level_kWh, desired_charge)
-        self.charge_level_kWh += amount_to_charge*self.efficiency_cycle
-        return desired_charge - amount_to_charge # returns unstored portion of energy
-
-    def discharge(self,desired_discharge):
-        amount_to_discharge = min(desired_discharge,
-                                self.charge_level_kWh - self.capacity_kWh * (1 - self.maxDOD),
-                                self.max_halfhour_discharge)
-        self.charge_level_kWh -= amount_to_discharge
-        self.number_cycles += amount_to_discharge / self.capacity_kWh
-        return amount_to_discharge # returns delivered energy
-
+        um.df_to_csv(timedata, time_file)
 
 class Scenario():
     """Contains a single set of input parameters, but may contain multiple load profiles."""
@@ -793,8 +795,7 @@ class Scenario():
         self.load_folder = study.study_scenarios.loc[self.name, 'load_folder']
         if study.different_loads:
             self.load_folder = study.study_scenarios.loc[self.name, 'load_folder']
-            self.load_path = os.path.join(self.study.base_path, 'load_profiles',
-                                          self.load_folder)
+            self.load_path = os.path.join(self.study.base_path, 'load_profiles', self.load_folder)
             self.load_list = os.listdir(self.load_path)
             # get first load and set up resident_list
             loadFile = os.path.join(self.load_path, self.load_list[0])
@@ -1003,7 +1004,7 @@ class Scenario():
 
         self.results = self.results.append(pd.Series(result_list,
                                                      index=result_labels,
-                                                     name=network.loadName))
+                                                     name=network.load_name))
 
 
     def logScenarioData(self):
@@ -1067,7 +1068,7 @@ class Study():
         # Set up paths and files for Study
         # --------------------------------
         # All input and output datafiles are located relative to base_path and base_path\project
-        self.base_path =  base_path
+        self.base_path = base_path
         self.name = study_name
         self.project_path = os.path.join(self.base_path, project)
         # reference files
@@ -1093,7 +1094,7 @@ class Study():
         # --------------------
         self.study_scenarios = pd.read_csv(self.study_file)
         self.study_scenarios.set_index('scenario', inplace=True)
-        self.scenario_list = self.study_scenarios.index
+        self.scenario_list = [s for s in self.study_scenarios.index if not pd.isnull(s)]
         # Read list of output requirements and strip from df
         if 'output_types' in self.study_scenarios.columns:
             self.output_list = self.study_scenarios['output_types'].dropna().tolist()
@@ -1245,15 +1246,15 @@ def main(base_path,project,study_name):
     um.setup_logging(pyname)
 
     try:
-        st = Study (base_path = base_path,
-                    project = project,
-                    study_name = study_name)
+        st = Study (base_path=base_path,
+                    project=project,
+                    study_name=study_name)
         # Multiple scenarios, multiple load profiles for each are allowable
         for scenario_name in st.scenario_list:
             # Initialise scenario
             scenario = Scenario(study=st,
                                 scenario_name=scenario_name)
-            eno = Network(study=st,scenario = scenario)
+            eno = Network(study=st, scenario=scenario)
             # N.B. in embedded network scenarios, eno is the actual embedded network operator,
             # but in other scenarios, it is a virtual intermediary to organise energy and cash flows
             eno.initialiseAllTariffs(scenario)
@@ -1281,8 +1282,8 @@ def main(base_path,project,study_name):
                 eno.calcEnergyParameters(scenario)
                 eno.calcAllDemandCharges()
                 scenario.calcResults(eno)
-                if study.log_timeseries:
-                    eno.logTmeseries()
+                if st.log_timeseries:
+                    eno.logTimeseries(scenario)
                 print(scenario_name, loadFile, eno.total_building_payment/100, (eno.receipts_from_residents - eno.total_payment)/100)
             # collate / log data for all loads in scenario
             scenario.logScenarioData()
@@ -1308,7 +1309,7 @@ if __name__ == "__main__":
    #      study_name='energyCON',
    #      base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
    main(project='p_testing',
-        study_name='test7',
+        study_name='test_bat1',
         base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
 
 

@@ -12,9 +12,14 @@ Contact: m.roberts@unsw.edu.au*
 
 All input parameters for each study are contained or referenced in `study_xxxxxxx.csv` file.
 
+`scenario` :    Scenario identifier (integer)
+
 `output_type`:
 This column lists output formats required, applied to the whole study, not individual scenarios.
 All other parameters are given *per scenario* i.e. per line of `.csv` file.
+
+
+
 
 ---
 PV:
@@ -39,8 +44,15 @@ NB - use of this should be restricted to system sizes with equal $/kWp capex
 -----
 LOADS
 -----
-include folder name even if only a single file
-folder within `DATA_EN_3\load_profiles`
+`load_folder` contains the name of sub-folder within `base_path\load_profiles` that contains the load profile(s)
+Can be a single file or multiple files for multiple iterations
+Load files contain: 
+    `timestamp` (first column) in format `d/mm/yyyy h:mm`
+    30 minute timestamps assumed. Up to 1 year (17520) but can be less.
+    customer load columns (in kW)
+    `'cp'` (optional) common property load (kW)
+    
+
 If multiple loads for each scenario, they must all have the same list of customers within the folder,
 BUT each scenario can have different number of residents, etc.
 
