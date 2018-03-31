@@ -650,18 +650,21 @@ class Network(Customer):
         """Calculate internal energy flows for all residents.
         (currently assumes no demand management or individual batteries)"""
         # Initialise cumulative load and generation to zero
-        self.load = np.zeros(self.ts.num_steps)
-        self.generation = np.zeros(self.ts.num_steps)
+        self.cum_resident_imports = np.zeros(self.ts.num_steps)
+        self.cum_resident_exports = np.zeros(self.ts.num_steps)
         # Calculate flows for each resident and cumulative values for ENO
         for c in self.resident_list:
             self.resident[c].calcStaticEnergyFlows()
             # Cumulative load and generation are what the "ENO" presents to the retailer:
-            self.load += self.resident[c].imports
-            self.generation += self.resident[c].exports
+            self.cum_resident_imports += self.resident[c].imports
+            self.cum_resident_exports += self.resident[c].exports
         # If no battery, calculate aggregate flows for ENO
         # (If battery, this is done dynamically)
         if not (self.has_battery):
-            self.calcStaticEnergyFlows()
+            # self.calcStaticEnergyFlows()
+            self.flows = self.cum_resident_exports - self.cum_resident_imports
+            self.exports = self.flows.clip(0)
+            self.imports = (-1 * self.flows).clip(0)
 
     def setupRetailerFlows(self):
         # NB retailer acts like a customer too, buying from DNSP
@@ -679,7 +682,7 @@ class Network(Customer):
     def calcDynamicStorageEnergyFlows(self, step):
         """Timestepped energy flows for scenarios with storage."""
 
-        self.flows[step] = self.generation[step] - self.load[step]
+        self.flows[step] = self.cum_resident_exports[step] - self.cum_resident_imports[step]
         # -------------------------------
         # Make battery control decisions:
         # -------------------------------
@@ -753,8 +756,8 @@ class Network(Customer):
         """Logs timeseries data for whole building to csv file."""
 
         timedata = pd.DataFrame(index=self.study.ts.timeseries)
-        timedata['network_load'] = self.load
-        timedata['pv_generation'] = self.generation
+        timedata['network_load'] = self.network_load.sum(axis=1)
+        timedata['pv_generation'] = self.pv.sum(axis=1)
         timedata['grid_import'] = self.imports
         timedata['grid_export'] = self.exports
         if scenario.has_battery:
