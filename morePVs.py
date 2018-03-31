@@ -261,24 +261,39 @@ class Battery():
             self.max_cycles = 2000
         # Set up restricted discharge period and additional charge period
         # ---------------------------------------------------------------
-        discharge_start= study.battery_lookup.loc[battery_id, 'discharge_start']
-        discharge_end= study.battery_lookup.loc[battery_id, 'discharge_end']
-        discharge_day = study.battery_lookup.loc[battery_id, 'discharge_day']
-        charge_start= study.battery_lookup.loc[battery_id, 'charge_start']
-        charge_end= study.battery_lookup.loc[battery_id, 'charge_end']
+        discharge_start1 = study.battery_lookup.loc[battery_id, 'discharge_start1']
+        discharge_end1 = study.battery_lookup.loc[battery_id, 'discharge_end1']
+        discharge_day1 = study.battery_lookup.loc[battery_id, 'discharge_day1']
+        discharge_start2 = study.battery_lookup.loc[battery_id, 'discharge_start2']
+        discharge_end2 = study.battery_lookup.loc[battery_id, 'discharge_end2']
+        discharge_day2 = study.battery_lookup.loc[battery_id, 'discharge_day2']
+        charge_start = study.battery_lookup.loc[battery_id, 'charge_start']
+        charge_end = study.battery_lookup.loc[battery_id, 'charge_end']
         charge_day = study.battery_lookup.loc[battery_id, 'charge_day']
-        # Calculate discharge period:
-        # ---------------------------
-        if pd.isnull(discharge_start):
-            self.discharge_period = ts.timeseries
-        elif discharge_start == '0:00':
-            self.discharge_period = \
-                ts.days[discharge_day][(ts.days[discharge_day].time >= pd.Timestamp(discharge_start).time())
-                    & (ts.days[discharge_day].time <= pd.Timestamp(discharge_end).time())]
+        # Calculate discharge period(s):
+        # -----------------------------
+        if pd.isnull(discharge_start1):
+            discharge_period1 = ts.timeseries
+        elif discharge_start1 == '0:00':
+            discharge_period1 = \
+                ts.days[discharge_day1][(ts.days[discharge_day1].time >= pd.Timestamp(discharge_start1).time())
+                    & (ts.days[discharge_day1].time <= pd.Timestamp(discharge_end1).time())]
         else:
-            self.discharge_period = \
-                ts.days[discharge_day][(ts.days[discharge_day].time > pd.Timestamp(discharge_start).time())
-                               & (ts.days[discharge_day].time <= pd.Timestamp(discharge_end).time())]
+            discharge_period1 = \
+                ts.days[discharge_day1][(ts.days[discharge_day1].time > pd.Timestamp(discharge_start1).time())
+                               & (ts.days[discharge_day1].time <= pd.Timestamp(discharge_end1).time())]
+        if pd.isnull(discharge_start2):
+            discharge_period2 = ts.timeseries
+        elif discharge_start2 == '0:00':
+            discharge_period2 = \
+                ts.days[discharge_day2][(ts.days[discharge_day2].time >= pd.Timestamp(discharge_start2).time())
+                                        & (ts.days[discharge_day2].time <= pd.Timestamp(discharge_end2).time())]
+        else:
+            discharge_period2 = \
+                ts.days[discharge_day2][(ts.days[discharge_day2].time > pd.Timestamp(discharge_start2).time())
+                                        & (ts.days[discharge_day2].time <= pd.Timestamp(discharge_end2).time())]
+        self.discharge_period = discharge_period1.append(discharge_period2)
+
         # Calculate additional charging period:
         # -------------------------------------
         if pd.isnull(charge_start):
@@ -297,16 +312,23 @@ class Battery():
         self.number_cycles = 0
         self.max_timestep_discharge = self.charge_kW * study.ts.interval / 3600
         self.max_timestep_charge = self.charge_kW * study.ts.interval / 3600
+        # Initialise SOC log
+        # ------------------
+        self.SOC_log = np.zeros(ts.num_steps)
 
     def charge(self, desired_charge):
-        amount_to_charge = min(self.capacity_kWh * self.maxSOC - self.charge_level_kWh, desired_charge)
+        amount_to_charge = min((self.capacity_kWh * self.maxSOC - self.charge_level_kWh)
+                               / self.efficiency_cycle, desired_charge)
         self.charge_level_kWh += amount_to_charge*self.efficiency_cycle
         return desired_charge - amount_to_charge # returns unstored portion of energy
 
     def discharge(self, desired_discharge):
-        amount_to_discharge = min(desired_discharge,
+        if self.charge_level_kWh > self.capacity_kWh * (1 - self.maxDOD):
+            amount_to_discharge = min(desired_discharge,
                                   self.charge_level_kWh - self.capacity_kWh * (1 - self.maxDOD),
                                   self.max_timestep_discharge)
+        else:
+            amount_to_discharge =0
         self.charge_level_kWh -= amount_to_discharge
         self.number_cycles += amount_to_discharge / self.capacity_kWh
         return amount_to_discharge # returns delivered energy
@@ -682,6 +704,8 @@ class Network(Customer):
     def calcDynamicStorageEnergyFlows(self, step):
         """Timestepped energy flows for scenarios with storage."""
 
+        # Calculate energy flow without battery:
+        # --------------------------------------
         self.flows[step] = self.cum_resident_exports[step] - self.cum_resident_imports[step]
         # -------------------------------
         # Make battery control decisions:
@@ -693,19 +717,23 @@ class Network(Customer):
             self.battery.charge(self.flows[step])
         # 2) Discharge if needed to meet load, within discharge period
         # ------------------------------------------------------------
-        elif self.flows[step] < 0 and step in self.battery.discharge_period:
+        elif self.flows[step] < 0 and self.ts.timeseries[step] in self.battery.discharge_period:
             self.flows[step] += \
-                self.battery_discharge(-self.flows[step])
+                self.battery.discharge(-self.flows[step])
         # 3) Charge from grid in additional charge period:
         # ------------------------------------------------
-        elif self.flows[step] <=0 and step in self.battery.charge_period:
-            self.flows[step] += (self.battery.max_timestep_charge -
+        elif self.flows[step] <= 0 and self.ts.timeseries[step] in self.battery.charge_period:
+            self.flows[step] -= (self.battery.max_timestep_charge -
                                  self.battery.charge(self.battery.max_timestep_charge))
         # TODO 4) Look at using battery to address peak demand ....(later)
         # Calc imports and exports
         # ------------------------
         self.exports[step] = self.flows[step].clip(0)
         self.imports[step] = (-1 * self.flows[step]).clip(0)
+        # For monitoring purposes, log battery SOC:
+        # -----------------------------------------
+        self.battery.SOC_log[step] = self.battery.charge_level_kWh / self.battery.capacity_kWh * 100
+
 
     def calcDynamicTariffs(self,step):
         """Dynamic calcs of (eg block) tariffs by timestep for ENO and for all residents."""
@@ -761,8 +789,8 @@ class Network(Customer):
         timedata['grid_import'] = self.imports
         timedata['grid_export'] = self.exports
         if scenario.has_battery:
-            timedata['battery_charge__kWh'] = self.battery.charge_level_kWh
-            timedata['battery_SOC'] = self.battery.charge_level_kWh / self.battery.capacity_kWh *100
+            timedata['battery_SOC'] = self.battery.SOC_log
+            timedata['battery_charge_kWh'] = self.battery.SOC_log * self.battery.capacity_kWh / 100
         time_file = os.path.join(self.study.timeseries_path,
                                  self.scenario.label + '_' +
                                  self.load_name + '.csv')

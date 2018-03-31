@@ -122,9 +122,9 @@ __Battery Characteristics__
 `capex`
 
 __Control Strategy__
-`discharge_start` and `discharge_end` (optional) Discharge *only* allowed between these hours 
-`charge_start` and `charge_end` (optional) Charge from grid in this *additional* period
-`discharge_day` and `charge_day` (=`both`) `week`, `end` or `both` : days to discharge / charge
+`discharge_start1` and `discharge_end1` (optional) Discharge *only* allowed between these hours 
+or these hours: `discharge_start2` and `discharge_end2` 
+`discharge_day1` , `discharge_day2`and `charge_day` (=`both`) `week`, `end` or `both` : days to discharge / charge
 
 
 
