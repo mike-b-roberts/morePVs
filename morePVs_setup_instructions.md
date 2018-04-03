@@ -137,7 +137,10 @@ Optional additional grid-charging period
 ------------
 OUTPUT TYPES
 ------------
-Column `output_type` in `'study_...csv` 
+Column `output_type` in `'study_...csv` *applies to all scenarios*
 
 `log_timeseries_csv`: Creates a `.csv` for each scenario and load profile, containing:
+total load,total import & export for building, total generation, battery saved charge
+
+
     

@@ -187,6 +187,9 @@ class Tariff():
         # ------------------------------------------------------
         if tariff_id in scenario.solar_inst_list:
             self.is_solar_inst = True
+        else:
+            self.is_solar_inst = False
+
         # Get solar tariff data:
         if tariff_id in scenario.solar_list:
             for name, parameter in scenario.study.tariff_data.tou_rate_list.items():
@@ -898,7 +901,7 @@ class Scenario():
         self.demand_list = [t for t in self.tariff_short_list \
                 if 'Demand' in self.lookup.loc[t, 'tariff_type']]
         self.has_demand_charges = len(self.demand_list)>0
-        self.has_dynamic_tariff = len(self.dynamic_list)>0 #TODO Check this change,
+        self.has_dynamic_tariff = len(self.dynamic_list)>0
         #  previously:(list(set(self.tariff_short_list).intersection(self.dynamic_list)))
         self.has_solar_block = len(solar_block_list)>0
         self.has_solar_inst = len(self.solar_inst_list)>0
