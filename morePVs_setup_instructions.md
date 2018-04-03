@@ -64,6 +64,9 @@ amortization a_term (years) and a_rate (%) are included in study_....csv file
 a_rate is decimal e.g. `0.06` NOT `6%` or `6`
 NB if `capex_en_lookup` has duplicate `capex id`s, it all goes to cock. (read_csv retrns series instead of single value).
 
+`pv_capex` is full system cost (*including inverter cost * ), after rebates and including GST
+`inverter_cost` is only required if `inverter_life` > amortization period
+
 -------
 TARIFFS
 -------
@@ -120,7 +123,12 @@ All battery technical data is kept in `reference\battery_lookup.csv`
 `maxDOD` (default `0.8`
 `maxSOC` (default `0.9`)
 `max_cycles`(default `2000`)
-`capex`
+
+`battery_cost`: Installed battery cost *excluding* inverter, including GST
+`battery_inv_cost` : Installed cost of battery inverter, inc GST
+`life_bat_inv` : lifetime of battery inverter (years))
+
+
 
 __Control Strategies__
 kept in `reference/battery_control_strategies`

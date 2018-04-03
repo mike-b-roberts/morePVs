@@ -246,6 +246,7 @@ class Battery():
     def __init__(self, study, battery_id, battery_strategy):
         self.battery_id = battery_id
         ts = study.ts
+        self.scenario = study.scenario
         # Load battery parameters from battery lookup
         # -------------------------------------------
         self.capacity_kWh = study.battery_lookup.loc[battery_id, 'capacity_kWh']
@@ -254,7 +255,10 @@ class Battery():
         self.maxDOD = study.battery_lookup.loc[battery_id, 'maxDOD']
         self.maxSOC = study.battery_lookup.loc[battery_id, 'maxSOC']
         self.max_cycles = study.battery_lookup.loc[battery_id,'max_cycles']
-        self.capex = study.battery_lookup.loc[battery_id, 'capex']
+        self.battery_cost = study.battery_lookup.loc[battery_id, 'battery_cost']
+        self.battery_inv_cost = study.battery_lookup.loc[battery_id, 'battery_inv_cost']
+        self.life_bat_inv = study.battery_lookup.loc[battery_id, 'life_bat_inv']
+
         # Use default values if missing:
         # ------------------------------
         if pd.isnull(self.charge_kW):
@@ -343,6 +347,14 @@ class Battery():
         self.number_cycles += amount_to_discharge / self.capacity_kWh
         return amount_to_discharge # returns delivered energy
 
+    def calcBatCapex(self):
+        # Battery capex includes inverter replacement if amortization period > inverter lifetime
+        bat_inv_capex = (int((self.life_bat_inv / self.scenario.a_term))+1) * self.battery_inv_cost
+        # Battery capex includes battery replacement if it exceeds max_cycles in amortization period
+        bat_capex = (int(self.number_cycles / self.max_cycles)+1)* self.battery_inv_cost
+        tot_capex = bat_inv_capex + bat_capex
+        return tot_capex
+
 class Customer():
     """Can be resident, strata body, or ENO representing aggregation of residents."""
 
@@ -355,6 +367,7 @@ class Customer():
         self.ts = study.ts
         self.en_capex_repayment=0
         self.en_opex=0
+        self.bat_capex_repayment=0
 
     def initialiseCustomerLoad(self,
                                customer_load): # as 1-d np.array
@@ -451,7 +464,8 @@ class Customer():
             self.total_payment = self.energy_bill + \
                                  (self.pv_capex_repayment + \
                              self.en_capex_repayment + \
-                             self.en_opex) * 100 # capex, opex in $, energy in c (because tariffs in c/kWh)
+                             self.en_opex +\
+                             self.bat_capex_repayment) * 100 # capex, opex in $, energy in c (because tariffs in c/kWh)
 
     # def staticDemandResponse(self,shift_time,shift_pc):
     #     self.load= self.load * (100% - shift_pc) + shift(self.load,shift_time)  * shift_pc ???
@@ -528,40 +542,7 @@ class Network(Customer):
         # copy tariff parameter(s) from scenario
         self.has_dynamic_tariff = scenario.has_dynamic_tariff
 
-    def initialiseAllCapex(self, scenario):
-        """ Allocates capex repayments and opex to customers according to arrangement"""
-        # For some arrangements, this depends on pv allocation, so must follow allocatePv call
-        # Called once per load profile where capex is allocated according to load; once per scenario otherwise
-        # Initialise all to zero:
-        self.en_opex = 0
-        self.pv_capex_repayment = 0
-        self.en_capex_repayment = 0
-        for c in self.resident_list:
-            self.resident[c].pv_capex_repayment = 0
-        if scenario.arrangement in ['en_strata','en','en_pv']:
-            # For en, all capex & opex borne by the ENO
-            self.en_opex = scenario.en_opex
-            self.pv_capex_repayment = scenario.pv_capex_repayment
-            self.en_capex_repayment = scenario.en_capex_repayment
-        elif scenario.arrangement =='cp_only':
-            # pv capex allocated by customer 'cp' (ie strata)
-            self.resident['cp'].pv_capex_repayment = scenario.pv_capex_repayment
-        elif 'btm_i' in scenario.arrangement:
-            # For btm_i apportion capex costs according to pv allocation
-            for c in self.pv_customers:
-                self.resident[c].pv_capex_repayment = self.pv[c].sum() / self.pv.sum().sum() * scenario.pv_capex_repayment
-        elif 'btm_s_c' in scenario.arrangement:
-            # For btm_s_c, apportion capex costs equally between units and cp.
-            # (Not ideal - needs more sophisticated analysis of practical btm_s arrangements)
-            for c in self.resident_list:
-                self.resident[c].pv_capex_repayment =  scenario.pv_capex_repayment / len(self.resident_list)
-        elif 'btm_s_u' in scenario.arrangement:
-            # For btm_s_u, apportion capex costs equally between units only
-            # (Not ideal - needs more sophisticated analysis of practical btm_s arrangements)
-            for c in self.households:
-                self.resident[c].pv_capex_repayment =  scenario.pv_capex_repayment / len(self.households)
-# TODO: Add battery and battery inveter capex
-# TODO: Include battery lifetime calcs
+
     def allocatePv(self, scenario):
         """set up and allocate pv generation for this scenario."""
 
@@ -779,6 +760,56 @@ class Network(Customer):
                 for calc in dynamic_calculations:
                     calc(step)  # Do each of the calcs iteratively, if required
 
+
+    def allocateAllCapex(self, scenario):
+        """ Allocates capex repayments and opex to customers according to arrangement"""
+        # For some arrangements, this depends on pv allocation, so must follow allocatePv call
+        # Called once per load profile where capex is allocated according to load; once per scenario otherwise
+        # Moved from start of iterations to end to incorporate battery lifecycle impacts
+        # Initialise all to zero:
+        self.en_opex = 0
+        self.pv_capex_repayment = 0
+        self.en_capex_repayment = 0
+        self.bat_capex_repayment =0
+        for c in self.resident_list:
+            self.resident[c].pv_capex_repayment = 0
+            self.resident[c].bat_capex_repayment = 0
+
+        # Calculate capex costs for battery
+        # ---------------------------------
+        if self.has_battery:
+            self.bat_capex = self.battery.calcBatCapex()
+        if self.bat_capex > 0:
+            self.bat_capex_repayment = -12 * np.pmt(rate=self.a_rate / 12,
+                                                   nper=12 * self.a_term,
+                                                   pv=self.bat_capex,
+                                                   fv=0,
+                                                   when='end')
+        # Allocate capex & opex payments depending on network arrangements
+        # ----------------------------------------------------------------
+        if scenario.arrangement in ['en_strata', 'en', 'en_pv']:
+            # For en, all capex & opex are borne by the ENO
+            self.en_opex = scenario.en_opex
+            self.pv_capex_repayment = scenario.pv_capex_repayment
+            self.en_capex_repayment = scenario.en_capex_repayment
+        elif scenario.arrangement =='cp_only':
+            # pv capex allocated by customer 'cp' (ie strata)
+            self.resident['cp'].pv_capex_repayment = scenario.pv_capex_repayment
+        elif 'btm_i' in scenario.arrangement:
+            # For btm_i apportion capex costs according to pv allocation
+            for c in self.pv_customers:
+                self.resident[c].pv_capex_repayment = self.pv[c].sum() / self.pv.sum().sum() * scenario.pv_capex_repayment
+        elif 'btm_s_c' in scenario.arrangement:
+            # For btm_s_c, apportion capex costs equally between units and cp.
+            # (Not ideal - needs more sophisticated analysis of practical btm_s arrangements)
+            for c in self.resident_list:
+                self.resident[c].pv_capex_repayment =  scenario.pv_capex_repayment / len(self.resident_list)
+        elif 'btm_s_u' in scenario.arrangement:
+            # For btm_s_u, apportion capex costs equally between units only
+            # (Not ideal - needs more sophisticated analysis of practical btm_s arrangements)
+            for c in self.households:
+                self.resident[c].pv_capex_repayment =  scenario.pv_capex_repayment / len(self.households)
+
     def calcEnergyParameters(self, scenario):
         # ---------------------------------------------------------------
         # calculate total exports / imports & pvr, cpr & self consumption
@@ -986,7 +1017,7 @@ class Scenario():
                    cashflows for network and retailer
                    total imports and exports,
                    self consumption and pv_ratio."""
-        # This function and Customer.calcCashflow() are the heart of it all
+        # This function and Customer.calcCashflow() are the heart of the finances
         # -------------------------------
         # Calculate cashflows for network
         # -------------------------------
@@ -1324,16 +1355,13 @@ def main(base_path,project,study_name):
             # Set up pv profile if allocation not load-dependent
             if scenario.pv_allocation == 'fixed':
                 eno.allocatePv(scenario)
-                eno.initialiseAllCapex(scenario)
+
             if scenario.has_solar_block:
                 eno.initialiseDailySolarBlockQuotas(scenario)
             for loadFile in scenario.load_list :
                 eno.initialiseBuildingLoads(loadFile, scenario)
-                if scenario.pv_allocation =='load_dependent':
-                    # ie. for btm_icp, btm_s_u and btm_s_c arrangements
+                if scenario.pv_allocation =='load_dependent': #ie. for btm_icp, btm_s_u and btm_s_c arrangements
                     eno.allocatePv(scenario)
-                    eno.initialiseAllCapex(scenario)
-
                 eno.initialiseSolarInstQuotas(scenario) # depends on load and pv
                 # calc all internal energy flows (static & dynamic) & dynamic tariffs
                 # (currently assumes no demand management or individual batteries)
@@ -1343,6 +1371,7 @@ def main(base_path,project,study_name):
                 eno.retailer.calcStaticEnergyFlows()
                 eno.calcEnergyParameters(scenario)
                 eno.calcAllDemandCharges()
+                eno.allocateAllCapex(scenario)  # per load profile to allow for scenarios where capex allocation depends on load
                 scenario.calcResults(eno)
                 if st.log_timeseries:
                     eno.logTimeseries(scenario)
