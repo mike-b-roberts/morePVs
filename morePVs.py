@@ -185,8 +185,10 @@ class Tariff():
         # ------------------------------------------------------
         # Solar tariff periods and rates (block or instantaneous)
         # ------------------------------------------------------
+        if tariff_id in scenario.solar_inst_list:
+            self.is_solar_inst = True
         # Get solar tariff data:
-        if any(s in scenario.lookup.loc[tariff_id, 'tariff_type'] for s in ['solar','Solar']):
+        if tariff_id in scenario.solar_list:
             for name, parameter in scenario.study.tariff_data.tou_rate_list.items():
                 if any(s in name for s in ['solar','Solar']):
                     self.solar_period = \
@@ -436,7 +438,7 @@ class Customer():
             # - np.multiply(self.local_exports, self.tariff.local_export_tariff) could be added for LET / P2P
         # These are all 1x17520 Arrays.
         # local_tariffs are for, e.g. `solar_rate` energy,
-        # maybe extandable for p2p later
+        # maybe extendable for p2p later
         self.energy_bill = self.cashflows.sum() + \
                            self.tariff.fixed_charge * self.ts.num_days + \
                            self.demand_charge
@@ -555,7 +557,8 @@ class Network(Customer):
             # (Not ideal - needs more sophisticated analysis of practical btm_s arrangements)
             for c in self.households:
                 self.resident[c].pv_capex_repayment =  scenario.pv_capex_repayment / len(self.households)
-
+# TODO: Add battery and battery inveter capex
+# TODO: Include battery lifetime calcs
     def allocatePv(self, scenario):
         """set up and allocate pv generation for this scenario."""
 
@@ -661,10 +664,17 @@ class Network(Customer):
         # This is for instantaneous solar tariff.
         self.local_quota = 0
         self.retailer.local_quota = 0
-        for c in self.resident_list:
-            self.resident[c].local_quota = np.where((self.pv['cp'] > self.resident['cp'].load), \
-                                                    (self.pv['cp'] - self.resident['cp'].load) / len(
-                                                        self.households), 0)
+        if 'en' in scenario.arrangement:
+            for c in self.resident_list:
+                if self.resident[c].tariff.is_solar_inst:
+                    self.resident[c].local_quota = np.where((self.pv['cp'] > self.resident['cp'].load),\
+                                                            (self.pv['cp'] - self.resident['cp'].load) / len(
+                                                            self.households), 0)
+                else:
+                    self.resident[c].local_quota =0
+        else:
+            for c in self.resident_list:
+                self.resident[c].local_quota = 0
 
     def initailiseBuildingBattery(self, scenario):
         self.has_battery = scenario.has_battery
@@ -710,6 +720,10 @@ class Network(Customer):
     def calcDynamicStorageEnergyFlows(self, step):
         """Timestepped energy flows for scenarios with storage."""
 
+        # (Currently this works for central battery only.
+        # To extend for individual batteries, move these dispatch calcs to Battery class
+        # and do individual battery dispatch before calculating resident (& cumulative) imports & exports)
+        # --------------------------------------
         # Calculate energy flow without battery:
         # --------------------------------------
         self.flows[step] = self.cum_resident_exports[step] - self.cum_resident_imports[step]
@@ -739,7 +753,6 @@ class Network(Customer):
         # For monitoring purposes, log battery SOC:
         # -----------------------------------------
         self.battery.SOC_log[step] = self.battery.charge_level_kWh / self.battery.capacity_kWh * 100
-
 
     def calcDynamicTariffs(self,step):
         """Dynamic calcs of (eg block) tariffs by timestep for ENO and for all residents."""
@@ -876,16 +889,20 @@ class Scenario():
                 if any(word in self.lookup.loc[t, 'tariff_type'] for word in ['Block','block','Dynamic','dynamic'])]
                 # Currently only includes block, could also add demand tariffs
                 # if needed - i.e. for demand tariffs on < 12 month period
-        solar_list = [t for t in self.tariff_short_list \
+        self.solar_list = [t for t in self.tariff_short_list \
                 if any(word in self.lookup.loc[t, 'tariff_type'] for word in ['Solar','solar'])]
-        solar_block_list = [t for t in solar_list \
+        solar_block_list = [t for t in self.solar_list \
                 if any(word in self.lookup.loc[t, 'tariff_type'] for word in ['Block','block'])]
+        self.solar_inst_list = [t for t in self.solar_list \
+                           if any(word in self.lookup.loc[t, 'tariff_type'] for word in ['Inst', 'inst'])]
         self.demand_list = [t for t in self.tariff_short_list \
                 if 'Demand' in self.lookup.loc[t, 'tariff_type']]
         self.has_demand_charges = len(self.demand_list)>0
         self.has_dynamic_tariff = len(self.dynamic_list)>0 #TODO Check this change,
         #  previously:(list(set(self.tariff_short_list).intersection(self.dynamic_list)))
         self.has_solar_block = len(solar_block_list)>0
+        self.has_solar_inst = len(self.solar_inst_list)>0
+
         self.block_quarterly_billing_start = study.tariff_data.block_quarterly_billing_start
         self.steps_in_block = study.tariff_data.steps_in_block
         self.steps_in_day = 48 # used for daily block tariffs eg solar block
@@ -893,7 +910,7 @@ class Scenario():
         # ----------------------------------------
         self.static_imports = study.tariff_data.static_imports[self.tariff_short_list]
         self.static_exports = study.tariff_data.static_exports[self.tariff_short_list]
-        if len(solar_list) > 0:
+        if len(self.solar_list) > 0:
             self.static_solar_imports = study.tariff_data.static_solar_imports[self.solar_list]
 
         # ----------------------------------
@@ -1257,8 +1274,9 @@ class Study():
         # For ease of handling, 3 csv files are created:
         # results_ has key values for all scenarios, averaged across multiple load profiles
         # customer_results has individual customer bills and total costs
-        # results_std_dev has standard deviations of all avaeraged values
-
+        # results_std_dev has standard deviations of all averaged values
+        # idex by scenario:
+        self.op.index.name='scenario'
         # Separate individual customer data and save as csv
         if not self.different_loads:
             op_cust = self.op[[c for c in self.op.columns if 'cust_'in c and 'cp' not in c]]
@@ -1312,6 +1330,7 @@ def main(base_path,project,study_name):
                     # ie. for btm_icp, btm_s_u and btm_s_c arrangements
                     eno.allocatePv(scenario)
                     eno.initialiseAllCapex(scenario)
+
                 eno.initialiseSolarInstQuotas(scenario) # depends on load and pv
                 # calc all internal energy flows (static & dynamic) & dynamic tariffs
                 # (currently assumes no demand management or individual batteries)
@@ -1342,16 +1361,16 @@ def main(base_path,project,study_name):
         pdb.post_mortem(tb)
 
 if __name__ == "__main__":
-   # main(project='past_papers',
-   #      study_name='apsrc2017',
-   #      base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
-   # main(project='past_papers',
-   #      study_name='energyCON',
-   #      base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
-   main(project='p_testing',
-        study_name='test_bat1',
-        base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
 
+   main(project='past_papers',
+        study_name='apsrc2017_1',
+        base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+   main(project='past_papers',
+        study_name='energyCON_1',
+        base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+   # main(project='p_testing',
+   #      study_name='apsrc2017__test2',
+   #      base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
 
 # TODO - FUTURE - Variable allocation of pv between cp and residents
 # TODO - en_external scenario: cp tariff != TIDNULL
