@@ -98,7 +98,7 @@ class Output():
                 floors = {'A':12,'E':7, 'D':9,'B':8,'H':3,'I':4,'G':44,'C':34,'J':26,'F':5}
                 # floors = {s:floors[s] for s in sites}
                 labels ={}
-                for s,f in floors.items():
+                for s, f in floors.items():
                     u = (self.df.loc[self.df.loc[:,'site']==s,'number_of_households'].values[0]).astype(int)
                     labels[s] = s +'('+str(u)+'/'+str(f)+')'
 

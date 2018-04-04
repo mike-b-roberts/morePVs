@@ -12,9 +12,14 @@ Contact: m.roberts@unsw.edu.au*
 
 All input parameters for each study are contained or referenced in `study_xxxxxxx.csv` file.
 
+`scenario` :    Scenario identifier (integer)
+
 `output_type`:
 This column lists output formats required, applied to the whole study, not individual scenarios.
 All other parameters are given *per scenario* i.e. per line of `.csv` file.
+
+
+
 
 ---
 PV:
@@ -39,8 +44,15 @@ NB - use of this should be restricted to system sizes with equal $/kWp capex
 -----
 LOADS
 -----
-include folder name even if only a single file
-folder within `DATA_EN_3\load_profiles`
+`load_folder` contains the name of sub-folder within `base_path\load_profiles` that contains the load profile(s)
+Can be a single file or multiple files for multiple iterations
+Load files contain: 
+    `timestamp` (first column) in format `d/mm/yyyy h:mm`
+    30 minute timestamps assumed. Up to 1 year (17520) but can be less.
+    customer load columns (in kW)
+    `'cp'` (optional) common property load (kW)
+    
+
 If multiple loads for each scenario, they must all have the same list of customers within the folder,
 BUT each scenario can have different number of residents, etc.
 
@@ -51,6 +63,9 @@ capex scenarios for en and pv are included in reference file
 amortization a_term (years) and a_rate (%) are included in study_....csv file
 a_rate is decimal e.g. `0.06` NOT `6%` or `6`
 NB if `capex_en_lookup` has duplicate `capex id`s, it all goes to cock. (read_csv retrns series instead of single value).
+
+`pv_capex` is full system cost (*including inverter cost * ), after rebates and including GST
+`inverter_cost` is only required if `inverter_life` > amortization period
 
 -------
 TARIFFS
@@ -97,4 +112,43 @@ For Non EN scenarios (bau, btm, cp_only, etc.), parent tariff must be `TIDNULL`,
 -------
 BATTERY
 -------
-In `study_xxxxxxx.csv` file, battery is identified by `bat_scenario`
+In `study_xxxxxxx.csv` file, battery is identified by `battery_id` and battery control strategy by `battery_strategy` 
+
+__Battery Characteristics__
+All battery technical data is kept in `reference\battery_lookup.csv`
+`battery_scenario`  - identifier unique to battery characteristics and control strategy
+`capacity_kWh`      - Single capacity figure
+`efficiency_cycle`  - for charge and discharge (default `0.95`)
+`charge_kW` - for charge and discharge. constrained by inverter power and/or max ~0.8C for charging. Defaults to `0.5C`
+`maxDOD` (default `0.8`
+`maxSOC` (default `0.9`)
+`max_cycles`(default `2000`)
+
+`battery_cost`: Installed battery cost *excluding* inverter, including GST
+`battery_inv_cost` : Installed cost of battery inverter, inc GST
+`life_bat_inv` : lifetime of battery inverter (years)) (Defaults to capital amortization period `a_term` )
+
+
+
+__Control Strategies__
+kept in `reference/battery_control_strategies`
+
+`discharge_start1` and `discharge_end1` (optional) Discharge *only* allowed between these hours 
+or these hours: `discharge_start2` and `discharge_end2` 
+
+Optional additional grid-charging period
+`charge_start` and `charge_end` 
+`discharge_day1` , `discharge_day2`and `charge_day` (=`both`) `week`, `end` or `both` : days to discharge / charge
+
+
+
+------------
+OUTPUT TYPES
+------------
+Column `output_type` in `'study_...csv` *applies to all scenarios*
+
+`log_timeseries_csv`: Creates a `.csv` for each scenario and load profile, containing:
+total load,total import & export for building, total generation, battery saved charge
+
+
+    
