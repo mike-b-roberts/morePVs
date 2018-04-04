@@ -151,7 +151,7 @@ def plot_battery(project,
                  base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3\\'):
     """Plots timeseries data of pv, load, import, export and SOC."""
 
-    path = os.path.join(base_path,project,'outputs',study_name)
+    path = os.path.join(base_path,project,'outputs',study_name,'timeseries')
     plotpath = os.path.join(path, 'plots')
     if not os.path.exists(plotpath):
         os.makedirs(plotpath)
@@ -162,21 +162,22 @@ def plot_battery(project,
         df = pd.read_csv(file)
         if 'battery_charge_kWh' in df.columns:
             df = df.drop(['battery_charge_kWh'], axis=1)
-        plt.figure()
+        fig,ax=plt.subplots()
         ax = df[[c for c in df.columns if 'SOC' not in c]].plot()
-        leg = ax.legend(fancybox=True)
-        leg.get_frame().set_alpha(0.5)
+
         ax.set_xlabel("Time", fontsize=14)
         ax.set_ylabel("kWh", fontsize=14)
+        ax.grid(True)
 
         if 'battery_SOC' in df.columns:
             ax2 = df['battery_SOC'].plot(secondary_y=True, ax=ax, style='--')
             ax2.set_ylabel("Battery SOC %")
-
+        leg = ax.legend(fancybox=True)
+        leg.get_frame().set_alpha(0.5)
         ax.set_title(name[:-4], fontsize=14)
         # plt.show()
         plt.savefig(plotfile, dpi=1000)
-        plt.close()
+        plt.close(fig)
 
 
 
@@ -184,7 +185,8 @@ def plot_battery(project,
 #MAIN PROGRAM
 
 def main():
-    plot_tariffs(tariff_list =['EASO_TOU_25pc','STS_35','STC_15' ])
+    #
+    plot_battery(project='p_testing', study_name='test_bat4')
 
     pass
 

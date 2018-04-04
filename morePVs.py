@@ -284,7 +284,7 @@ class Battery():
         # Calculate discharge period(s):
         # -----------------------------
         if pd.isnull(discharge_start1):
-            discharge_period1 = pd.DatetimeIndex([])
+            discharge_period1 = ts.timeseries
         elif pd.Timestamp(discharge_start1) > pd.Timestamp(discharge_end1):
             discharge_period1 = (ts.days[discharge_day1][(ts.days[discharge_day1].time > pd.Timestamp(discharge_start1).time()) & (
                         ts.days[discharge_day1].time <= pd.Timestamp('23:59').time())].append(
@@ -306,7 +306,7 @@ class Battery():
             discharge_period2 = \
                 ts.days[discharge_day2][(ts.days[discharge_day2].time > pd.Timestamp(discharge_start2).time())
                                         & (ts.days[discharge_day2].time <= pd.Timestamp(discharge_end2).time())]
-        self.discharge_period = discharge_period1.append(discharge_period2)
+        self.discharge_period = discharge_period1.join(discharge_period2, how='outer')
 
         # Calculate additional charging period:
         # -------------------------------------
@@ -789,8 +789,8 @@ class Network(Customer):
         else:
             self.bat_capex = 0
         if self.bat_capex > 0:
-            self.bat_capex_repayment = -12 * np.pmt(rate=self.a_rate / 12,
-                                                   nper=12 * self.a_term,
+            self.bat_capex_repayment = -12 * np.pmt(rate=scenario.a_rate / 12,
+                                                   nper=12 * scenario.a_term,
                                                    pv=self.bat_capex,
                                                    fv=0,
                                                    when='end')
@@ -978,9 +978,9 @@ class Scenario():
         self.a_term=study.study_scenarios.loc[self.name,'a_term']
         self.a_rate= study.study_scenarios.loc[self.name,'a_rate']
         if self.en_capex>0:
-            self.en_capex_repayment = -12 * np.pmt(rate = self.a_rate/12,
-                                         nper = 12 * self.a_term,
-                                         pv = self.en_capex,
+            self.en_capex_repayment = -12 * np.pmt(rate=self.a_rate/12,
+                                         nper=12 * self.a_term,
+                                         pv=self.en_capex,
                                          fv=0,
                                          when='end')
         else:
@@ -1403,15 +1403,15 @@ def main(base_path,project,study_name):
 
 if __name__ == "__main__":
 
-   main(project='past_papers',
-        study_name='apsrc2017_1',
-        base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
-   main(project='past_papers',
-        study_name='energyCON_1',
-        base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
-   # main(project='p_testing',
-   #      study_name='apsrc2017__test2',
-   #      base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+   # main(project='past_papers',
+   #      study_name='apsrc2017_1',
+   #      base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+   # main(project='past_papers',
+   #      study_name='energyCON_1',
+   #      base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+   main(project='p_testing',
+        study_name='test_bat5',
+        base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
 
 # TODO - FUTURE - Variable allocation of pv between cp and residents
 # TODO - en_external scenario: cp tariff != TIDNULL
