@@ -243,21 +243,22 @@ class Tariff():
 
 class Battery():
     # adapted from script by Luke Marshall
-    def __init__(self, study, battery_id, battery_strategy):
+    def __init__(self, scenario, battery_id, battery_strategy):
         self.battery_id = battery_id
-        ts = study.ts
-        self.scenario = study.scenario
+        ts = scenario.study.ts
+        self.scenario = scenario
         # Load battery parameters from battery lookup
         # -------------------------------------------
-        self.capacity_kWh = study.battery_lookup.loc[battery_id, 'capacity_kWh']
-        self.charge_kW = study.battery_lookup.loc[battery_id, 'charge_kW']
-        self.efficiency_cycle = study.battery_lookup.loc[battery_id, 'efficiency_cycle']
-        self.maxDOD = study.battery_lookup.loc[battery_id, 'maxDOD']
-        self.maxSOC = study.battery_lookup.loc[battery_id, 'maxSOC']
-        self.max_cycles = study.battery_lookup.loc[battery_id,'max_cycles']
-        self.battery_cost = study.battery_lookup.loc[battery_id, 'battery_cost']
-        self.battery_inv_cost = study.battery_lookup.loc[battery_id, 'battery_inv_cost']
-        self.life_bat_inv = study.battery_lookup.loc[battery_id, 'life_bat_inv']
+        self.capacity_kWh = scenario.study.battery_lookup.loc[battery_id, 'capacity_kWh']
+        self.charge_kW = scenario.study.battery_lookup.loc[battery_id, 'charge_kW']
+        self.efficiency_cycle = scenario.study.battery_lookup.loc[battery_id, 'efficiency_cycle']
+        self.maxDOD = scenario.study.battery_lookup.loc[battery_id, 'maxDOD']
+        self.maxSOC = scenario.study.battery_lookup.loc[battery_id, 'maxSOC']
+        self.max_cycles = scenario.study.battery_lookup.loc[battery_id,'max_cycles']
+        self.battery_cost = scenario.study.battery_lookup.loc[battery_id, 'battery_cost']
+        self.battery_inv_cost = scenario.study.battery_lookup.loc[battery_id, 'battery_inv_cost']
+        self.life_bat_inv = scenario.a_term if np.isnan(scenario.study.battery_lookup.loc[battery_id, 'life_bat_inv'])\
+                                         else scenario.study.battery_lookup.loc[battery_id, 'life_bat_inv']
 
         # Use default values if missing:
         # ------------------------------
@@ -271,15 +272,15 @@ class Battery():
             self.max_cycles = 2000
         # Set up restricted discharge period and additional charge period
         # ---------------------------------------------------------------
-        discharge_start1 = study.battery_strategies.loc[battery_strategy, 'discharge_start1']
-        discharge_end1 = study.battery_strategies.loc[battery_strategy, 'discharge_end1']
-        discharge_day1 = study.battery_strategies.loc[battery_strategy, 'discharge_day1']
-        discharge_start2 = study.battery_strategies.loc[battery_strategy, 'discharge_start2']
-        discharge_end2 = study.battery_strategies.loc[battery_strategy, 'discharge_end2']
-        discharge_day2 = study.battery_strategies.loc[battery_strategy, 'discharge_day2']
-        charge_start = study.battery_strategies.loc[battery_strategy, 'charge_start']
-        charge_end = study.battery_strategies.loc[battery_strategy, 'charge_end']
-        charge_day = study.battery_strategies.loc[battery_strategy, 'charge_day']
+        discharge_start1 = scenario.study.battery_strategies.loc[battery_strategy, 'discharge_start1']
+        discharge_end1 = scenario.study.battery_strategies.loc[battery_strategy, 'discharge_end1']
+        discharge_day1 = scenario.study.battery_strategies.loc[battery_strategy, 'discharge_day1']
+        discharge_start2 = scenario.study.battery_strategies.loc[battery_strategy, 'discharge_start2']
+        discharge_end2 = scenario.study.battery_strategies.loc[battery_strategy, 'discharge_end2']
+        discharge_day2 = scenario.study.battery_strategies.loc[battery_strategy, 'discharge_day2']
+        charge_start = scenario.study.battery_strategies.loc[battery_strategy, 'charge_start']
+        charge_end = scenario.study.battery_strategies.loc[battery_strategy, 'charge_end']
+        charge_day = scenario.study.battery_strategies.loc[battery_strategy, 'charge_day']
         # Calculate discharge period(s):
         # -----------------------------
         if pd.isnull(discharge_start1):
@@ -324,8 +325,8 @@ class Battery():
         # ----------------------------
         self.charge_level_kWh = 0.0
         self.number_cycles = 0
-        self.max_timestep_discharge = self.charge_kW * study.ts.interval / 3600
-        self.max_timestep_charge = self.charge_kW * study.ts.interval / 3600
+        self.max_timestep_discharge = self.charge_kW * scenario.study.ts.interval / 3600
+        self.max_timestep_charge = self.charge_kW * scenario.study.ts.interval / 3600
         # Initialise SOC log
         # ------------------
         self.SOC_log = np.zeros(ts.num_steps)
@@ -349,9 +350,15 @@ class Battery():
 
     def calcBatCapex(self):
         # Battery capex includes inverter replacement if amortization period > inverter lifetime
-        bat_inv_capex = (int((self.life_bat_inv / self.scenario.a_term))+1) * self.battery_inv_cost
+        if self.life_bat_inv > self.scenario.a_term:
+            bat_inv_capex = (int((self.life_bat_inv / self.scenario.a_term))+1) * self.battery_inv_cost
+        else:
+            bat_inv_capex = self.battery_inv_cost
         # Battery capex includes battery replacement if it exceeds max_cycles in amortization period
-        bat_capex = (int(self.number_cycles / self.max_cycles)+1)* self.battery_inv_cost
+        if self.number_cycles > self.max_cycles:
+            bat_capex = (int(self.number_cycles / self.max_cycles)+1) * self.battery_cost
+        else:
+            bat_capex = self.battery_cost
         tot_capex = bat_inv_capex + bat_capex
         return tot_capex
 
@@ -663,7 +670,7 @@ class Network(Customer):
     def initailiseBuildingBattery(self, scenario):
         self.has_battery = scenario.has_battery
         if self.has_battery:
-            self.battery = Battery(study=self.study,
+            self.battery = Battery(scenario=scenario,
                                    battery_id=scenario.battery_id,
                                    battery_strategy=scenario.battery_strategy)
 
@@ -779,6 +786,8 @@ class Network(Customer):
         # ---------------------------------
         if self.has_battery:
             self.bat_capex = self.battery.calcBatCapex()
+        else:
+            self.bat_capex = 0
         if self.bat_capex > 0:
             self.bat_capex_repayment = -12 * np.pmt(rate=self.a_rate / 12,
                                                    nper=12 * self.a_term,
@@ -846,7 +855,7 @@ class Network(Customer):
             timedata['battery_charge_kWh'] = self.battery.SOC_log * self.battery.capacity_kWh / 100
         time_file = os.path.join(self.study.timeseries_path,
                                  self.scenario.label + '_' +
-                                 self.load_name + '.csv')
+                                 self.load_name )
         um.df_to_csv(timedata, time_file)
 
 class Scenario():

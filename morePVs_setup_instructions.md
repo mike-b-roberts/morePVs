@@ -126,7 +126,7 @@ All battery technical data is kept in `reference\battery_lookup.csv`
 
 `battery_cost`: Installed battery cost *excluding* inverter, including GST
 `battery_inv_cost` : Installed cost of battery inverter, inc GST
-`life_bat_inv` : lifetime of battery inverter (years))
+`life_bat_inv` : lifetime of battery inverter (years)) (Defaults to capital amortization period `a_term` )
 
 
 

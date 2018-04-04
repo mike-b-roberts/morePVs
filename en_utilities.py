@@ -145,6 +145,41 @@ def plot_tariffs(path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3\\re
     plt.savefig(plotFile,dpi=1000)
     plt.close()
 
+##############################################################
+def plot_battery(project,
+                 study_name,
+                 base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3\\'):
+    """Plots timeseries data of pv, load, import, export and SOC."""
+
+    path = os.path.join(base_path,project,'outputs',study_name)
+    plotpath = os.path.join(path, 'plots')
+    if not os.path.exists(plotpath):
+        os.makedirs(plotpath)
+    flist = [f for f in os.listdir(path) if '.csv' in f]
+    for name in flist:
+        file = os.path.join(path, name)
+        plotfile = os.path.join(plotpath, name[0:-3] + 'png')
+        df = pd.read_csv(file)
+        if 'battery_charge_kWh' in df.columns:
+            df = df.drop(['battery_charge_kWh'], axis=1)
+        plt.figure()
+        ax = df[[c for c in df.columns if 'SOC' not in c]].plot()
+        leg = ax.legend(fancybox=True)
+        leg.get_frame().set_alpha(0.5)
+        ax.set_xlabel("Time", fontsize=14)
+        ax.set_ylabel("kWh", fontsize=14)
+
+        if 'battery_SOC' in df.columns:
+            ax2 = df['battery_SOC'].plot(secondary_y=True, ax=ax, style='--')
+            ax2.set_ylabel("Battery SOC %")
+
+        ax.set_title(name[:-4], fontsize=14)
+        # plt.show()
+        plt.savefig(plotfile, dpi=1000)
+        plt.close()
+
+
+
 
 #MAIN PROGRAM
 
