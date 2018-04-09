@@ -15,7 +15,7 @@ class Output():
                  ):
         """sets up paths and loads input & output data"""
 
-        # NB `data` is the results file, `study_scenarios' is the study parameters
+        # NB `data` is the results file, `study_parameters' is the study parameters
         self.base_path =  base_path
         self.study_name = study_name
         self.project_path = os.path.join(self.base_path, project)

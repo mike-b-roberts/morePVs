@@ -554,7 +554,7 @@ class Network(Customer):
             self.pv_customers = []
         else:
             pvFile = os.path.join(study.pv_path,
-                                  study.study_scenarios.loc[scenario.name, 'pv_filename'])
+                                  study.study_parameters.loc[scenario.name, 'pv_filename'])
             if not os.path.exists(pvFile):
                 logging.info('***************Exception!!! PV file %s NOT FOUND', pvFile)
                 sys.exit("PV file missing")
@@ -859,15 +859,16 @@ class Scenario():
         # ------------------------------
         # Set up key scenario parameters
         # ------------------------------
-        self.name= scenario_name
-        self.label = study.name +'_'+ "{:03}".format(self.name)
-
+        self.name = scenario_name
+        self.label = study.name + '_' + "{:03}".format(self.name)
+        # Copy all scenario parameters to allow for threading:
+        #self.parameters = study.study_parameters[self.name].copy()
         # --------------------------------------------
         # Set up network arrangement for this scenario
         # --------------------------------------------
-        self.arrangement = study.study_scenarios.loc[self.name,'arrangement']
-        self.pv_exists = not (study.study_scenarios.isnull().loc[self.name, 'pv_filename']) and study.pv_exists
-        if  self.arrangement in ['btm_s_c', 'btm_s_u','btm_icp']:
+        self.arrangement = study.study_parameters.loc[self.name, 'arrangement']
+        self.pv_exists = not (study.study_parameters.isnull().loc[self.name, 'pv_filename']) and study.pv_exists
+        if self.arrangement in ['btm_s_c', 'btm_s_u','btm_icp']:
             self.pv_allocation = 'load_dependent'
         else:
             self.pv_allocation = 'fixed'
@@ -877,9 +878,9 @@ class Scenario():
         # --------------------------------------------------
         # if same load profile(s) used for all scenarios, this comes from Study
         # If different loads used, get resident list from first load
-        self.load_folder = study.study_scenarios.loc[self.name, 'load_folder']
+        self.load_folder = study.study_parameters.loc[self.name, 'load_folder']
         if study.different_loads:
-            self.load_folder = study.study_scenarios.loc[self.name, 'load_folder']
+            self.load_folder = study.study_parameters.loc[self.name, 'load_folder']
             self.load_path = os.path.join(study.base_path, 'load_profiles', self.load_folder)
             self.load_list = os.listdir(self.load_path)
             # get first load and set up resident_list
@@ -904,18 +905,19 @@ class Scenario():
         # Customer tariffs can be individually allocated, or can be fixed for all residents
         # if 'all residents' is present in scenario csv, it trumps individual customer tariffs
         # and is copied across (except for cp):
-        if 'all_residents' in study.study_scenarios.columns:
-            if (study.study_scenarios.loc[self.name,'all_residents'] == ''):
+        if 'all_residents' in study.study_parameters.columns:
+            if (study.study_parameters.loc[self.name, 'all_residents'] == ''):
                 logging.info('Missing tariff data for all_residents in study csv')
             else: # read tariff for each customer
                 for c in self.households:
-                    study.study_scenarios.loc[self.name,c] = study.study_scenarios.loc[self.name,'all_residents']
+                    with lock:
+                        study.study_parameters.loc[self.name, c] = study.study_parameters.loc[self.name, 'all_residents']
 
         # Create list of tariffs used in this scenario
         # --------------------------------------------
         self.customers_with_tariffs = self.resident_list + ['parent']
-        self.dnsp_tariff = study.study_scenarios.loc[self.name, 'network_tariff']
-        self.tariff_in_use = study.study_scenarios.loc[self.name,self.customers_with_tariffs ] # tariff ids for each customer
+        self.dnsp_tariff = study.study_parameters.loc[self.name, 'network_tariff']
+        self.tariff_in_use = study.study_parameters.loc[self.name, self.customers_with_tariffs] # tariff ids for each customer
         self.tariff_short_list = self.tariff_in_use.tolist()  + [self.dnsp_tariff]  # list of tariffs in use
         self.tariff_short_list = list(set(self.tariff_short_list)) # drop duplicates
         #  Slice tariff lookup table for this scenario
@@ -951,9 +953,9 @@ class Scenario():
         # ----------------------------------
         # identify battery for this scenario
         # ----------------------------------
-        if 'battery_id' in study.study_scenarios.columns and 'battery_strategy' in study.study_scenarios.columns:
-            self.battery_id = study.study_scenarios.loc[self.name, 'battery_id']
-            self.battery_strategy = study.study_scenarios.loc[self.name, 'battery_strategy']
+        if 'battery_id' in study.study_parameters.columns and 'battery_strategy' in study.study_parameters.columns:
+            self.battery_id = study.study_parameters.loc[self.name, 'battery_id']
+            self.battery_strategy = study.study_parameters.loc[self.name, 'battery_strategy']
             self.has_battery = not pd.isnull(self.battery_id)
         else:
             self.has_battery = False
@@ -962,13 +964,13 @@ class Scenario():
         # Set up annual capex & opex costs for en in this scenario
         # --------------------------------------------------------
         # Annual capex repayments for embedded network
-        self.pc_cap_id = study.study_scenarios.loc[self.name, 'pv_cap_id']
-        self.en_cap_id = study.study_scenarios.loc[self.name,'capex_id']
+        self.pc_cap_id = study.study_parameters.loc[self.name, 'pv_cap_id']
+        self.en_cap_id = study.study_parameters.loc[self.name, 'capex_id']
         self.en_capex = study.en_capex.loc[self.en_cap_id, 'site_capex'] + \
             (study.en_capex.loc[self.en_cap_id, 'unit_capex']  * \
             len(self.households))
-        self.a_term = study.study_scenarios.loc[self.name,'a_term']
-        self.a_rate = study.study_scenarios.loc[self.name,'a_rate']
+        self.a_term = study.study_parameters.loc[self.name, 'a_term']
+        self.a_rate = study.study_parameters.loc[self.name, 'a_rate']
         if self.en_capex>0:
             self.en_capex_repayment = -12 * np.pmt(rate=self.a_rate/12,
                                          nper=12 * self.a_term,
@@ -995,10 +997,10 @@ class Scenario():
                              study.pv_capex_table.loc[self.pc_cap_id, 'inverter_cost'])
             #  Option to use standard 1kW PV output and scale
             #  with pv_capex and inverter cost given as $/kW
-            self.pv_scaleable = ('pv_scaleable' in study.study_scenarios.columns) and \
-                                    study.study_scenarios.loc[self.name, 'pv_scaleable']
+            self.pv_scaleable = ('pv_scaleable' in study.study_parameters.columns) and \
+                                study.study_parameters.loc[self.name, 'pv_scaleable']
             if self.pv_scaleable:
-                self.pv_kW_peak = study.study_scenarios.loc[self.name, 'pv_kW_peak']
+                self.pv_kW_peak = study.study_parameters.loc[self.name, 'pv_kW_peak']
                 self.pv_capex = self.pv_capex * self.pv_kW_peak
             # Calculate annual repayments
             # ---------------------------
@@ -1167,7 +1169,7 @@ class Study():
         self.reference_path = os.path.join(self.base_path, 'reference')
         self.input_path = os.path.join(self.project_path, 'inputs')
         tariff_name='tariff_lookup.csv'
-        self.t_lookupFile=os.path.join(self.reference_path, tariff_name)
+        self.t_lookupFile = os.path.join(self.reference_path, tariff_name)
         capex_pv_name = 'capex_pv_lookup.csv'
         self.capexpv_file = os.path.join(self.reference_path, capex_pv_name)
         capex_en_name = 'capex_en_lookup.csv'
@@ -1179,17 +1181,17 @@ class Study():
         # study file contains all scenarios
         # ---------------------------------
         study_filename = 'study_' + study_name + '.csv'
-        study_file= os.path.join(self.input_path, study_filename)
+        study_file = os.path.join(self.input_path, study_filename)
 
         # --------------------
         # read study scenarios
         # --------------------
-        study_scenarios = pd.read_csv(study_file)
-        study_scenarios.set_index('scenario', inplace=True)
-        self.scenario_list = [s for s in study_scenarios.index if not pd.isnull(s)]
+        self.study_parameters = pd.read_csv(study_file)
+        self.study_parameters.set_index('scenario', inplace=True)
+        self.scenario_list = [s for s in self.study_parameters.index if not pd.isnull(s)]
         # Read list of output requirements and strip from df
-        if 'output_types' in study_scenarios.columns:
-            self.output_list = study_scenarios['output_types'].dropna().tolist()
+        if 'output_types' in self.study_parameters.columns:
+            self.output_list = self.study_parameters['output_types'].dropna().tolist()
         else:
             self.output_list = []
         # -------------------
@@ -1258,11 +1260,11 @@ class Study():
         # -------------------
         #  Identify load data
         # -------------------
-        if len(study_scenarios['load_folder'].unique())==1:
+        if len(self.study_parameters['load_folder'].unique())==1:
             self.different_loads = False # Same load or set of loads for each scenario
         else:
             self.different_loads = True # Different loads for each scenario
-        self.load_path = os.path.join(self.base_path, 'load_profiles',study_scenarios.loc[study_scenarios.index[0],'load_folder'])
+        self.load_path = os.path.join(self.base_path, 'load_profiles', self.study_parameters.loc[self.study_parameters.index[0], 'load_folder'])
         self.load_list = os.listdir(self.load_path)
         if len(self.load_list) == 0:
             logging.info('***************** Load folder %s is empty *************************', self.load_path)
@@ -1335,7 +1337,7 @@ class Study():
 
 
 def runScenario(scenario_name):
-
+    print("Scenario name is: " , scenario_name)
     # Initialise scenario
     scenario = Scenario(scenario_name=scenario_name)
     eno = Network(scenario=scenario)
@@ -1369,7 +1371,8 @@ def runScenario(scenario_name):
             eno.logTimeseries(scenario)
         print(scenario_name, loadFile, eno.total_building_payment/100, (eno.receipts_from_residents - eno.total_payment)/100)
     # collate / log data for all loads in scenario
-    scenario.logScenarioData()
+    with lock:
+        scenario.logScenarioData()
 
 def worker():
     """Sends queued scenarios to threads"""
@@ -1403,16 +1406,17 @@ def main(base_path,project,study_name):
         # -------------------
         #Initialise threading
         # -------------------
-        global q
+        global q, lock
         q = Queue()  # create a queue object
         threads = []
         num_worker_threads = 8  # pick a number that works for you, I suggest trying a few between 4 and 200
-
+        lock = threading.Lock()
         # create a list of threads
         for i in range(num_worker_threads):
-            t = threading.Thread(target=worker)
-            t.start()
-            threads.append(t)
+            print("Thread number ",i)
+            this_thread = threading.Thread(target=worker)
+            this_thread.start()
+            threads.append(this_thread)
 
         # -----------------------
         # create a queue of items
