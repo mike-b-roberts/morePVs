@@ -959,7 +959,7 @@ class Scenario():
         # ----------------------------------
         # identify battery for this scenario
         # ----------------------------------
-        if 'battery_id' in study.study_scenarios.columns and 'battery_strategy' in study.study_scenarios.columns
+        if 'battery_id' in study.study_scenarios.columns and 'battery_strategy' in study.study_scenarios.columns:
             self.battery_id = study.study_scenarios.loc[self.name, 'battery_id']
             self.battery_strategy = study.study_scenarios.loc[self.name, 'battery_strategy']
             self.has_battery = not pd.isnull(self.battery_id)
