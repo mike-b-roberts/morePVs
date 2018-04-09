@@ -1414,7 +1414,7 @@ if __name__ == "__main__":
    #      study_name='pv_optimiser2',
    #      base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
    main(project='p_testing',
-        study_name='test7',
+        study_name='test7a',
         base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
 
 
@@ -1424,4 +1424,6 @@ if __name__ == "__main__":
 # TODO: Add threading
 # TODO Add import-export plot to output module
 # TODO test solar tariffs
+# TODO Add individual batteries
+# TODO Add combined central and individual PV
 # TODO Test battery
