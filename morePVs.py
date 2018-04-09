@@ -959,7 +959,7 @@ class Scenario():
         # ----------------------------------
         # identify battery for this scenario
         # ----------------------------------
-        if 'battery_id' in study.study_scenarios.columns:
+        if 'battery_id' in study.study_scenarios.columns and 'battery_strategy' in study.study_scenarios.columns
             self.battery_id = study.study_scenarios.loc[self.name, 'battery_id']
             self.battery_strategy = study.study_scenarios.loc[self.name, 'battery_strategy']
             self.has_battery = not pd.isnull(self.battery_id)
@@ -1410,9 +1410,13 @@ if __name__ == "__main__":
    # main(project='past_papers',
    #      study_name='energyCON_1',
    #      base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
-   main(project='pv_optimiser',
-        study_name='pv_optimiser2',
+   # main(project='pv_optimiser',
+   #      study_name='pv_optimiser2',
+   #      base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+   main(project='p_testing',
+        study_name='test7',
         base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+
 
 # TODO - FUTURE - Variable allocation of pv between cp and residents
 # TODO - en_external scenario: cp tariff != TIDNULL

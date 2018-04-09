@@ -121,6 +121,8 @@ For Non EN scenarios (bau, btm, cp_only, etc.), parent tariff must be `TIDNULL`,
 BATTERY
 -------
 In `study_xxxxxxx.csv` file, battery is identified by `battery_id` and battery control strategy by `battery_strategy` 
+If `battery_id` and `battery_strategy` are in the headers, then both must be supplied; 
+If `battery_id` and `battery_strategy` are NOT BOTH in the headers, then battery is not included.
 
 __Battery Characteristics__
 All battery technical data is kept in `reference\battery_lookup.csv`
