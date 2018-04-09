@@ -17,7 +17,7 @@ import os
 import pdb, traceback
 import pandas as pd
 import en_utilities as um
-from en import morePVs_output as opm
+#from en import morePVs_output as opm
 
 # Classes
 class Timeseries():
@@ -469,7 +469,7 @@ class Customer():
             self.total_payment = self.energy_bill
         else:
             self.total_payment = self.energy_bill + \
-                                 (self.pv_capex_repayment + \
+                            (self.pv_capex_repayment + \
                              self.en_capex_repayment + \
                              self.en_opex +\
                              self.bat_capex_repayment) * 100 # capex, opex in $, energy in c (because tariffs in c/kWh)
@@ -1044,22 +1044,23 @@ class Scenario():
             network.total_building_payment = network.total_building_payment + network.resident[c].total_payment
         # For en, total_building_payment is sum of customer payments less ENO profit
         if 'en' in self.arrangement:
-            network.total_building_payment = network.total_building_payment - (network.receipts_from_residents - network.total_payment)
+            # Sum of all resident (bills + cap/opex) plus eno total (bills plus cap/opex) less what residents pay to eno
+            network.total_building_payment = network.total_building_payment + network.total_payment - network.receipts_from_residents
         # Calculate external retailer cashflows:
         network.retailer.calcCashflow()
         # -----------------
-        # retailer receipts
+        # Retailer receipts
         # -----------------
         if self.arrangement == 'bau' or self.arrangement == 'cp_only' or 'btm' in self.arrangement :
             network.energy_bill = 0
             network.total_payment = 0
             network.retailer_receipt = network.receipts_from_residents.copy()
             network.receipts_from_residents = 0
-        elif 'en' in self.arrangement :
+        elif 'en' in self.arrangement:
             network.retailer_receipt = network.energy_bill.copy()
         else:
-            print ('************************Unknown network arrangement********************')
-            logging.info ('************************Unknown network arrangement********************')
+            print('************************Unknown network arrangement********************')
+            logging.info('************************Unknown network arrangement********************')
         # --------------------------------------------------------
         # Collate all results for network in one row of results df
         # --------------------------------------------------------
@@ -1409,8 +1410,8 @@ if __name__ == "__main__":
    # main(project='past_papers',
    #      study_name='energyCON_1',
    #      base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
-   main(project='p_testing',
-        study_name='test_bat5',
+   main(project='pv_optimiser',
+        study_name='pv_optimiser2',
         base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
 
 # TODO - FUTURE - Variable allocation of pv between cp and residents

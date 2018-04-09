@@ -26,18 +26,26 @@ PV:
 ---
 Name of pv file - 1 year's output within `DATA_EN_3\pv_profiles`
 
-For en or cp arrangement, pv file has single column, must be 'cp'
+For `en` or `cp` arrangement, pv file has single column, must be 'cp'
+
 For `btm_i` : btm individual:  en has column for each unit, or if not, single 'cp' or 'total' column that is split equally
-For `btm_icp : en has column for eadch unit and cp. Or, single column: cp gets share according to load share; units get eqaul share of remainder
+
+For `btm_icp` : en has column for eadch unit and cp. Or, single column: cp gets share according to load share; units get equal share of remainder
+
 For Shared btm inc cp:  `btm_s_c` A single `total` or 'cp' column that is split according to instantaneous load between all units AND cp
+
 For Shared btm Units only:`btm_s_u` single `total` or 'cp' column that is split according to instantaneousload between all units EXCLUDING cp
+
 For en_external scenario: `cp tariff != TIDNULL`
 
 Scaleable PV:
 -------------
 filename of 1kWp PV output is `pv_filename` column
+
 `pv_scaleable = TRUE`
+
 `pv_kW_peak` = value to scaleby, eg 50 for 50kWp
+
 In this case, `pv_cap_id` refers to a scaleable capex scenario with capex and repayments also scaled by `pv_kW_peak`
 NB - use of this should be restricted to system sizes with equal $/kWp capex
 
