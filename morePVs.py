@@ -1402,6 +1402,7 @@ def main(base_path,project,study_name):
         #Initialise threading
         # -------------------
         global lock
+        num_threads = 4
         num_worker_threads = num_threads  # pick a number that works for you, I suggest trying a few between 4 and 200
         lock = threading.Lock()
         with concurrent.futures.ThreadPoolExecutor(max_workers=num_worker_threads) as x:
@@ -1435,22 +1436,15 @@ if __name__ == "__main__":
    # main(project='pv_optimiser',
    #      study_name='pv_optimiser2',
    #      base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
-    global num_threads
-    times = pd.DataFrame(columns = ['start', 'end','time'],index =[2,4,6,8,10,15])
-    for num_threads in [2,4,6,8,10,15]:
-        times.loc[num_threads,'start'] = dt.datetime.now()
-        print ('RUNNING WITH ',num_threads,' THREADS:')
-        main(project='p_testing',
-            study_name='test7a',
-            base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
-        times.loc[num_threads,'end'] = dt.datetime.now()
-        times.loc[num_threads,'time'] = times.loc[num_threads,'end'] -times.loc[num_threads,'start']
-    print(times)
+
+    main(project='p_testing',
+        study_name='test7a',
+        base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
 
 # TODO - FUTURE - Variable allocation of pv between cp and residents
 # TODO - en_external scenario: cp tariff != TIDNULL
 # TODO Set up logging throughout
-# TODO: Add threading
+
 # TODO Add import-export plot to output module
 # TODO test solar tariffs
 # TODO Add individual batteries
