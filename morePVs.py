@@ -19,6 +19,9 @@ import pandas as pd
 import en_utilities as um
 import threading
 from queue import Queue
+import concurrent.futures
+import datetime as dt
+
 #from en import morePVs_output as opm
 
 # Classes
@@ -1376,19 +1379,6 @@ def runScenario(scenario_name):
     with lock:
         scenario.logScenarioData()
 
-def worker():
-    """Sends queued scenarios to threads"""
-    global q
-    while True:
-        next_scenario = q.get() #get the next scenario in the queue
-        if next_scenario is None:
-            logging.info("NO MORE SCENARIOS")
-            break
-        logging.info ("Thread %i calling scenario %i",thread_count,next_scenario )
-        runScenario(next_scenario) #send item to your function here
-        logging.info ("Thread %i & scenario %i COMPLETED",thread_count,next_scenario )
-        q.task_done() #remove from queue once done
-
 # ------------
 # MAIN PROGRAM
 # ------------
@@ -1411,43 +1401,21 @@ def main(base_path,project,study_name):
         # -------------------
         #Initialise threading
         # -------------------
-        global q, lock, thread_count
-        q = Queue()  # create a queue object
-        threads = []
+        global lock
         num_worker_threads = 6  # pick a number that works for you, I suggest trying a few between 4 and 200
         lock = threading.Lock()
-        # create a list of threads
-        for thread_count in range(num_worker_threads):
-            logging.info("Thread number %i", thread_count)
-            this_thread = threading.Thread(target=worker)
-            this_thread.start()
-            threads.append(this_thread)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=num_worker_threads) as x:
+            futs = x.map(runScenario, study.scenario_list)
+            concurrent.futures.wait(futs)
 
-        # -----------------------
-        # create a queue of items
-        # -----------------------
-        # may need to do this in chunks?
-        for scenario_name in study.scenario_list:
-            q.put(scenario_name)  # put items in my queue
-
-        # This needed to end the threads:
-        for thread_count in range(num_worker_threads):
-            q.put(None)
-        for t in threads:
-            t.join()
-        # block until all tasks are done
-        q.join()
-
-        print("after q.join")
-
-        #study.logStudyData()
+        study.logStudyData()
         # if len(study.output_list)>0:
         #     op = opm.Output(base_path = base_path,
         #                     project = project,
         #                     study_name = study_name)
         #     op.csv_output()
         #     op.plot_output()
-        print("after log data")
+
 
     except:
         pass
@@ -1467,10 +1435,16 @@ if __name__ == "__main__":
    # main(project='pv_optimiser',
    #      study_name='pv_optimiser2',
    #      base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
-   main(project='p_testing',
-        study_name='test7a',
-        base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
-
+    global num_threads
+    times = pd.DataFrame(columns = ['start', 'end','time'],index =[2,4,6,8,10,15])
+    for num_threads in [2,4,6,8,10,15]:
+        times.loc[num_threads,'start'] = dt.datetime.now()
+        main(project='p_testing',
+            study_name='test7a',
+            base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+        times.loc[num_threads,'end'] = dt.datetime.now()
+        times.loc[num_threads,'time'] = times.loc[num_threads,'end'] -times.loc[num_threads,'start']
+    print(times)
 
 # TODO - FUTURE - Variable allocation of pv between cp and residents
 # TODO - en_external scenario: cp tariff != TIDNULL
