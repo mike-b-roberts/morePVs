@@ -1378,7 +1378,7 @@ def runScenario(scenario_name):
     # collate / log data for all loads in scenario
     with lock:
         scenario.logScenarioData()
-
+    logging.info('Completed Scenario %i', scenario_name)
 # ------------
 # MAIN PROGRAM
 # ------------
@@ -1402,11 +1402,11 @@ def main(base_path,project,study_name):
         #Initialise threading
         # -------------------
         global lock
-        num_worker_threads = 6  # pick a number that works for you, I suggest trying a few between 4 and 200
+        num_worker_threads = num_threads  # pick a number that works for you, I suggest trying a few between 4 and 200
         lock = threading.Lock()
         with concurrent.futures.ThreadPoolExecutor(max_workers=num_worker_threads) as x:
-            futs = x.map(runScenario, study.scenario_list)
-            concurrent.futures.wait(futs)
+            results = list(x.map(runScenario, study.scenario_list))
+
 
         study.logStudyData()
         # if len(study.output_list)>0:
@@ -1419,10 +1419,10 @@ def main(base_path,project,study_name):
 
     except:
         pass
-        # logging.exception('\n\n\n Exception !!!!!!')
-        # type, value, tb = sys.exc_info()
-        # traceback.print_exc()
-        # pdb.post_mortem(tb)
+        logging.exception('\n\n\n Exception !!!!!!')
+        type, value, tb = sys.exc_info()
+        traceback.print_exc()
+        pdb.post_mortem(tb)
 
 if __name__ == "__main__":
 
@@ -1439,6 +1439,7 @@ if __name__ == "__main__":
     times = pd.DataFrame(columns = ['start', 'end','time'],index =[2,4,6,8,10,15])
     for num_threads in [2,4,6,8,10,15]:
         times.loc[num_threads,'start'] = dt.datetime.now()
+        print ('RUNNING WITH ',num_threads,' THREADS:')
         main(project='p_testing',
             study_name='test7a',
             base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
