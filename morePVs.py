@@ -1332,14 +1332,14 @@ class Study():
 
         # Save remaining results for all scenarios
         opFile = os.path.join(self.output_path, self.name + '_results.csv')
-        um.df_to_csv(self.op,opFile)
+        um.df_to_csv(self.op, opFile)
 
- # ----------------------------------------------------------------------------------------------------
- # ----------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------
 
 
 def runScenario(scenario_name):
-    print("Scenario name is: " , scenario_name)
+    logging.info("Running Scenario number %i ", scenario_name)
     # Initialise scenario
     scenario = Scenario(scenario_name=scenario_name)
     eno = Network(scenario=scenario)
@@ -1382,8 +1382,11 @@ def worker():
     while True:
         next_scenario = q.get() #get the next scenario in the queue
         if next_scenario is None:
+            logging.info("NO MORE SCENARIOS")
             break
+        logging.info ("Thread %i calling scenario %i",thread_count,next_scenario )
         runScenario(next_scenario) #send item to your function here
+        logging.info ("Thread %i & scenario %i COMPLETED",thread_count,next_scenario )
         q.task_done() #remove from queue once done
 
 # ------------
@@ -1408,14 +1411,14 @@ def main(base_path,project,study_name):
         # -------------------
         #Initialise threading
         # -------------------
-        global q, lock
+        global q, lock, thread_count
         q = Queue()  # create a queue object
         threads = []
         num_worker_threads = 6  # pick a number that works for you, I suggest trying a few between 4 and 200
         lock = threading.Lock()
         # create a list of threads
-        for i in range(num_worker_threads):
-            print("Thread number ",i)
+        for thread_count in range(num_worker_threads):
+            logging.info("Thread number %i", thread_count)
             this_thread = threading.Thread(target=worker)
             this_thread.start()
             threads.append(this_thread)
@@ -1427,14 +1430,17 @@ def main(base_path,project,study_name):
         for scenario_name in study.scenario_list:
             q.put(scenario_name)  # put items in my queue
 
-
+        # This needed to end the threads:
+        for thread_count in range(num_worker_threads):
+            q.put(None)
+        for t in threads:
+            t.join()
         # block until all tasks are done
-
         q.join()
 
         print("after q.join")
 
-        study.logStudyData()
+        #study.logStudyData()
         # if len(study.output_list)>0:
         #     op = opm.Output(base_path = base_path,
         #                     project = project,
@@ -1444,10 +1450,11 @@ def main(base_path,project,study_name):
         print("after log data")
 
     except:
-        logging.exception('\n\n\n Exception !!!!!!')
-        type, value, tb = sys.exc_info()
-        traceback.print_exc()
-        pdb.post_mortem(tb)
+        pass
+        # logging.exception('\n\n\n Exception !!!!!!')
+        # type, value, tb = sys.exc_info()
+        # traceback.print_exc()
+        # pdb.post_mortem(tb)
 
 if __name__ == "__main__":
 
