@@ -969,7 +969,7 @@ class Scenario():
         # --------------------------------------------------------
         # Annual capex repayments for embedded network
         self.pc_cap_id = self.parameters['pv_cap_id']
-        self.en_cap_id = self.parameters['capex_id']
+        self.en_cap_id = self.parameters['en_capex_id']
         self.en_capex = study.en_capex.loc[self.en_cap_id, 'site_capex'] + \
             (study.en_capex.loc[self.en_cap_id, 'unit_capex']  * \
             len(self.households))
@@ -1167,7 +1167,7 @@ class Study():
         # All input and output datafiles are located relative to base_path and base_path\project
         self.base_path = base_path
         self.name = study_name
-        self.project_path = os.path.join(self.base_path, project)
+        self.project_path = os.path.join(self.base_path,'studies',project)
         # reference files
         # ---------------
         self.reference_path = os.path.join(self.base_path, 'reference')
@@ -1245,7 +1245,7 @@ class Study():
                                            })
         self.en_capex.loc[:,['site_capex', 'unit_capex', 'site_opex', 'unit_opex']] \
             = self.en_capex.loc[:,['site_capex','unit_capex','site_opex','unit_opex']].fillna(0.0)
-        self.en_capex = self.en_capex.set_index('capex_id')
+        self.en_capex = self.en_capex.set_index('en_capex_id')
         if self.pv_exists:
             self.pv_capex_table = pd.read_csv(self.capexpv_file,
                                               dtype = {'pv_capex' : np.float64,
@@ -1398,16 +1398,14 @@ def main(base_path,project,study_name):
                     study_name=study_name)
         # Multiple scenarios, multiple load profiles for each are allowable
 
-        # -------------------
-        #Initialise threading
-        # -------------------
+        # -------------
+        # Use Threading
+        # -------------
         global lock
-        num_threads = 4
-        num_worker_threads = num_threads  # pick a number that works for you, I suggest trying a few between 4 and 200
+        num_worker_threads = num_threads
         lock = threading.Lock()
         with concurrent.futures.ThreadPoolExecutor(max_workers=num_worker_threads) as x:
             results = list(x.map(runScenario, study.scenario_list))
-
 
         study.logStudyData()
         # if len(study.output_list)>0:
@@ -1437,9 +1435,36 @@ if __name__ == "__main__":
    #      study_name='pv_optimiser2',
    #      base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
 
+    # start = dt.datetime.now()
+    # main(project='p_testing',
+    #     study_name='test7a',
+    #     base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+    # end = dt.datetime.now()
+    # duration = end - start
+    # print(duration)
+
+    # This is legacy code for optimising number of threads. left here as it is likely to be machine specific:
+    # -------------------------------------------------------------------------------------------------------
+    # global num_threads
+    # thread_options = [4,6,8, 10, 12, 15, 20]
+    # times = pd.DataFrame(columns=['start', 'end', 'time'], index=thread_options)
+    # for num_threads in thread_options:
+    #     times.loc[num_threads,'start'] = dt.datetime.now()
+    #     print ('RUNNING WITH ',num_threads,' THREADS:')
+    #     main(project='p_testing',
+    #         study_name='test7a',
+    #         base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+    #     times.loc[num_threads,'end'] = dt.datetime.now()
+    #     times.loc[num_threads,'time'] = times.loc[num_threads,'end'] -times.loc[num_threads,'start']
+    # print(times)
+
+    # This optimised to n = 6 threads
+    # -------------------------------
+    num_threads = 6
     main(project='p_testing',
-        study_name='test7a',
-        base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+            study_name='test7a',
+            base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+
 
 # TODO - FUTURE - Variable allocation of pv between cp and residents
 # TODO - en_external scenario: cp tariff != TIDNULL
