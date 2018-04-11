@@ -1387,6 +1387,7 @@ def main(base_path,project,study_name):
     # set up script logging
     pyname = os.path.basename(__file__)
     um.setup_logging(pyname)
+    start_time = dt.datetime.now()
 
     try:
         # --------------------------------------
@@ -1414,7 +1415,10 @@ def main(base_path,project,study_name):
         #                     study_name = study_name)
         #     op.csv_output()
         #     op.plot_output()
-
+        end_time = dt.datetime.now()
+        duration = end_time-start_time
+        logging.info(" ********* Completed %i scenarios in %f **************", len(study.scenario_list), duration.seconds)
+        logging.info(" ********* Time per Scenario is  %f **************", duration.seconds / len(study.scenario_list))
 
     except:
         pass
