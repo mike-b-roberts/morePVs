@@ -51,10 +51,8 @@ class TariffData():
     def __init__(
             self,
             tariff_lookup_path,
-            timeseries,
             reference_path):
         """Initialise tariff look-up table."""
-        self.ts = timeseries
         self.reference_path = reference_path
         self.saved_tariff_path = os.path.join(self.reference_path, 'saved_tariffs')
         if not os.path.exists(self.saved_tariff_path):
@@ -63,9 +61,9 @@ class TariffData():
         self.lookup = pd.read_csv(tariff_lookup_path, index_col=[0])
         self.all_tariffs = self.lookup.index  # list of all tariff ids
         # set up dfs for static import and export tariffs
-        self.static_imports = pd.DataFrame(index=self.ts.timeseries)
-        self.static_exports = pd.DataFrame(index=self.ts.timeseries)
-        self.static_solar_imports = pd.DataFrame(index=self.ts.timeseries)
+        self.static_imports = pd.DataFrame(index=ts.timeseries)
+        self.static_exports = pd.DataFrame(index=ts.timeseries)
+        self.static_solar_imports = pd.DataFrame(index=ts.timeseries)
         self.block_quarterly_billing_start = 0  # timestep to start cumulative energy calc
         self.steps_in_block = 4380  # quarterly half-hour steps
         self.tou_rate_list = {'name_1': ['rate_1', 'start_1', 'end_1', 'week_1'],
@@ -107,18 +105,18 @@ class TariffData():
 
                         if self.lookup.loc[tid, parameter[1]] == '0:00':  # start_
                             period = \
-                                self.ts.days[self.lookup.loc[tid, parameter[3]]][ # week_
-                                    (self.ts.days[self.lookup.loc[tid, parameter[3]]].time >= pd.Timestamp( # week_
+                                    ts.days[self.lookup.loc[tid, parameter[3]]][ # week_
+                                    (ts.days[self.lookup.loc[tid, parameter[3]]].time >= pd.Timestamp( # week_
                                         self.lookup.loc[tid,  parameter[1]]).time()) # start_
-                                    & (self.ts.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp( # week_
+                                    & (ts.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp( # week_
                                         self.lookup.loc[tid, parameter[2]]).time()) # end_
                                     ]
                         else:
                             period = \
-                                self.ts.days[self.lookup.loc[tid, parameter[3]]][ # week_
-                                    (self.ts.days[self.lookup.loc[tid, parameter[3]]].time > pd.Timestamp( # week_
+                                    ts.days[self.lookup.loc[tid, parameter[3]]][ # week_
+                                    (ts.days[self.lookup.loc[tid, parameter[3]]].time > pd.Timestamp( # week_
                                         self.lookup.loc[tid, parameter[1]]).time()) # start_
-                                    & (self.ts.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp( # week_
+                                    & (ts.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp( # week_
                                         self.lookup.loc[tid, parameter[2]]).time()) #end_
                                     ]
                         if not any(s in name for s in ['solar','Solar']):
@@ -149,8 +147,7 @@ class TariffData():
 class Tariff():
     def __init__(self,
                  tariff_id,
-                 scenario,
-                 ts):
+                 scenario):
         """Create time-based rates for single specific tariff."""
 
         # ------------------------------
@@ -226,9 +223,7 @@ class Tariff():
                           tariff_id,
                           scenario,
                           step,
-                          customer_load,
-                          pv_daily_allocation,
-                          pv_instantaneous_allocation):
+                          customer_load):
         """Dynamically calculate tariffs by timestep according to status (eg cumulative load for block tariffs)."""
         if tariff_id in scenario.dynamic_list:
             if scenario.lookup.loc[tariff_id, 'tariff_type'] == 'Block_Quarterly':
@@ -250,7 +245,6 @@ class Battery():
     # adapted from script by Luke Marshall
     def __init__(self, scenario, battery_id, battery_strategy):
         self.battery_id = battery_id
-        ts = study.ts
         self.scenario = scenario
         # Load battery parameters from battery lookup
         # -------------------------------------------
@@ -330,8 +324,8 @@ class Battery():
         # ----------------------------
         self.charge_level_kWh = 0.0
         self.number_cycles = 0
-        self.max_timestep_discharge = self.charge_kW * study.ts.interval / 3600
-        self.max_timestep_charge = self.charge_kW * study.ts.interval / 3600
+        self.max_timestep_discharge = self.charge_kW * ts.interval / 3600
+        self.max_timestep_charge = self.charge_kW * ts.interval / 3600
         # Initialise SOC log
         # ------------------
         self.SOC_log = np.zeros(ts.num_steps)
@@ -340,7 +334,7 @@ class Battery():
         amount_to_charge = min((self.capacity_kWh * self.maxSOC - self.charge_level_kWh)
                                / self.efficiency_cycle, desired_charge)
         self.charge_level_kWh += amount_to_charge*self.efficiency_cycle
-        return desired_charge - amount_to_charge # returns unstored portion of energy
+        return desired_charge - amount_to_charge  # returns unstored portion of energy
 
     def discharge(self, desired_discharge):
         if self.charge_level_kWh > self.capacity_kWh * (1 - self.maxDOD):
@@ -351,7 +345,7 @@ class Battery():
             amount_to_discharge =0
         self.charge_level_kWh -= amount_to_discharge
         self.number_cycles += amount_to_discharge / self.capacity_kWh
-        return amount_to_discharge # returns delivered energy
+        return amount_to_discharge  # returns delivered energy
 
     def calcBatCapex(self):
         # Battery capex includes inverter replacement if amortization period > inverter lifetime
@@ -367,6 +361,35 @@ class Battery():
         tot_capex = bat_inv_capex + bat_capex
         return tot_capex
 
+    def dispatch(self, available_kWh, step):
+        """Determines charge and discharge of battery at timestep."""
+
+        # -------------------------------
+        # Make battery control decisions:
+        # -------------------------------
+        # 1) Use excess PV to charge
+        # --------------------------
+        if available_kWh > 0:
+            available_kWh = \
+            self.charge(available_kWh)
+        # 2) Discharge if needed to meet load, within discharge period
+        # ------------------------------------------------------------
+        elif available_kWh < 0 and ts.timeseries[step] in self.discharge_period:
+            available_kWh += \
+                self.discharge(-available_kWh)
+        # 3) Charge from grid in additional charge period:
+        # ------------------------------------------------
+        elif available_kWh <= 0 and ts.timeseries[step] in self.charge_period:
+            available_kWh -= (self.max_timestep_charge -
+                                 self.charge(self.max_timestep_charge))
+        # TODO 4) Dispatch battery to address peak demand ....(later)
+
+        # For monitoring purposes, log battery SOC:
+        # -----------------------------------------
+        self.SOC_log[step] = self.charge_level_kWh / self.capacity_kWh * 100
+        return available_kWh
+
+
 class Customer():
     """Can be resident, strata body, or ENO representing aggregation of residents."""
 
@@ -375,7 +398,6 @@ class Customer():
                  ):
         self.name = name
         self.tariff_data = study.tariff_data
-        self.ts = study.ts
         self.en_capex_repayment=0
         self.en_opex=0
         self.bat_capex_repayment=0
@@ -384,12 +406,12 @@ class Customer():
                                customer_load): # as 1-d np.array
         """Set customer load, energy flows and cashflows to zero."""
         self.load = customer_load
-        self.exports = np.zeros(self.ts.num_steps)
-        self.imports = np.zeros(self.ts.num_steps)
-        self.local_exports = np.zeros(self.ts.num_steps) # not used, available for local trading
-        self.local_imports = np.zeros(self.ts.num_steps) # used for import of local generation
-        self.flows = np.zeros(self.ts.num_steps)
-        self.cashflows = np.zeros(self.ts.num_steps)
+        self.exports = np.zeros(ts.num_steps)
+        self.imports = np.zeros(ts.num_steps)
+        self.local_exports = np.zeros(ts.num_steps) # not used, available for local trading
+        self.local_imports = np.zeros(ts.num_steps) # used for import of local generation
+        self.flows = np.zeros(ts.num_steps)
+        self.cashflows = np.zeros(ts.num_steps)
 
     def initialiseCustomerTariff(self,
                                  customer_tariff_id,#string
@@ -398,8 +420,7 @@ class Customer():
         self.scenario = scenario
         self.tariff = Tariff(
                             tariff_id=self.tariff_id,
-                            scenario=scenario,
-                            ts=self.ts)
+                            scenario=scenario)
 
     def initialiseCustomerPv(self, pv_generation):  # 1-D array
         self.generation = pv_generation
@@ -410,6 +431,25 @@ class Customer():
         self.exports = self.flows.clip(0)
         self.imports = (-1 * self.flows).clip(0)
         self.local_imports = np.minimum(self.imports, self.local_quota) # for use of local generation
+
+    def calcDynamicEnergyFlows(self,step):
+        """Calculate Customer imports and exports for single timestep"""
+        # -------------------------------------------------------------------------------
+        # Calculate energy flow without battery, then modify by calling battery.dispatch:
+        # -------------------------------------------------------------------------------
+        self.flows[step] = self.generation[step] - self.load[step]
+        if self.has_battery:
+            self.flows[step] = self.battery.dispatch(available_kWh=self.flows[step], step=step)
+        self.exports[step] = self.flows[step].clip(0)
+        self.imports[step] = (-1 * self.flows[step]).clip(0)
+        #TODO: @@@@@ Sort this local quota
+        self.local_imports[step] = np.minimum(self.imports[step], self.local_quota[step])  # for use of local generation
+
+        # TODO: @@@@@@ Can cp have its own battery??? ie households or residents
+
+
+
+
 
     def calcCustomerTariff (self, step):
         """Calculates import rates for timestep for dynamic (eg block) tariff."""
@@ -430,7 +470,7 @@ class Customer():
             if self.cumulative_energy.all():
                 self.prev_cum_energy = self.cumulative_energy
             else:
-                self.prev_cum_energy= np.zeros(self.ts.num_steps)
+                self.prev_cum_energy= np.zeros(ts.num_steps)
             self.cumulative_energy = self.imports[step - self.steps_since_reset:step + 1].sum()
             # Allocate local_import depending on cumulative energy relative to quota:
             if self.cumulative_energy <= self.daily_local_quota:
@@ -445,7 +485,7 @@ class Customer():
     def calcDemandCharge(self):
         if self.tariff.is_demand:
             max_demand = np.multiply(self.imports,self.tariff.demand_period_array).max()/2 # in kW
-            self.demand_charge = max_demand * self.tariff.demand_tariff * self.ts.num_days
+            self.demand_charge = max_demand * self.tariff.demand_tariff * ts.num_days
             # Use nominal pf to convert to kVA?
             if self.tariff.demand_type == 'kVA':
                 self.demand_charge = self.demand_charge / self.tariff.assumed_pf
@@ -467,7 +507,7 @@ class Customer():
         # local_tariffs are for, e.g. `solar_rate` energy,
         # maybe extendable for p2p later
         self.energy_bill = self.cashflows.sum() + \
-                           self.tariff.fixed_charge * self.ts.num_days + \
+                           self.tariff.fixed_charge * ts.num_days + \
                            self.demand_charge
         if self.name == 'retailer':
             self.total_payment = self.energy_bill
@@ -516,9 +556,11 @@ class Network(Customer):
         self.network_load.set_index('timestamp', inplace=True)
         if not 'cp' in self.network_load.columns:
             self.network_load['cp'] = 0
-        # set eno load to zero initially
-        # ------------------------------
-        self.initialiseCustomerLoad(np.zeros(self.ts.num_steps))
+        # set eno load, cumulative load and generation to zero
+        # ----------------------------------------------------
+        self.initialiseCustomerLoad(np.zeros(ts.num_steps))
+        self.cum_resident_imports = np.zeros(ts.num_steps)
+        self.cum_resident_exports = np.zeros(ts.num_steps)
         # initialise residents' loads
         # ---------------------------
         for c in self.resident_list:
@@ -553,7 +595,7 @@ class Network(Customer):
 
         # Also used to allocate pv capex costs for some scenarios
         if not scenario.pv_exists:
-            self.pv = pd.DataFrame(index = study.ts.timeseries, columns = study.load.columns).fillna(0)
+            self.pv = pd.DataFrame(index=ts.timeseries, columns=study.load.columns).fillna(0)
             self.pv_customers = []
         else:
             pvFile = os.path.join(study.pv_path,
@@ -566,7 +608,7 @@ class Network(Customer):
                 # -----------------------
                 self.pv = pd.read_csv(pvFile, parse_dates=['timestamp'], dayfirst=True)
                 self.pv.set_index('timestamp', inplace=True)
-                if not self.pv.index.equals(study.ts.timeseries):
+                if not self.pv.index.equals(ts.timeseries):
                     logging.info('***************Exception!!! PV %s index does not align with load ', pvFile)
                     sys.exit("PV has bad timeseries")
                 # Scaleable PV has a 1kW gneration input file scaled to array size:
@@ -651,6 +693,7 @@ class Network(Customer):
         # -----------------------------------------------
         # (NB Applies to EN arrangements only, so PV allocation is fixed and PV has already been initialised.)
         # This is for instantaneous solar tariff.
+        #TODO @@@ Modify this to use customer import, not customer load and move execution to later on
         self.local_quota = 0
         self.retailer.local_quota = 0
         if 'en' in scenario.arrangement:
@@ -665,33 +708,44 @@ class Network(Customer):
             for c in self.resident_list:
                 self.resident[c].local_quota = 0
 
-    def initailiseBuildingBattery(self, scenario):
-        self.has_battery = scenario.has_battery
-        if self.has_battery:
+    def initialiseAllBatteries(self, scenario):
+        """Initialise central and individual batteries as required."""
+        # Central Battery
+        # ---------------
+        self.has_central_battery = scenario.has_battery
+        if self.has_central_battery:
             self.battery = Battery(scenario=scenario,
                                    battery_id=scenario.battery_id,
                                    battery_strategy=scenario.battery_strategy)
+        # Individual Batteries
+        # --------------------
+        self.any_resident_has_battery = False
+        for c in self.households:
+            if self.scenario.cust_battery[c]:
+                bat_name = str(c) + '_battery_id'
+                bat_strategy = str(c) + '_battery_strategy'
+                self.resident[c].battery = Battery(scenario=scenario,
+                                                   battery_id=scenario.parameters[bat_name],
+                                                   battery_strategy=scenario.parameters[bat_strategy])
+                self.resident[c].has_battery = True
+                self.any_resident_has_battery = True
+            else:
+                self.resident[c].has_battery = False
 
 
     def calcBuildingStaticEnergyFlows(self):
-        """Calculate internal energy flows for all residents.
-        (currently assumes no demand management or individual batteries)"""
-        # Initialise cumulative load and generation to zero
-        self.cum_resident_imports = np.zeros(self.ts.num_steps)
-        self.cum_resident_exports = np.zeros(self.ts.num_steps)
+        """Calculate all internal energy flows for all timesteps (no storage or dm)."""
+
         # Calculate flows for each resident and cumulative values for ENO
         for c in self.resident_list:
             self.resident[c].calcStaticEnergyFlows()
             # Cumulative load and generation are what the "ENO" presents to the retailer:
             self.cum_resident_imports += self.resident[c].imports
             self.cum_resident_exports += self.resident[c].exports
-        # If no battery, calculate aggregate flows for ENO
-        # (If battery, this is done dynamically)
-        if not (self.has_battery):
-            # self.calcStaticEnergyFlows()
-            self.flows = self.cum_resident_exports - self.cum_resident_imports
-            self.exports = self.flows.clip(0)
-            self.imports = (-1 * self.flows).clip(0)
+        # Calculate aggregate flows for ENO
+        self.flows = self.cum_resident_exports - self.cum_resident_imports
+        self.exports = self.flows.clip(0)
+        self.imports = (-1 * self.flows).clip(0)
 
     def setupRetailerFlows(self):
         # NB retailer acts like a customer too, buying from DNSP
@@ -706,64 +760,37 @@ class Network(Customer):
             self.resident[c].calcDemandCharge()
         self.retailer.calcDemandCharge()
 
-    def calcDynamicStorageEnergyFlows(self, step):
-        """Timestepped energy flows for scenarios with storage."""
+    def calcBuildingDynamicEnergyFlows(self, step):
+        """Calculate all internal energy flows for SINGLE timesteps (with storage)."""
 
-        # (Currently this works for central battery only.
-        # To extend for individual batteries, move these dispatch calcs to Battery class
-        # and do individual battery dispatch before calculating resident (& cumulative) imports & exports)
-        # --------------------------------------
-        # Calculate energy flow without battery:
-        # --------------------------------------
+        # ---------------------------------------------------------------
+        # Calculate flows for each resident and cumulative values for ENO
+        # ---------------------------------------------------------------
+        for c in self.resident_list:
+            # Calc flows (inc battery dispatch) for each resident
+            # ---------------------------------------------------
+            self.resident[c].calcDynamicEnergyFlows(step)
+            # Cumulative load and generation are what the "ENO" presents to the retailer:
+            self.cum_resident_imports[step] += self.resident[c].imports[step]
+            self.cum_resident_exports[step] += self.resident[c].exports[step]
+
+        # ----------------------------------------------------------------------------------------
+        # Calculate energy flow without central  battery, then modify by calling battery.dispatch:
+        # ----------------------------------------------------------------------------------------
         self.flows[step] = self.cum_resident_exports[step] - self.cum_resident_imports[step]
-        # -------------------------------
-        # Make battery control decisions:
-        # -------------------------------
-        # 1) Use excess PV to charge
-        # --------------------------
-        if self.flows[step] > 0:
-            self.flows[step] = \
-            self.battery.charge(self.flows[step])
-        # 2) Discharge if needed to meet load, within discharge period
-        # ------------------------------------------------------------
-        elif self.flows[step] < 0 and self.ts.timeseries[step] in self.battery.discharge_period:
-            self.flows[step] += \
-                self.battery.discharge(-self.flows[step])
-        # 3) Charge from grid in additional charge period:
-        # ------------------------------------------------
-        elif self.flows[step] <= 0 and self.ts.timeseries[step] in self.battery.charge_period:
-            self.flows[step] -= (self.battery.max_timestep_charge -
-                                 self.battery.charge(self.battery.max_timestep_charge))
-        # TODO 4) Look at using battery to address peak demand ....(later)
+        if self.has_central_battery:
+            self.flows[step] = self.battery.dispatch(available_kWh=self.flows[step], step=step)
         # Calc imports and exports
         # ------------------------
         self.exports[step] = self.flows[step].clip(0)
         self.imports[step] = (-1 * self.flows[step]).clip(0)
-        # For monitoring purposes, log battery SOC:
-        # -----------------------------------------
-        self.battery.SOC_log[step] = self.battery.charge_level_kWh / self.battery.capacity_kWh * 100
+
 
     def calcDynamicTariffs(self,step):
         """Dynamic calcs of (eg block) tariffs by timestep for ENO and for all residents."""
         for c in self.resident_list:
-            self.resident[c].calcDynamicTariff(step)
+            self.resident[c].calcCustomerTariff(step)
         self.calcCustomerTariff(step)
-
-    def calcDynamicValues(self):
-        """Iterate through dynamic processes by timestep, but only if necessary
-
-        Dynamic processes are those that require calculation iteratively by timestep, including:
-            dynamic tariff calcs: block tariffs
-            dynamic energy flow calculations: where energy flows depend on battery status and control algorithm"""
-
-        dynamic_calculations = [f for c, f in [
-            (self.has_dynamic_tariff, self.calcDynamicTariffs),  # if condition, do calc iteratively
-            (self.has_battery, self.calcDynamicStorageEnergyFlows),  # if condition, do calc iteratively
-            ] if c]
-        if dynamic_calculations:
-            for step in np.arange(0, study.ts.num_steps):
-                for calc in dynamic_calculations:
-                    calc(step)  # Do each of the calcs iteratively, if required
 
 
     def allocateAllCapex(self, scenario):
@@ -782,7 +809,7 @@ class Network(Customer):
 
         # Calculate capex costs for battery
         # ---------------------------------
-        if self.has_battery:
+        if self.has_central_battery:
             self.bat_capex = self.battery.calcBatCapex()
         else:
             self.bat_capex = 0
@@ -843,7 +870,7 @@ class Network(Customer):
     def logTimeseries(self,scenario):
         """Logs timeseries data for whole building to csv file."""
 
-        timedata = pd.DataFrame(index=study.ts.timeseries)
+        timedata = pd.DataFrame(index=ts.timeseries)
         timedata['network_load'] = self.network_load.sum(axis=1)
         timedata['pv_generation'] = self.pv.sum(axis=1)
         timedata['grid_import'] = self.imports
@@ -955,7 +982,7 @@ class Scenario():
             self.static_solar_imports = study.tariff_data.static_solar_imports[self.solar_list]
 
         # ----------------------------------
-        # identify battery for this scenario
+        # identify batteries for this scenario
         # ----------------------------------
         if 'battery_id' in self.parameters.index and 'battery_strategy' in self.parameters.index:
             self.battery_id = self.parameters['battery_id']
@@ -963,6 +990,15 @@ class Scenario():
             self.has_battery = not pd.isnull(self.battery_id)
         else:
             self.has_battery = False
+        self.cust_battery={}
+        for c in self.households:
+            bat_name = str(c) + '_battery_id'
+            bat_strategy = str(c) +'_battery_strategy'
+            if bat_name in self.parameters.index and bat_strategy in self.parameters.index:
+                self.cust_battery[c] = True
+            else:
+                self.cust_battery[c] = False
+
 
         # --------------------------------------------------------
         # Set up annual capex & opex costs for en in this scenario
@@ -1164,6 +1200,7 @@ class Scenario():
 
 class Study():
     """A set of different scenarios to be compared."""
+    global ts
     def __init__(self,
                  base_path,
                  project,
@@ -1273,18 +1310,18 @@ class Study():
         #  Identify load data
         # -------------------
         if len(self.study_parameters['load_folder'].unique())==1:
-            self.different_loads = False # Same load or set of loads for each scenario
+            self.different_loads = False  # Same load or set of loads for each scenario
         else:
-            self.different_loads = True # Different loads for each scenario
+            self.different_loads = True  # Different loads for each scenario
         self.load_path = os.path.join(self.base_path, 'load_profiles', self.study_parameters.loc[self.study_parameters.index[0], 'load_folder'])
         self.load_list = os.listdir(self.load_path)
         if len(self.load_list) == 0:
             logging.info('***************** Load folder %s is empty *************************', self.load_path)
-            sys.exit("Missing load data") # TODO: Exception handling
-        elif len(self.load_list) ==1:
-            self.multiple_loads = False # single load profile for each scenario
+            sys.exit("Missing load data")  # TODO: Exception handling
+        elif len(self.load_list) == 1:
+            self.multiple_loads = False  # single load profile for each scenario
         else:
-            self.multiple_loads = True # multiple load profiles for each scenario - outputs are mean ,std dev, etc.
+            self.multiple_loads = True  # multiple load profiles for each scenario - outputs are mean ,std dev, etc.
         # -----------------------------------------------------------------
         # Use first load profile to initialise timeseries and resident_list
         # -----------------------------------------------------------------
@@ -1298,7 +1335,8 @@ class Study():
             self.load['cp'] = 0
         # Initialise timeseries
         # (assume timeseries are all the same for all load profiles)
-        self.ts = Timeseries(self.load)
+
+        ts = Timeseries(self.load)
         # Lists of meters / residents (includes cp)
         # -----------------------------------------
         # This is used for initialisation (and when different_loads = FALSE),
@@ -1307,10 +1345,8 @@ class Study():
         # ---------------------------------------------------------------
         # Initialise Tariff Look-up table and generate all static tariffs
         # ---------------------------------------------------------------
-        self.tariff_data = TariffData(
-                                     tariff_lookup_path=self.t_lookupFile,
-                                     timeseries=self.ts,
-                                     reference_path = self.reference_path
+        self.tariff_data = TariffData(tariff_lookup_path=self.t_lookupFile,
+                                     reference_path=self.reference_path
                                      )
         self.tariff_data.generateStaticTariffs()
         # -----------------------------
@@ -1357,7 +1393,7 @@ def runScenario(scenario_name):
     # N.B. in embedded network scenarios, eno is the actual embedded network operator,
     # but in other scenarios, it is a virtual intermediary to organise energy and cash flows
     eno.initialiseAllTariffs(scenario)
-    eno.initailiseBuildingBattery(scenario)
+    eno.initialiseAllBatteries(scenario)
 
     # Set up pv profile if allocation not load-dependent
     if scenario.pv_allocation == 'fixed':
@@ -1365,18 +1401,41 @@ def runScenario(scenario_name):
 
     if scenario.has_solar_block:
         eno.initialiseDailySolarBlockQuotas(scenario)
+
+    # Iterate through all load profiles for this scenario:
     for loadFile in scenario.load_list :
         eno.initialiseBuildingLoads(loadFile, scenario)
-        if scenario.pv_allocation =='load_dependent': #ie. for btm_icp, btm_s_u and btm_s_c arrangements
+        if scenario.pv_allocation == 'load_dependent':  # ie. for btm_icp, btm_s_u and btm_s_c arrangements
             eno.allocatePv(scenario)
-        eno.initialiseSolarInstQuotas(scenario) # depends on load and pv
-        # calc all internal energy flows (static & dynamic) & dynamic tariffs
-        # (currently assumes no demand management or individual batteries)
-        eno.calcBuildingStaticEnergyFlows()
-        eno.calcDynamicValues()
-        eno.setupRetailerFlows() # Move this??
+        eno.initialiseSolarInstQuotas(scenario)  # depends on load and pv
+
+        # If no battery, calc all internal energy flows statically (i.e. as single df calculation)
+        # ----------------------------------------------------------------------------------------
+        if not eno.has_central_battery and not eno.any_resident_has_battery:
+            eno.calcBuildingStaticEnergyFlows()
+        else:
+            # If battery, calculate energy flows stepwise:
+            # --------------------------------------------
+            for step in np.arange(0, ts.num_steps):
+                eno.calcBuildingDynamicEnergyFlows(step)
+
+        # If tariffs are dynamic (e.g block), calculate them stepwise:
+        # ------------------------------------------------------------
+        if eno.has_dynamic_tariff:
+            for step in np.arange(0, ts.num_steps):
+                eno.calcDynamicTariffs
+
+        # Energy Flows for retailler (static)
+        # -----------------------------------
+        eno.setupRetailerFlows()  # Move this??
         eno.retailer.calcStaticEnergyFlows()
+
+        # Summary energy metrics
+        # ----------------------
         eno.calcEnergyParameters(scenario)
+
+        # Financials
+        # ----------
         eno.calcAllDemandCharges()
         eno.allocateAllCapex(scenario)  # per load profile to allow for scenarios where capex allocation depends on load
         scenario.calcResults(eno)
@@ -1439,9 +1498,6 @@ def main(base_path,project,study_name):
         pdb.post_mortem(tb)
 
 if __name__ == "__main__":
-
-
-
     # start = dt.datetime.now()
     # main(project='p_testing',
     #     study_name='test7a',
@@ -1469,16 +1525,16 @@ if __name__ == "__main__":
     # -------------------------------
     num_threads = 6
 
-    # main(project='p_testing',
-    #         study_name='test7a',
-    #         base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+    main(project='p_testing',
+            study_name='test_bat6',
+            base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
 
-    sites = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
-    for s in sites:
-        study_name = 'site'+s+'_value1'
-        main(project='EN1_value_of_pv',
-                study_name = study_name,
-                base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+    # sites = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+    # for s in sites:
+    #     study_name = 'site'+s+'_value1'
+    #     main(project='EN1_value_of_pv',
+    #             study_name=study_name,
+    #             base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
 
 
 # TODO - FUTURE - Variable allocation of pv between cp and residents
