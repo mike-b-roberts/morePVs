@@ -968,13 +968,18 @@ class Scenario():
         # Set up annual capex & opex costs for en in this scenario
         # --------------------------------------------------------
         # Annual capex repayments for embedded network
+
         self.pc_cap_id = self.parameters['pv_cap_id']
-        self.en_cap_id = self.parameters['en_capex_id']
-        self.en_capex = study.en_capex.loc[self.en_cap_id, 'site_capex'] + \
-            (study.en_capex.loc[self.en_cap_id, 'unit_capex']  * \
-            len(self.households))
+        if 'en' in self.arrangement:
+            self.en_cap_id = self.parameters['en_capex_id']
+            self.en_capex = study.en_capex.loc[self.en_cap_id, 'site_capex'] + \
+                (study.en_capex.loc[self.en_cap_id, 'unit_capex']  * \
+                len(self.households))
+        else:
+            self.en_capex =0
         self.a_term = self.parameters['a_term']
         self.a_rate = self.parameters['a_rate']
+
         if self.en_capex>0:
             self.en_capex_repayment = -12 * np.pmt(rate=self.a_rate/12,
                                          nper=12 * self.a_term,
@@ -984,9 +989,12 @@ class Scenario():
         else:
             self.en_capex_repayment=0
         # Opex for embedded network:
-        self.en_opex = study.en_capex.loc[self.en_cap_id, 'site_opex'] + \
-                      (study.en_capex.loc[self.en_cap_id, 'unit_opex'] * \
-                       len(self.households))
+        if 'en' in self.arrangement:
+            self.en_opex = study.en_capex.loc[self.en_cap_id, 'site_opex'] + \
+                          (study.en_capex.loc[self.en_cap_id, 'unit_opex'] * \
+                           len(self.households))
+        else:
+            self.en_opex = 0
         # --------------------------------------------------------
         # Allocate annual capex repayments for pv in this scenario
         # --------------------------------------------------------
@@ -1394,9 +1402,11 @@ def main(base_path,project,study_name):
         # Initialise and load data for the study
         # --------------------------------------
         global study
+        logging.info("study_name = %s", study_name)
         study = Study(base_path=base_path,
                     project=project,
                     study_name=study_name)
+
         # Multiple scenarios, multiple load profiles for each are allowable
 
         # -------------
@@ -1417,6 +1427,7 @@ def main(base_path,project,study_name):
         #     op.plot_output()
         end_time = dt.datetime.now()
         duration = end_time-start_time
+        logging.info("***COMPLETED STUDY %s ***", 'study_name')
         logging.info(" ********* Completed %i scenarios in %f **************", len(study.scenario_list), duration.seconds)
         logging.info(" ********* Time per Scenario is  %f **************", duration.seconds / len(study.scenario_list))
 
@@ -1429,15 +1440,7 @@ def main(base_path,project,study_name):
 
 if __name__ == "__main__":
 
-   # main(project='past_papers',
-   #      study_name='apsrc2017_1',
-   #      base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
-   # main(project='past_papers',
-   #      study_name='energyCON_1',
-   #      base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
-   # main(project='pv_optimiser',
-   #      study_name='pv_optimiser2',
-   #      base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+
 
     # start = dt.datetime.now()
     # main(project='p_testing',
@@ -1465,9 +1468,17 @@ if __name__ == "__main__":
     # This optimised to n = 6 threads
     # -------------------------------
     num_threads = 6
-    main(project='p_testing',
-            study_name='test7a',
-            base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+
+    # main(project='p_testing',
+    #         study_name='test7a',
+    #         base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+
+    sites = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+    for s in sites:
+        study_name = 'site'+s+'_value1'
+        main(project='EN1_value_of_pv',
+                study_name = study_name,
+                base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
 
 
 # TODO - FUTURE - Variable allocation of pv between cp and residents
