@@ -442,14 +442,8 @@ class Customer():
             self.flows[step] = self.battery.dispatch(available_kWh=self.flows[step], step=step)
         self.exports[step] = self.flows[step].clip(0)
         self.imports[step] = (-1 * self.flows[step]).clip(0)
-        #TODO: @@@@@ Sort this local quota
+        #TODO: @@@ Sort this local quota - might be OK
         self.local_imports[step] = np.minimum(self.imports[step], self.local_quota[step])  # for use of local generation
-
-        # TODO: @@@@@@ Can cp have its own battery??? ie households or residents
-
-
-
-
 
     def calcCustomerTariff (self, step):
         """Calculates import rates for timestep for dynamic (eg block) tariff."""
@@ -532,7 +526,7 @@ class Network(Customer):
 
     def __init__(self, scenario):
         self.resident_list = scenario.resident_list # all residents plus cp
-        self.households = scenario.households # just residents, not cp
+        self.households = scenario.households  # just residents, not cp
         # (these may change later if different_loads)
         #initialise characteristics of the network as a customer:
         super().__init__('network')
@@ -630,7 +624,7 @@ class Network(Customer):
                     if len(self.pv.columns) ==1:
                         self.pv.columns =['total']
                         for r in scenario.households:
-                            self.pv[r]=self.pv['total']/len(scenario.households)
+                            self.pv[r] = self.pv['total']/len(scenario.households)
                         self.pv = self.pv.drop('total', axis=1)
                 elif scenario.arrangement == 'btm_icp':
                     # For btm_icp, if only single pv column, split % to cp according tp cp_ratio and split remainder equally between all units
@@ -693,9 +687,8 @@ class Network(Customer):
         # -----------------------------------------------
         # (NB Applies to EN arrangements only, so PV allocation is fixed and PV has already been initialised.)
         # This is for instantaneous solar tariff.
-        #TODO @@@ Modify this to use customer import, not customer load and move execution to later on
-        self.local_quota = 0
-        self.retailer.local_quota = 0
+        self.local_quota = np.zeros(ts.num_steps)
+        self.retailer.local_quota = np.zeros(ts.num_steps)
         if 'en' in scenario.arrangement:
             for c in self.resident_list:
                 if self.resident[c].tariff.is_solar_inst:
@@ -703,10 +696,10 @@ class Network(Customer):
                                                             (self.pv['cp'] - self.resident['cp'].load) / len(
                                                             self.households), 0)
                 else:
-                    self.resident[c].local_quota =0
+                    self.resident[c].local_quota =np.zeros(ts.num_steps)
         else:
             for c in self.resident_list:
-                self.resident[c].local_quota = 0
+                self.resident[c].local_quota = np.zeros(ts.num_steps)
 
     def initialiseAllBatteries(self, scenario):
         """Initialise central and individual batteries as required."""
@@ -720,7 +713,7 @@ class Network(Customer):
         # Individual Batteries
         # --------------------
         self.any_resident_has_battery = False
-        for c in self.households:
+        for c in self.resident_list:
             if self.scenario.cust_battery[c]:
                 bat_name = str(c) + '_battery_id'
                 bat_strategy = str(c) + '_battery_strategy'
@@ -991,7 +984,7 @@ class Scenario():
         else:
             self.has_battery = False
         self.cust_battery={}
-        for c in self.households:
+        for c in self.resident_list:
             bat_name = str(c) + '_battery_id'
             bat_strategy = str(c) +'_battery_strategy'
             if bat_name in self.parameters.index and bat_strategy in self.parameters.index:
@@ -1200,7 +1193,7 @@ class Scenario():
 
 class Study():
     """A set of different scenarios to be compared."""
-    global ts
+
     def __init__(self,
                  base_path,
                  project,
@@ -1335,7 +1328,7 @@ class Study():
             self.load['cp'] = 0
         # Initialise timeseries
         # (assume timeseries are all the same for all load profiles)
-
+        global ts
         ts = Timeseries(self.load)
         # Lists of meters / residents (includes cp)
         # -----------------------------------------
