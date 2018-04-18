@@ -32,7 +32,7 @@ def setup_logging(pyname):
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
     logname = "python_logfile_" + str(runtime.year) + "_" + str(runtime.month).zfill(2) + "_" + str(runtime.day).zfill(
-        2) + "_" + str(runtime.hour).zfill(2) + str(runtime.minute).zfill(2) + ".txt"
+        2) + "_" + str(runtime.hour).zfill(2) + str(runtime.minute).zfill(2) + str(runtime.second).zfill(2)+ ".txt"
     logpath = os.path.join(log_dir, logname)
 
     logging.basicConfig(level=logging.DEBUG, filename=logpath, filemode='w', format='%(asctime)s %(message)s',
@@ -178,7 +178,14 @@ def plot_battery(project,
         plt.savefig(plotfile, dpi=1000)
         plt.close(fig)
 
-
+def find_between( s, first, last ):
+    # from https://stackoverflow.com/questions/3368969/find-string-between-two-substrings
+    try:
+        start = s.index( first ) + len( first )
+        end = s.index( last, start )
+        return s[start:end]
+    except ValueError:
+        return ""
 
 
 #MAIN PROGRAM
