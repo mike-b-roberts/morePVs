@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 import sys
+import en_utilities as um
 
 
 class Output():
@@ -16,7 +17,7 @@ class Output():
         """sets up paths and loads input & output data"""
 
         # NB `data` is the results file, `study_parameters' is the study parameters
-        self.base_path =  base_path
+        self.base_path = base_path
         self.study_name = study_name
         self.project_path = os.path.join(self.base_path, project)
         self.input_path = os.path.join(self.project_path, 'inputs')
@@ -31,18 +32,18 @@ class Output():
         if not os.path.exists(self.plot_path):
                 os.makedirs(self.plot_path)
         # read study scenarios
-        self.study_scenarios = pd.read_csv(self.studyFile)
-        self.study_scenarios.set_index('scenario', inplace=True)
-        self.scenario_list = self.study_scenarios.index
+        self.study_parameters = pd.read_csv(self.studyFile)
+        self.study_parameters.set_index('scenario', inplace=True)
+        self.scenario_list = self.study_parameters.index
         # Read list of output requirements and strip from self.df
-        if 'output_types' in self.study_scenarios.columns:
-            self.output_list = self.study_scenarios['output_types'].dropna().tolist()
+        if 'output_types' in self.study_parameters.columns:
+            self.output_list = self.study_parameters['output_types'].dropna().tolist()
         # read results file
         resultsFile = os.path.join(self.output_path,self.study_name+'_results.csv')
         self.data = pd.read_csv(resultsFile)
         self.data= self.data.set_index('scenario')
 
-    def CsvOutput(self):
+    def csvOutput(self):
         """Format summary data from en model for csv output"""
 
         # Dict with required fields for summary table for different output_types
@@ -62,10 +63,10 @@ class Output():
                 # add in fields from input parameters ('study_ .csv)
                 for field in summary_fields[type]:
                     if field not in self.data.columns:
-                        if field not in self.study_scenarios.columns:
+                        if field not in self.study_parameters.columns:
                             sys.exit ('Field '+ field + ' not available')
                         else:
-                            self.data.join(self.study_scenarios[field])
+                            self.data.join(self.study_parameters[field])
                 # saves summary csv file
                 summary = self.data.loc[:,summary_fields[type]]
                 summaryFile = os.path.join(self.output_path,type[4:] + '.csv')
@@ -152,7 +153,7 @@ class Output():
             self.df = self.data.copy()
 
             # Get parent tariff and slice for 11.5c only
-            self.df = self.df.join(self.study_scenarios['parent'])
+            self.df = self.df.join(self.study_parameters['parent'])
             self.df['parent'] = self.df['parent'].fillna('N/A')
             self.df = self.df[self.df['parent'].str.contains('11.5c')]
             # Also, lose bau and cp_only
@@ -175,8 +176,8 @@ class Output():
             # -------------------------------------------------------
             # Set up axis categories based  PV size and years payback
             # -------------------------------------------------------
-            self.df = self.df.join(self.study_scenarios['pv_filename'])
-            self.df = self.df.join(self.study_scenarios['all_residents'])
+            self.df = self.df.join(self.study_parameters['pv_filename'])
+            self.df = self.df.join(self.study_parameters['all_residents'])
             def name_pv(x):
                 if 'max' in x:
                     y = 'max PV'
@@ -186,7 +187,7 @@ class Output():
                     y = 'no PV'
                 return y
             self.df['pv'] = self.df['pv_filename'].fillna('none').apply(lambda x: name_pv(x))
-            self.df = self.df.join(self.study_scenarios['a_term'])
+            self.df = self.df.join(self.study_parameters['a_term'])
             self.df['label'] = self.df['pv'] + self.df['a_term'].map(str)
 
             # ----------------------------------------------------------
@@ -221,8 +222,7 @@ class Output():
             plt.savefig(plotFile,dpi=1000)
 
         if type == 'scat_cust_sav_vs_sc_per_tariff':
-            print('hi')
-            # -----------------------------------------------------------
+                        # -----------------------------------------------------------
             # Scatter plot of customer savings vs self consumption metric
             # -----------------------------------------------------------
             # Each plot is for particular EN internal tariff,
@@ -236,12 +236,12 @@ class Output():
 
             # Select EN scenarios with different EN tariffs , plus bau, or for different sites
             # --------------------------------------------------------------------------------
-            self.study_scenarios['label'] = self.study_scenarios['site'].apply(lambda x: 'Site ' + x + ' ') + \
-                                          self.study_scenarios['all_residents']
-            self.study_scenarios[self.study_scenarios['arrangement'].isin(['en', 'en_pv', 'bau'])]
-            self.df = self.df[self.df.index.isin(self.study_scenarios[self.study_scenarios['arrangement']
+            self.study_parameters['label'] = self.study_parameters['site'].apply(lambda x: 'Site ' + x + ' ') + \
+                                             self.study_parameters['all_residents']
+            self.study_parameters[self.study_parameters['arrangement'].isin(['en', 'en_pv', 'bau'])]
+            self.df = self.df[self.df.index.isin(self.study_parameters[self.study_parameters['arrangement']
                                            .isin(['en', 'en_pv', 'bau'])].drop_duplicates('label').index)]
-            self.df = self.df.join(self.study_scenarios['label'])
+            self.df = self.df.join(self.study_parameters['label'])
 
             # get bau data
             # ------------
@@ -280,8 +280,8 @@ class Output():
             for label in [l for l in self.df.label if 'bau' not in l]:
                 # get tariff data
                 # ---------------
-                tariff = self.study_scenarios.loc[
-                    self.study_scenarios.label == label, 'all_residents'].drop_duplicates().values[0]
+                tariff = self.study_parameters.loc[
+                    self.study_parameters.label == label, 'all_residents'].drop_duplicates().values[0]
                 tariff_scenario = self.df.loc[self.df['label'].str.contains(tariff), 'scenario_label'].values[0]
                 tariff_path = os.path.join(self.scenario_path, tariff_scenario + '.csv')
                 d_en = pd.read_csv(tariff_path,index_col=[0])
@@ -345,7 +345,7 @@ class Output():
             # plots vs kWp and kWp per unit
             # Set up specifically for sgsc virtual buildings, sites A to J
             df = self.data.copy() # results
-            df_in = self.study_scenarios.copy() # input parameters
+            df_in = self.study_parameters.copy() # input parameters
 
             sites = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
             values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -466,6 +466,149 @@ class Output():
             plot_name = 'ssm_scm.png'
             plotFile = os.path.join(self.plot_path, plot_name)
             plt.savefig(plotFile, dpi=1000)
+
+        if type == 'scm_ssm_vs_pv_all_vbs':
+            # ------------------------------------------------------
+            # Plot of  self consumption and self-sufficiency metrics
+            # ------------------------------------------------------
+            # plots vs kWp and kWp per unit
+            # Set up specifically for sgsc virtual buildings, sites A to J
+            # This second version plots all vbs, not just mean values for each site
+
+            df = self.data.copy() # results
+            df_in = self.study_parameters.copy() # input parameters
+
+            sites = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+            values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            dict_sites = dict(zip(sites, values))
+
+            # Set up df for data
+            # ------------------
+            dfo = pd.DataFrame()
+
+
+            # Load data from each scenario
+            scenario_path = os.path.join(self.project_path, 'outputs', self.study_name, 'scenarios')
+            scenario_list = os.listdir(scenario_path)
+
+
+            for i in df.index:   #for each scenario
+                # Extract key data from input parameters
+                # --------------------------------------
+                scenario_file = os.path.join(scenario_path,df.loc[i,'scenario_label']+'.csv')
+                dfs = pd.read_csv(scenario_file)
+                dfs = dfs.set_index(dfs.columns[0])
+                dfs['s'] = dfs.index.str[-8]
+                dfs['kWp'] = df_in.loc[i, 'pv_kW_peak']
+                dfs['kWp/unit'] = dfs['kWp'] / df.loc[i, 'number_of_households']
+                dfs['colour'] = dfs['s'].apply(lambda x: dict_sites[x])
+
+                # Calculate Self-Sufficiency
+                # --------------------------
+                for vb in dfs.index:
+                    dfs.loc[vb, 'self-sufficiency'] = (dfs.loc[vb, 'total_building_load']
+                                                              - dfs.loc[vb, 'import_kWh']) / dfs.loc[
+                                                                 vb, 'total_building_load'] * 100
+                dfs = dfs[['s', 'kWp', 'kWp/unit', 'colour', 'self-consumption', 'self-sufficiency']]
+                dfo = dfo.append(dfs)
+
+            alpha = 0.3
+            size = 1
+            # Plot self consumption metric  vs PV kW peak
+            # -------------------------------------------
+            cmap = mpl.cm.tab10
+            fig, ax = plt.subplots()
+            cmap = mpl.cm.tab10
+            s = ax.scatter(dfo['kWp'], dfo['self-consumption'], cmap=cmap, c=dfo['colour'], s=size, alpha=alpha, label=dfo['s'])
+            cb = plt.colorbar(s)
+            cb.set_label('site')
+            cb.set_ticks(([s.colorbar.vmin + t * (s.colorbar.vmax - s.colorbar.vmin) for t in cb.ax.get_yticks()]))
+            cb.set_ticklabels(sites)
+            ax.set_xlabel("PV System kWp", fontsize=14)
+            ax.set_ylabel("Self-Consumption % ", fontsize=14)
+            ax.grid(True)
+            ax.set_xlim([0,220])
+            ax.set_ylim([0,110])
+            plot_name = 'SelfConsumption_v_pv.png'
+            plotFile = os.path.join(self.plot_path, plot_name)
+            plt.savefig(plotFile, dpi=1000)
+
+            # Plot self consumption metric  vs PV per unit
+            # --------------------------------------------
+            fig, ax = plt.subplots()
+            cmap = mpl.cm.tab10
+            s = ax.scatter(dfo['kWp/unit'], dfo['self-consumption'], cmap=cmap, c=dfo['colour'], s=size, alpha=alpha, label=dfo['s'])
+            cb = plt.colorbar(s)
+            cb.set_label('site')
+            cb.set_ticks(([s.colorbar.vmin + t * (s.colorbar.vmax - s.colorbar.vmin) for t in cb.ax.get_yticks()]))
+            cb.set_ticklabels(sites)
+            ax.set_xlabel("PV kWp per unit", fontsize=14)
+            ax.set_ylabel("Self-Consumption % ", fontsize=14)
+            ax.grid(True)
+            ax.set_xlim([0,4])
+            ax.set_ylim([0,110])
+            plot_name = 'SelfConsumption_v_p_perUnit.png'
+            plotFile = os.path.join(self.plot_path, plot_name)
+            plt.savefig(plotFile, dpi=1000)
+
+
+
+            # Plot self sufficiency metric  vs PV kW peak
+            # -------------------------------------------
+            cmap = mpl.cm.tab10
+            fig, ax = plt.subplots()
+            cmap = mpl.cm.tab10
+            s = ax.scatter(dfo['kWp'], dfo['self-sufficiency'], cmap=cmap, c=dfo['colour'], s=size, alpha=alpha, label=dfo['s'])
+            cb = plt.colorbar(s)
+            cb.set_label('site')
+            cb.set_ticks(([s.colorbar.vmin + t * (s.colorbar.vmax - s.colorbar.vmin) for t in cb.ax.get_yticks()]))
+            cb.set_ticklabels(sites)
+            ax.set_xlabel("PV System kWp", fontsize=14)
+            ax.set_ylabel("Self-Sufficiency % ", fontsize=14)
+            ax.grid(True)
+            ax.set_xlim([0,220])
+            ax.set_ylim([0,50])
+            plot_name = 'Selfsufficiency_v_pv.png'
+            plotFile = os.path.join(self.plot_path, plot_name)
+            plt.savefig(plotFile, dpi=1000)
+
+            # Plot self sufficiency metric  vs PV per unit
+            # --------------------------------------------
+            fig, ax = plt.subplots()
+            cmap = mpl.cm.tab10
+            s = ax.scatter(dfo['kWp/unit'], dfo['self-sufficiency'], cmap=cmap, c=dfo['colour'], s=size, alpha=alpha, label=dfo['s'])
+            cb = plt.colorbar(s)
+            cb.set_label('site')
+            cb.set_ticks(([s.colorbar.vmin + t * (s.colorbar.vmax - s.colorbar.vmin) for t in cb.ax.get_yticks()]))
+            cb.set_ticklabels(sites)
+            ax.set_xlabel("PV kWp per unit", fontsize=14)
+            ax.set_ylabel("Self-Sufficiency % ", fontsize=14)
+            ax.grid(True)
+            ax.set_xlim([0,4])
+            ax.set_ylim([0,50])
+            plot_name = 'Selfsufficiency_v_pv_perUnit.png'
+            plotFile = os.path.join(self.plot_path, plot_name)
+            plt.savefig(plotFile, dpi=1000)
+
+            # Plot scm vs ssm
+            # ---------------
+            fig, ax = plt.subplots()
+            cmap = mpl.cm.tab10
+            s = ax.scatter(dfo['self-consumption'], dfo['self-sufficiency'], cmap=cmap, c=dfo['colour'], s=size, alpha=alpha, label=dfo['s'])
+            cb = plt.colorbar(s)
+            cb.set_label('site')
+            cb.set_ticks(([s.colorbar.vmin + t * (s.colorbar.vmax - s.colorbar.vmin) for t in cb.ax.get_yticks()]))
+            cb.set_ticklabels(sites)
+            ax.set_xlabel("self Consumption", fontsize=14)
+            ax.set_ylabel("Self-Sufficiency % ", fontsize=14)
+            ax.grid(True)
+            ax.set_xlim([0, 110])
+            ax.set_ylim([0, 50])
+            plot_name = 'ssm_scm.png'
+            plotFile = os.path.join(self.plot_path, plot_name)
+            plt.savefig(plotFile, dpi=1000)
+
+
 
 
 

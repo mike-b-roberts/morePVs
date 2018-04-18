@@ -11,6 +11,7 @@
 
 # IMPORT Modules
 import numpy as np
+import sys
 import logging
 import sys
 import os
@@ -18,7 +19,6 @@ import pdb, traceback
 import pandas as pd
 import en_utilities as um
 import threading
-from queue import Queue
 import concurrent.futures
 import datetime as dt
 
@@ -264,7 +264,7 @@ class Battery():
         if pd.isnull(self.charge_kW):
             self.charge_kW = self.capacity_kWh * 0.5
         if pd.isnull(self.maxDOD):
-            self.maxDOD =  0.8
+            self.maxDOD = 0.8
         if pd.isnull(self.efficiency_cycle):
             self.efficiency_cycle = 0.95
         if pd.isnull(self.max_cycles):
@@ -438,6 +438,7 @@ class Customer():
         # Calculate energy flow without battery, then modify by calling battery.dispatch:
         # -------------------------------------------------------------------------------
         self.flows[step] = self.generation[step] - self.load[step]
+        was = self.flows[step]
         if self.has_battery:
             self.flows[step] = self.battery.dispatch(available_kWh=self.flows[step], step=step)
         self.exports[step] = self.flows[step].clip(0)
@@ -705,26 +706,34 @@ class Network(Customer):
         """Initialise central and individual batteries as required."""
         # Central Battery
         # ---------------
-        self.has_central_battery = scenario.has_battery
+        self.has_central_battery = scenario.has_central_battery
         if self.has_central_battery:
             self.battery = Battery(scenario=scenario,
                                    battery_id=scenario.battery_id,
                                    battery_strategy=scenario.battery_strategy)
         # Individual Batteries
         # --------------------
+        self.cum_ind_bat_charge = np.zeros(ts.num_steps)
+        self.tot_ind_bat_capacity =0
         self.any_resident_has_battery = False
-        for c in self.resident_list:
-            if self.scenario.cust_battery[c]:
+        if scenario.has_ind_batteries != 'none':
+            for c in self.resident_list:
                 bat_name = str(c) + '_battery_id'
                 bat_strategy = str(c) + '_battery_strategy'
-                self.resident[c].battery = Battery(scenario=scenario,
-                                                   battery_id=scenario.parameters[bat_name],
-                                                   battery_strategy=scenario.parameters[bat_strategy])
-                self.resident[c].has_battery = True
-                self.any_resident_has_battery = True
-            else:
-                self.resident[c].has_battery = False
-
+                if bat_name in scenario.parameters.index and bat_strategy in scenario.parameters.index:
+                    if not pd.isnull(scenario.parameters[bat_name]) and \
+                            not pd.isnull(scenario.parameters[bat_strategy]):
+                        self.resident[c].battery = Battery(scenario=scenario,
+                                                           battery_id=scenario.parameters[bat_name],
+                                                           battery_strategy=scenario.parameters[bat_strategy])
+                        self.resident[c].has_battery = True
+                        self.any_resident_has_battery = True
+                        scenario.has_ind_batteries = 'True'
+                        self.tot_ind_bat_capacity += self.resident[c].battery.capacity_kWh
+                    else:
+                        self.resident[c].has_battery = False
+                else:
+                    self.resident[c].has_battery = False
 
     def calcBuildingStaticEnergyFlows(self):
         """Calculate all internal energy flows for all timesteps (no storage or dm)."""
@@ -766,6 +775,10 @@ class Network(Customer):
             # Cumulative load and generation are what the "ENO" presents to the retailer:
             self.cum_resident_imports[step] += self.resident[c].imports[step]
             self.cum_resident_exports[step] += self.resident[c].exports[step]
+            # For diagnostics, log cumulative charge state
+            if self.resident[c].has_battery:
+                self.cum_ind_bat_charge[step] += self.resident[c].battery.charge_level_kWh
+
 
         # ----------------------------------------------------------------------------------------
         # Calculate energy flow without central  battery, then modify by calling battery.dispatch:
@@ -868,9 +881,11 @@ class Network(Customer):
         timedata['pv_generation'] = self.pv.sum(axis=1)
         timedata['grid_import'] = self.imports
         timedata['grid_export'] = self.exports
-        if scenario.has_battery:
+        if scenario.has_central_battery:
             timedata['battery_SOC'] = self.battery.SOC_log
             timedata['battery_charge_kWh'] = self.battery.SOC_log * self.battery.capacity_kWh / 100
+        if scenario.has_ind_batteries == 'True':
+            timedata['ind_battery_SOC'] = self.cum_ind_bat_charge / self.tot_ind_bat_capacity *100
         time_file = os.path.join(study.timeseries_path,
                                  self.scenario.label + '_' +
                                  self.load_name )
@@ -885,8 +900,8 @@ class Scenario():
         self.name = scenario_name
         self.label = study.name + '_' + "{:03}".format(self.name)
         # Copy all scenario parameters to allow for threading:
-        with lock:
-            self.parameters = study.study_parameters.loc[self.name].copy()
+        # with lock: REINSTATE lock if using Threads
+        self.parameters = study.study_parameters.loc[self.name].copy()
         # --------------------------------------------
         # Set up network arrangement for this scenario
         # --------------------------------------------
@@ -934,8 +949,8 @@ class Scenario():
                 logging.info('Missing tariff data for all_residents in study csv')
             else: # read tariff for each customer
                 for c in self.households:
-                    with lock:
-                        self.parameters[c] = self.parameters['all_residents']
+                    # with lock: REINSTATE lock if using Threads
+                    self.parameters[c] = self.parameters['all_residents']
 
         # Create list of tariffs used in this scenario
         # --------------------------------------------
@@ -980,17 +995,16 @@ class Scenario():
         if 'battery_id' in self.parameters.index and 'battery_strategy' in self.parameters.index:
             self.battery_id = self.parameters['battery_id']
             self.battery_strategy = self.parameters['battery_strategy']
-            self.has_battery = not pd.isnull(self.battery_id)
+            self.has_central_battery = not pd.isnull(self.battery_id)
         else:
-            self.has_battery = False
-        self.cust_battery={}
-        for c in self.resident_list:
-            bat_name = str(c) + '_battery_id'
-            bat_strategy = str(c) +'_battery_strategy'
-            if bat_name in self.parameters.index and bat_strategy in self.parameters.index:
-                self.cust_battery[c] = True
-            else:
-                self.cust_battery[c] = False
+            self.has_central_battery = False
+
+        # Possible individual batteries:
+        if self.parameters.index.str.contains('_battery_id').any() \
+                and self.parameters.index.str.contains('_battery_strategy').any():
+            self.has_ind_batteries = 'maybe'
+        else:
+            self.has_ind_batteries = 'none'
 
 
         # --------------------------------------------------------
@@ -1396,7 +1410,7 @@ def runScenario(scenario_name):
         eno.initialiseDailySolarBlockQuotas(scenario)
 
     # Iterate through all load profiles for this scenario:
-    for loadFile in scenario.load_list :
+    for loadFile in scenario.load_list:
         eno.initialiseBuildingLoads(loadFile, scenario)
         if scenario.pv_allocation == 'load_dependent':  # ie. for btm_icp, btm_s_u and btm_s_c arrangements
             eno.allocatePv(scenario)
@@ -1436,13 +1450,13 @@ def runScenario(scenario_name):
             eno.logTimeseries(scenario)
         #print(scenario_name, loadFile, eno.total_building_payment/100, (eno.receipts_from_residents - eno.total_payment)/100)
     # collate / log data for all loads in scenario
-    with lock:
-        scenario.logScenarioData()
+    # with lock: REINSTATE lock if using Threads
+    scenario.logScenarioData()
     logging.info('Completed Scenario %i', scenario_name)
 # ------------
 # MAIN PROGRAM
 # ------------
-def main(base_path,project,study_name):
+def main(base_path,project,study_name,num_threads=6):
 
     # set up script logging
     pyname = os.path.basename(__file__)
@@ -1459,17 +1473,19 @@ def main(base_path,project,study_name):
                     project=project,
                     study_name=study_name)
 
-        # Multiple scenarios, multiple load profiles for each are allowable
+        # # -------------
+        # # Use Threading
+        # # -------------
+        # global lock
+        # num_worker_threads = num_threads
+        # lock = threading.Lock()
+        # with concurrent.futures.ThreadPoolExecutor(max_workers=num_worker_threads) as x:
+        #     results = list(x.map(runScenario, study.scenario_list))
 
-        # -------------
-        # Use Threading
-        # -------------
-        global lock
-        num_worker_threads = num_threads
-        lock = threading.Lock()
-        with concurrent.futures.ThreadPoolExecutor(max_workers=num_worker_threads) as x:
-            results = list(x.map(runScenario, study.scenario_list))
-
+        # WITHOUT Threads (simpler to debug):
+        # ----------------------------------
+        for s in study.scenario_list:
+            runScenario(s)
         study.logStudyData()
         # if len(study.output_list)>0:
         #     op = opm.Output(base_path = base_path,
@@ -1479,7 +1495,8 @@ def main(base_path,project,study_name):
         #     op.plot_output()
         end_time = dt.datetime.now()
         duration = end_time-start_time
-        logging.info("***COMPLETED STUDY %s ***", 'study_name')
+        print("***COMPLETED STUDY ***", study_name)
+        logging.info("***COMPLETED STUDY %s ***", study_name)
         logging.info(" ********* Completed %i scenarios in %f **************", len(study.scenario_list), duration.seconds)
         logging.info(" ********* Time per Scenario is  %f **************", duration.seconds / len(study.scenario_list))
 
@@ -1491,6 +1508,7 @@ def main(base_path,project,study_name):
         pdb.post_mortem(tb)
 
 if __name__ == "__main__":
+
     # start = dt.datetime.now()
     # main(project='p_testing',
     #     study_name='test7a',
@@ -1514,28 +1532,47 @@ if __name__ == "__main__":
     #     times.loc[num_threads,'time'] = times.loc[num_threads,'end'] -times.loc[num_threads,'start']
     # print(times)
 
+
     # This optimised to n = 6 threads
     # -------------------------------
-    num_threads = 6
+    num_threads = 1
 
-    main(project='p_testing',
-            study_name='test_bat6',
-            base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
 
-    # sites = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
-    # for s in sites:
-    #     study_name = 'site'+s+'_value1'
-    #     main(project='EN1_value_of_pv',
-    #             study_name=study_name,
-    #             base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+    # Import arguments - allows multi-processing from command line
+    # ------------------------------------------------------------
+    opts = {}  # Empty dictionary to store key-value pairs.
+    while sys.argv:  # While there are arguments left to parse...
+        if sys.argv[0][0] == '-':  # Found a "-name value" pair.
+            opts[sys.argv[0]] =sys.argv[1]  # Add key and value to the dictionary.
+        sys.argv = sys.argv[1:]
+        # Reduce the argument list by copying it starting from index 1.
+    if '-p' in opts:
+        project = opts['-p']
+    else:
+        project = 'p_testing'
+    if '-s' in opts:
+        project = opts['-s']
+    else:
+        study = 'test_indbat1'
+
+    main(project=project,
+         study_name=study,
+         base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+
 
 
 # TODO - FUTURE - Variable allocation of pv between cp and residents
 # TODO - en_external scenario: cp tariff != TIDNULL
 # TODO Set up logging throughout
-
 # TODO Add import-export plot to output module
 # TODO test solar tariffs
 # TODO Add individual batteries
 # TODO Add combined central and individual PV
 # TODO Test battery
+# TODO - Optimisaition: Separate financial settings from scenarios to reduce calculation
+# TODO - Optimisaition: for loops -> i in np.arange rather than iter  thru' list
+# TODO - Optimisaition: change all calcs to np.calcs
+# TODO - Optimisaition: remove print, sort, etc.
+# TODO - Optimisaition: time runs: i/o vs calcs
+# TODO - Add sys.argv to run from commandline with variables (Use `&` to run multiple processes
+# TODO Python anywhere / HPC
