@@ -41,7 +41,7 @@ class Output():
         # read results file
         resultsFile = os.path.join(self.output_path,self.study_name+'_results.csv')
         self.data = pd.read_csv(resultsFile)
-        self.data= self.data.set_index('scenario')
+        self.data = self.data.set_index('scenario')
 
     def csvOutput(self):
         """Format summary data from en model for csv output"""
@@ -607,6 +607,68 @@ class Output():
             plot_name = 'ssm_scm.png'
             plotFile = os.path.join(self.plot_path, plot_name)
             plt.savefig(plotFile, dpi=1000)
+
+        if type == 'bar_total_vs_site_arrangement':
+            # -----------------------------
+            # Barchart used for APSRC paper
+            # -----------------------------
+            # Barchart of total annual costs for different sites
+            # (includes en and pv capex opex costs)
+            # under different pv arrangements
+            # 2 plots:  1 compares EN with btm, other compares btm scenarios
+
+            self.df = self.data.copy()
+            # ---------------
+            # get site labels
+            # ---------------
+            self.df.loc[:,'site'] = self.df.loc[:,'load_folder'].apply(lambda x : x[-1])
+            self.df.loc[:, 'labels'] = self.df.loc[:,'site']
+            sites = self.df.loc[:, 'site'].drop_duplicates().tolist()
+            sites=['A','E','D','B','H','I','G','C','J','F']
+            floors = {'A':12,'E':7, 'D':9,'B':8,'H':3,'I':4,'G':44,'C':34,'J':26,'F':5}
+            # floors = {s:floors[s] for s in sites}
+            labels ={}
+            for s, f in floors.items():
+                u = (self.df.loc[self.df.loc[:,'site']==s,'number_of_households'].values[0]).astype(int)
+                labels[s] = s +'('+str(u)+'/'+str(f)+')'
+
+            print(labels)
+            self.df.loc[:, 'label'] = self.df.loc[:, 'site'].apply(lambda x: labels[x])
+            # ---------------------------------
+            # calc total network energy per unit
+            # ----------------------------------
+            self.df['total$_building_costs_per_unit'] = self.df['total$_building_costs_mean']/ self.df['number_of_households']
+
+            # Get rid of duplicates - assumed irrelevant as only variation is internal tariffs
+            self.df['combined'] = self.df['site'] + self.df['arrangement']
+            self.df = self.df.drop_duplicates('combined')
+            self.df = self.df.drop('combined', axis=1)
+            # ----------------------
+            # reindex and stack data
+            # ----------------------
+            self.df.index = [self.df.label,self.df.arrangement]
+            self.df = self.df['total$_building_costs_per_unit'].unstack()
+
+            # --------------------------
+            # Choose order of categories
+            # --------------------------
+            self.df = self.df.loc[[labels[s] for s in sites],:]
+
+            # -----------------------------
+            # Plot 2 different combinations
+            # -----------------------------
+            for i, arr_list in enumerate([['cp_only','bau', 'btm_icp', 'en', 'en_pv'], \
+                                          ['bau', 'btm_icp', 'btm_s_c']]):
+                ax = self.df[[c for c in self.df.columns if c in arr_list]].plot(kind='bar',figsize=(15, 10), fontsize=20)
+                ax.set_xlabel("Site (Number units / number floors)", fontsize=20)
+                ax.set_ylabel("Total Site Costs $ / unit", fontsize=20)
+                ax.set_title ("Site Costs $ / Unit",fontsize=24)
+                ax.legend(fontsize=20)
+                ax.grid(True)
+                plt.show()
+                plotFile = os.path.join(self.plot_path,type + '_'+ '%02d' % i + '.png')
+                plt.savefig(plotFile,dpi=1000)
+                plt.close()
 
 
 
