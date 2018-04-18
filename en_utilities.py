@@ -178,15 +178,6 @@ def plot_battery(project,
         plt.savefig(plotfile, dpi=1000)
         plt.close(fig)
 
-def find_between( s, first, last ):
-    # from https://stackoverflow.com/questions/3368969/find-string-between-two-substrings
-    try:
-        start = s.index( first ) + len( first )
-        end = s.index( last, start )
-        return s[start:end]
-    except ValueError:
-        return ""
-
 
 #MAIN PROGRAM
 
