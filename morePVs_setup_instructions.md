@@ -157,8 +157,9 @@ OUTPUT TYPES
 ------------
 Column `output_type` in `'study_...csv` *applies to all scenarios*
 
-`log_timeseries_csv`: Creates a `.csv` for each scenario and load profile, containing:
-total load,total import & export for building, total generation, battery saved charge
+|   `output_type`     |            |    Fields          |
+------------| ---------------------------------------|--------|
+| `log_timeseries_csv` | timeseries `.csv` for each scenario and load profile |  ` total load  `,` total building import`, `total building export`,`total generation`,`battery saved charge` |
+| `csv_total_vs_type` | Summary `.csv` | `scenario_label`,`load_folder`, `arrangement`, `number_of_households`,`total$_building_costs_mean`,`cp_ratio_mean`,`pv_ratio_mean`   |
+| `csv_total_vs_bat`  | summary `.csv` |   `scenario_label`,`load_folder`, `arrangement`, `number_of_households`,`total$_building_costs_mean`,`self-consumption_mean`,`pv_ratio_mean`, `battery_id` `battery_strategy`  |
 
-
-    

@@ -52,9 +52,9 @@ class Output():
         summary_fields = {'csv_total_vs_type':
                              ['scenario_label','load_folder', 'arrangement', 'number_of_households',\
                               'total$_building_costs_mean','cp_ratio_mean','pv_ratio_mean'],
-                          'csv_total_vs_tariff':
-                              [ 'scenario_label','load_folder', 'arrangement', 'number_of_households',\
-                              'total$_building_costs_mean','self-consumption_mean','pv_ratio_mean'],
+                          'csv_total_vs_bat':
+                              ['scenario_label','load_folder', 'arrangement', 'number_of_households',\
+                              'total$_building_costs_mean','self-consumption_mean','pv_ratio_mean','capacity_kWh','kW'],
                           'csv_another_one':
                               ['list', 'of','fields']
                           }
@@ -64,7 +64,8 @@ class Output():
                 for field in summary_fields[type]:
                     if field not in self.data.columns:
                         if field not in self.study_parameters.columns:
-                            sys.exit ('Field '+ field + ' not available')
+                            sys.exit('Field '+ field + ' not available')
+                            #TODO look up field in reference csvs
                         else:
                             self.data.join(self.study_parameters[field])
                 # saves summary csv file
@@ -625,14 +626,15 @@ class Output():
             self.df.loc[:, 'labels'] = self.df.loc[:,'site']
             sites = self.df.loc[:, 'site'].drop_duplicates().tolist()
             sites=['A','E','D','B','H','I','G','C','J','F']
-            floors = {'A':12,'E':7, 'D':9,'B':8,'H':3,'I':4,'G':44,'C':34,'J':26,'F':5}
+            floors = {'A': 12, 'E': 7, 'D': 9, 'B': 8, 'H': 3, 'I': 4, 'G': 4, 'C': 4, 'J': 4, 'F': 5}
+            numhouses = {'A': 208, 'E': 161, 'D': 138,'B': 104, 'H': 52, 'I': 48, 'G': 44, 'C': 34, 'J': 26, 'F': 20}
             # floors = {s:floors[s] for s in sites}
             labels ={}
             for s, f in floors.items():
                 u = (self.df.loc[self.df.loc[:,'site']==s,'number_of_households'].values[0]).astype(int)
                 labels[s] = s +'('+str(u)+'/'+str(f)+')'
 
-            print(labels)
+
             self.df.loc[:, 'label'] = self.df.loc[:, 'site'].apply(lambda x: labels[x])
             # ---------------------------------
             # calc total network energy per unit
