@@ -1355,7 +1355,7 @@ class Study():
         # customer_results has individual customer bills and total costs
         # results_std_dev has standard deviations of all averaged values
         # idex by scenario:
-        print("start of logStudyData")
+
         self.op.index.name = 'scenario'
         # Separate individual customer data and save as csv
         if not self.different_loads:
@@ -1434,7 +1434,7 @@ def runScenario(scenario_name):
         scenario.calcResults(eno)
         if study.log_timeseries:
             eno.logTimeseries(scenario)
-        print(scenario_name, loadFile, eno.total_building_payment/100, (eno.receipts_from_residents - eno.total_payment)/100)
+        #print(scenario_name, loadFile, eno.total_building_payment/100, (eno.receipts_from_residents - eno.total_payment)/100)
     # collate / log data for all loads in scenario
     with lock:
         scenario.logScenarioData()
