@@ -1520,7 +1520,6 @@ if __name__ == "__main__":
 # TODO Set up logging throughout
 # TODO Add import-export plot to output module
 # TODO test solar tariffs
-# TODO Add individual batteries
 # TODO Add combined central and individual PV
 # TODO Test battery
 # TODO - Optimisaition: Separate financial settings from scenarios to reduce calculation
