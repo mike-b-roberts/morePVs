@@ -883,8 +883,8 @@ class Scenario():
         self.name = scenario_name
         self.label = study.name + '_' + "{:03}".format(self.name)
         # Copy all scenario parameters to allow for threading:
-        # with lock: REINSTATE lock if using Threads
-        self.parameters = study.study_parameters.loc[self.name].copy()
+        with lock:
+            self.parameters = study.study_parameters.loc[self.name].copy()
         # --------------------------------------------
         # Set up network arrangement for this scenario
         # --------------------------------------------
@@ -1437,7 +1437,6 @@ def runScenario(scenario_name):
 
     # Set up pv profile if allocation not load-dependent
     if scenario.pv_allocation == 'fixed':
-        print('scenario', scenario.name, 'fixed')
         eno.allocatePv(scenario, scenario.pv)
 
     if scenario.has_solar_block:
@@ -1448,7 +1447,6 @@ def runScenario(scenario_name):
         eno.initialiseBuildingLoads(load_name, scenario)
         if scenario.pv_allocation == 'load_dependent':  # ie. for btm_icp, btm_s_u and btm_s_c arrangements
             eno.allocatePv(scenario, scenario.pv)
-            print('scenario', scenario.name, 'load_dep')
         eno.initialiseSolarInstQuotas(scenario)  # depends on load and pv
 
         # If no battery, calc all internal energy flows statically (i.e. as single df calculation)
@@ -1485,8 +1483,8 @@ def runScenario(scenario_name):
             eno.logTimeseries(scenario)
         #print(scenario_name, loadFile, eno.total_building_payment/100, (eno.receipts_from_residents - eno.total_payment)/100)
     # collate / log data for all loads in scenario
-    # with lock: REINSTATE lock if using Threads
-    scenario.logScenarioData()
+    with lock:
+        scenario.logScenarioData()
     logging.info('Completed Scenario %i', scenario_name)
 # ------------
 # MAIN PROGRAM
@@ -1508,20 +1506,20 @@ def main(base_path,project,study_name):
                     project=project,
                     study_name=study_name)
 
-        # # -------------
-        # # Use Threading
-        # # -------------
-        # global lock
-        # num_worker_threads = num_threads
-        # lock = threading.Lock()
-        # with concurrent.futures.ThreadPoolExecutor(max_workers=num_worker_threads) as x:
-        #     results = list(x.map(runScenario, study.scenario_list))
+        # -------------
+        # Use Threading
+        # -------------
+        global lock
+        num_worker_threads = num_threads
+        lock = threading.Lock()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=num_worker_threads) as x:
+            results = list(x.map(runScenario, study.scenario_list))
 
-        # WITHOUT Threads (simpler to debug):
-        # ----------------------------------
-        for s in study.scenario_list:
-            runScenario(s)
-        study.logStudyData()
+        # # WITHOUT Threads (simpler to debug):
+        # # ----------------------------------
+        # for s in study.scenario_list:
+        #     runScenario(s)
+        # study.logStudyData()
         # if len(study.output_list)>0:
         #     op = opm.Output(base_path = base_path,
         #                     project = project,
@@ -1572,8 +1570,6 @@ if __name__ == "__main__":
     # -------------------------------
     num_threads = 6
 
-
-
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
     opts = {}  # Empty dictionary to store key-value pairs.
@@ -1587,7 +1583,7 @@ if __name__ == "__main__":
     else:
         project = 'p_testing'
     if '-s' in opts:
-        project = opts['-s']
+        study = opts['-s']
     else:
         study = 'test7b'
 
