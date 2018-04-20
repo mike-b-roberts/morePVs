@@ -137,7 +137,6 @@ def plot_tariffs(path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3\\re
     ax.legend(df['weekday'].columns, fontsize=12, loc='best')
     ax.grid(True)
     #plt.show()
-    print()
     plotFile = os.path.join(plotpath,('-'.join(tariff_list) +'.png'))
 
     # fig = ax[0].get_figure()
@@ -147,13 +146,16 @@ def plot_tariffs(path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3\\re
 ##############################################################
 def plot_battery(project,
                  study_name,
-                 base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3\\'):
+                 base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3\\studies'):
     """Plots timeseries data of pv, load, import, export and SOC."""
 
     path = os.path.join(base_path,project,'outputs',study_name,'timeseries')
+
     plotpath = os.path.join(path, 'plots')
     if not os.path.exists(plotpath):
         os.makedirs(plotpath)
+
+
     flist = [f for f in os.listdir(path) if '.csv' in f]
     for name in flist:
         file = os.path.join(path, name)
@@ -171,6 +173,17 @@ def plot_battery(project,
         if 'battery_SOC' in df.columns:
             ax2 = df['battery_SOC'].plot(secondary_y=True, ax=ax, style='--')
             ax2.set_ylabel("Battery SOC %")
+            ax2.set_ylim(0,100)
+        if 'ind_battery_SOC' in df.columns:
+            ax2 = df['ind_battery_SOC'].plot(secondary_y=True, ax=ax, style='--')
+            ax2.set_ylabel("Battery SOC %")
+            ax2.set_ylim(0, 100)
+
+
+
+
+
+
         leg = ax.legend(fancybox=True)
         leg.get_frame().set_alpha(0.5)
         ax.set_title(name[:-4], fontsize=14)
@@ -184,8 +197,8 @@ def plot_battery(project,
 #MAIN PROGRAM
 
 def main():
-    #
-    plot_battery(project='p_testing', study_name='test_bat4')
+
+    plot_battery(project='p_testing', study_name='test_indbat1')
 
     pass
 
