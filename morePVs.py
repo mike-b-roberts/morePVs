@@ -1565,6 +1565,7 @@ if __name__ == "__main__":
 # TODO - FUTURE - Variable allocation of pv between cp and residents
 # TODO - en_external scenario: cp tariff != TIDNULL
 # TODO Set up logging throughout
+
 # TODO Add import-export plot to output module
 # TODO test solar tariffs
 # TODO Add combined central and individual PV
