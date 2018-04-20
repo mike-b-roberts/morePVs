@@ -394,27 +394,27 @@ class Customer():
     """Can be resident, strata body, or ENO representing aggregation of residents."""
 
     def __init__(self,
-                 name, # string
+                 name,  # string
                  ):
         self.name = name
         self.tariff_data = study.tariff_data
-        self.en_capex_repayment=0
-        self.en_opex=0
-        self.bat_capex_repayment=0
+        self.en_capex_repayment = 0
+        self.en_opex = 0
+        self.bat_capex_repayment = 0
 
     def initialiseCustomerLoad(self,
-                               customer_load): # as 1-d np.array
+                               customer_load):  # as 1-d np.array
         """Set customer load, energy flows and cashflows to zero."""
         self.load = customer_load
         self.exports = np.zeros(ts.num_steps)
         self.imports = np.zeros(ts.num_steps)
-        self.local_exports = np.zeros(ts.num_steps) # not used, available for local trading
-        self.local_imports = np.zeros(ts.num_steps) # used for import of local generation
+        self.local_exports = np.zeros(ts.num_steps)  # not used, available for local trading
+        self.local_imports = np.zeros(ts.num_steps)  # used for import of local generation
         self.flows = np.zeros(ts.num_steps)
         self.cashflows = np.zeros(ts.num_steps)
 
     def initialiseCustomerTariff(self,
-                                 customer_tariff_id,#string
+                                 customer_tariff_id,  # string
                                  scenario):
         self.tariff_id = customer_tariff_id
         self.scenario = scenario
@@ -525,8 +525,8 @@ class Network(Customer):
     In other scenarios, it has no meaning irw, just passes energy and $ between other players"""
 
     def __init__(self, scenario):
-        self.resident_list = scenario.resident_list # all residents plus cp
-        self.households = scenario.households  # just residents, not cp
+        self.resident_list = scenario.resident_list.copy() # all residents plus cp
+        self.households = scenario.households.copy()  # just residents, not cp
         # (these may change later if different_loads)
         #initialise characteristics of the network as a customer:
         super().__init__('network')
@@ -748,8 +748,6 @@ class Network(Customer):
 
     def calcBuildingDynamicEnergyFlows(self, step):
         """Calculate all internal energy flows for SINGLE timesteps (with storage)."""
-    def calcBuildingDynamicEnergyFlows(self, step):
-        """Calculate all internal energy flows for SINGLE timesteps (with storage)."""
 
         # ---------------------------------------------------------------
         # Calculate flows for each resident and cumulative values for ENO
@@ -823,8 +821,6 @@ class Network(Customer):
         elif 'btm_i' in scenario.arrangement:
             # For btm_i apportion capex costs according to pv allocation
             for c in self.pv_customers:
-                print(scenario.name, scenario.arrangement,c)
-#@@@@@@@@@@@@@@@@@@@@
                 self.resident[c].pv_capex_repayment = self.pv[c].sum() / self.pv.sum().sum() * scenario.pv_capex_repayment
         elif 'btm_s_c' in scenario.arrangement:
             # For btm_s_c, apportion capex costs equally between units and cp.
@@ -906,8 +902,7 @@ class Scenario():
         # If different loads used, get resident list from first load
         self.load_folder = self.parameters['load_folder']
         if study.different_loads:
-            load_folder = self.parameters['load_folder']
-            load_path = os.path.join(study.base_path, 'load_profiles', load_folder)
+            load_path = os.path.join(study.base_path, 'load_profiles', self.load_folder)
             self.load_list = os.listdir(load_path)
 
             # read all load profiles into dict of dfs
@@ -921,7 +916,7 @@ class Scenario():
                 temp_load = temp_load.set_index('timestamp')
                 if not 'cp' in temp_load.columns:
                     temp_load['cp'] = 0
-                self.dict_load_profiles[load_name] = temp_load
+                self.dict_load_profiles[load_name] = temp_load.copy()
             # use first load profile in list to establish list of residents:
             # --------------------------------------------------------------
             self.resident_list = list(self.dict_load_profiles[self.load_list[0]].columns.values)  # list of potential child meters - residents + cp
@@ -929,9 +924,9 @@ class Scenario():
         else:
             # Loads are the same for every scenario and have been read already:
             # -----------------------------------------------------------------
-            self.dict_load_profiles = study.dict_load_profiles
-            self.resident_list = study.resident_list  # includes cp
-            self.load_list = study.load_list
+            self.dict_load_profiles = study.dict_load_profiles.copy()
+            self.resident_list = study.resident_list.copy()  # includes cp
+            self.load_list = study.load_list.copy()
 
         self.households = [c for c in self.resident_list if c != 'cp']
         self.results = pd.DataFrame()
@@ -970,7 +965,7 @@ class Scenario():
         if 'all_residents' in self.parameters.index:
             if (self.parameters['all_residents'] == ''):
                 logging.info('Missing tariff data for all_residents in study csv')
-            else: # read tariff for each customer
+            else:  # read tariff for each customer
                 for c in self.households:
                     # with lock: REINSTATE lock if using Threads
                     self.parameters[c] = self.parameters['all_residents']
@@ -996,11 +991,11 @@ class Scenario():
                            if any(word in self.lookup.loc[t, 'tariff_type'] for word in ['Inst', 'inst'])]
         self.demand_list = [t for t in self.tariff_short_list \
                 if 'Demand' in self.lookup.loc[t, 'tariff_type']]
-        self.has_demand_charges = len(self.demand_list)>0
-        self.has_dynamic_tariff = len(self.dynamic_list)>0
+        self.has_demand_charges = len(self.demand_list) > 0
+        self.has_dynamic_tariff = len(self.dynamic_list) > 0
         #  previously:(list(set(self.tariff_short_list).intersection(self.dynamic_list)))
-        self.has_solar_block = len(solar_block_list)>0
-        self.has_solar_inst = len(self.solar_inst_list)>0
+        self.has_solar_block = len(solar_block_list) > 0
+        self.has_solar_inst = len(self.solar_inst_list) > 0
 
         self.block_quarterly_billing_start = study.tariff_data.block_quarterly_billing_start
         self.steps_in_block = study.tariff_data.steps_in_block
@@ -1575,7 +1570,7 @@ if __name__ == "__main__":
 
     # This optimised to n = 6 threads
     # -------------------------------
-    #num_threads = 6
+    num_threads = 6
 
 
 
