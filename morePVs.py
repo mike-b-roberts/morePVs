@@ -543,13 +543,7 @@ class Network(Customer):
         # read load data
         # --------------
         self.load_name = load_name
-        self.load_file = os.path.join(scenario.load_path, self.load_name)
-        self.network_load = pd.read_csv(self.load_file,
-                                        parse_dates=['timestamp'],
-                                        dayfirst=True)
-        self.network_load.set_index('timestamp', inplace=True)
-        if not 'cp' in self.network_load.columns:
-            self.network_load['cp'] = 0
+        self.network_load = scenario.dict_load_profiles[load_name]
         # set eno load, cumulative load and generation to zero
         # ----------------------------------------------------
         self.initialiseCustomerLoad(np.zeros(ts.num_steps))
@@ -584,83 +578,73 @@ class Network(Customer):
         self.has_dynamic_tariff = scenario.has_dynamic_tariff
 
 
-    def allocatePv(self, scenario):
+    def allocatePv(self, scenario, pv):
         """set up and allocate pv generation for this scenario."""
 
         # Also used to allocate pv capex costs for some scenarios
-        if not scenario.pv_exists:
-            self.pv = pd.DataFrame(index=ts.timeseries, columns=study.load.columns).fillna(0)
+        # Copy profile from scenario and then allocate
+        # Allocation happens here as the Customers are part of the Network
+        self.pv_exists = scenario.pv_exists
+        self.pv = pv.copy()
+
+        # Set up pv dataframe for each scenario:
+        # --------------------------------------
+        if 'en' in scenario.arrangement:
+            # rename single column in pv file if necessary
+            # TODO This will change to allow distributed PV within EN
+            if 'cp' not in self.pv.columns:
+                self.pv.columns = ['cp']
+        elif scenario.arrangement == 'cp_only':
+            # no action required
+            # rename single column in pv file if necessary
+            if 'cp' not in self.pv.columns:
+                self.pv.columns = ['cp']
+        elif scenario.arrangement == 'btm_i':
+            # For btm_i, if only single pv column, split equally between all units (NOT CP)
+            if len(self.pv.columns) == 1:
+                self.pv.columns = ['total']
+                for r in scenario.households:
+                    self.pv[r] = self.pv['total']/len(scenario.households)
+                self.pv = self.pv.drop('total', axis=1)
+        elif scenario.arrangement == 'btm_icp':
+            # For btm_icp, if only single pv column, split % to cp according tp cp_ratio and split remainder equally between all units
+            # If more than 1 column, leave as allocated
+            if len(self.pv.columns) == 1:
+                self.pv.columns = ['total']
+                self.pv['cp'] = self.pv['total'] * (self.resident['cp'].load.sum() / self.total_building_load)
+                for r in scenario.households:
+                    self.pv[r] = (self.pv['total'] - self.pv['cp']) / len(scenario.households)
+                self.pv = self.pv.drop('total', axis=1)
+        elif scenario.arrangement == 'btm_s_c':
+            # For btm_s_c, split pv between all residents INCLUDING CP according to INSTANTANEOUS load
+            if len(self.pv.columns) != 1:
+                logging.info('***************Exception!!! PV %s has more than one column for shared btm arrangement ', scenario.pvFile)
+                sys.exit("PV file doesn't match btm_s_c arrangement")
+            else:
+                self.pv.columns = ['total']
+                self.pv = self.network_load.div(self.network_load.sum(axis=1), axis=0).multiply(
+                    self.pv.loc[:,'total'], axis=0)
+        elif scenario.arrangement == 'btm_s_u':
+            # For btm_s_u, split pv between all residents EXCLUDING CP according to INSTANTANEOUS  load
+            if len(self.pv.columns) != 1:
+                logging.info(
+                    '***************Exception!!! PV %s has more than one column for shared btm arrangement ',
+                    scenario.pvFile)
+                sys.exit("PV file doesn't match btm_s_u arrangement")
+            else:
+                self.pv.columns = ['total']
+                load_units_only = self.network_load.copy().drop('cp',axis=1)
+                self.pv = load_units_only.div(load_units_only.sum(axis=1), axis=0).multiply(
+                    self.pv.loc[:, 'total'], axis=0)
+
+        # Create list of customers with PV:
+        if not self.pv_exists:
             self.pv_customers = []
         else:
-            pvFile = os.path.join(study.pv_path,
-                                  scenario.parameters['pv_filename'])
-            if not os.path.exists(pvFile):
-                logging.info('***************Exception!!! PV file %s NOT FOUND', pvFile)
-                sys.exit("PV file missing")
-            else:
-                # Load pv generation data:
-                # -----------------------
-                self.pv = pd.read_csv(pvFile, parse_dates=['timestamp'], dayfirst=True)
-                self.pv.set_index('timestamp', inplace=True)
-                if not self.pv.index.equals(ts.timeseries):
-                    logging.info('***************Exception!!! PV %s index does not align with load ', pvFile)
-                    sys.exit("PV has bad timeseries")
-                # Scaleable PV has a 1kW gneration input file scaled to array size:
-                if scenario.pv_scaleable:
-                    self.pv = self.pv * scenario.pv_kW_peak
-                # Set up pv dataframe for each scenario:
-                # --------------------------------------
-                if 'en' in scenario.arrangement:
-                    # rename single column in pv file if necessary
-                    if 'cp' not in self.pv.columns:
-                        self.pv.columns=['cp']
-                elif scenario.arrangement =='cp_only':
-                    # no action required
-                    # rename single column in pv file if necessary
-                    if 'cp' not in self.pv.columns:
-                        self.pv.columns = ['cp']
-                elif scenario.arrangement =='btm_i':
-                    # For btm_i, if only single pv column, split equally between all units (NOT CP)
-                    if len(self.pv.columns) ==1:
-                        self.pv.columns =['total']
-                        for r in scenario.households:
-                            self.pv[r] = self.pv['total']/len(scenario.households)
-                        self.pv = self.pv.drop('total', axis=1)
-                elif scenario.arrangement == 'btm_icp':
-                    # For btm_icp, if only single pv column, split % to cp according tp cp_ratio and split remainder equally between all units
-                    # If more than 1 column, leave as allocated
-                    if len(self.pv.columns) == 1:
-                        self.pv.columns = ['total']
-                        self.pv['cp'] = self.pv['total']* (self.resident['cp'].load.sum() / self.total_building_load)
-                        for r in scenario.households:
-                            self.pv[r] = (self.pv['total'] - self.pv['cp']) / len(scenario.households)
-                        self.pv = self.pv.drop('total', axis=1)
-                elif scenario.arrangement == 'btm_s_c':
-                    # For btm_s_c, split pv between all residents INCLUDING CP according to INSTANTANEOUS load
-                    if len(self.pv.columns) !=1:
-                        logging.info('***************Exception!!! PV %s has more than one column for shared btm arrangement ', pvFile)
-                        sys.exit("PV file doesn't match btm_s_c arrangement")
-                    else:
-                        self.pv.columns=['total']
-                        self.pv = self.network_load.div(self.network_load.sum(axis=1), axis=0).multiply(
-                            self.pv.loc[:, 'total'], axis=0)
-                elif scenario.arrangement == 'btm_s_u':
-                # For btm_s_u, split pv between all residents EXCLUDING CP according to INSTANTANEOUS  load
-                    if len(self.pv.columns) != 1:
-                        logging.info(
-                            '***************Exception!!! PV %s has more than one column for shared btm arrangement ',
-                            pvFile)
-                        sys.exit("PV file doesn't match btm_s_u arrangement")
-                    else:
-                        self.pv.columns = ['total']
-                        load_units_only = self.network_load.copy().drop('cp',axis=1)
-                        self.pv = load_units_only.div(load_units_only.sum(axis=1), axis=0).multiply(
-                            self.pv.loc[:, 'total'], axis=0)
-            # Create list of customers with PV:
             self.pv_customers = [c for c in self.pv.columns if self.pv[c].sum() >0]
-        # Add blank columns for all residents with no pv
-        blank_columns = [x for x in self.resident_list if x not in self.pv.columns]
-        self.pv = pd.concat([self.pv, pd.DataFrame(columns=blank_columns)]).fillna(0)
+            # Add blank columns for all residents with no pv
+            blank_columns = [x for x in self.resident_list if x not in self.pv.columns]
+            self.pv = pd.concat([self.pv, pd.DataFrame(columns=blank_columns)]).fillna(0)
 
         # Initialise all residents with their allocated PV generation
         # -----------------------------------------------------------
@@ -705,7 +689,7 @@ class Network(Customer):
         """Initialise central and individual batteries as required."""
         # Central Battery
         # ---------------
-        self.has_central_battery = scenario.has_battery
+        self.has_central_battery = scenario.has_central_battery
         if self.has_central_battery:
             self.battery = Battery(scenario=scenario,
                                    battery_id=scenario.battery_id,
@@ -839,12 +823,14 @@ class Network(Customer):
         elif 'btm_i' in scenario.arrangement:
             # For btm_i apportion capex costs according to pv allocation
             for c in self.pv_customers:
+                print(scenario.name, scenario.arrangement,c)
+#@@@@@@@@@@@@@@@@@@@@
                 self.resident[c].pv_capex_repayment = self.pv[c].sum() / self.pv.sum().sum() * scenario.pv_capex_repayment
         elif 'btm_s_c' in scenario.arrangement:
             # For btm_s_c, apportion capex costs equally between units and cp.
             # (Not ideal - needs more sophisticated analysis of practical btm_s arrangements)
             for c in self.resident_list:
-                self.resident[c].pv_capex_repayment =  scenario.pv_capex_repayment / len(self.resident_list)
+                self.resident[c].pv_capex_repayment = scenario.pv_capex_repayment / len(self.resident_list)
         elif 'btm_s_u' in scenario.arrangement:
             # For btm_s_u, apportion capex costs equally between units only
             # (Not ideal - needs more sophisticated analysis of practical btm_s arrangements)
@@ -913,31 +899,67 @@ class Scenario():
         else:
             self.pv_allocation = 'fixed'
 
-        # --------------------------------------------------
-        # Set up resident list & results df for the scenario
-        # --------------------------------------------------
+        # -----------------------------------------------------------------
+        # Set up load profiles, resident list & results df for the scenario
+        # -----------------------------------------------------------------
         # if same load profile(s) used for all scenarios, this comes from Study
         # If different loads used, get resident list from first load
         self.load_folder = self.parameters['load_folder']
         if study.different_loads:
-            self.load_folder = self.parameters['load_folder']
-            self.load_path = os.path.join(study.base_path, 'load_profiles', self.load_folder)
-            self.load_list = os.listdir(self.load_path)
-            # get first load and set up resident_list
-            loadFile = os.path.join(self.load_path, self.load_list[0])
-            self.temp_load = pd.read_csv(loadFile,
-                                            parse_dates=['timestamp'],
-                                            dayfirst=True)
-            self.temp_load = self.temp_load.set_index('timestamp')
-            if not 'cp' in self.temp_load.columns:
-                self.temp_load['cp'] = 0
-            self.resident_list = list(self.temp_load.columns.values)  # list of potential child meters - residents + cp
+            load_folder = self.parameters['load_folder']
+            load_path = os.path.join(study.base_path, 'load_profiles', load_folder)
+            self.load_list = os.listdir(load_path)
+
+            # read all load profiles into dict of dfs
+            # ---------------------------------------
+            self.dict_load_profiles ={}
+            for load_name in self.load_list:
+                loadFile = os.path.join(load_path,load_name)
+                temp_load = pd.read_csv(loadFile,
+                                        parse_dates=['timestamp'],
+                                        dayfirst=True)
+                temp_load = temp_load.set_index('timestamp')
+                if not 'cp' in temp_load.columns:
+                    temp_load['cp'] = 0
+                self.dict_load_profiles[load_name] = temp_load
+            # use first load profile in list to establish list of residents:
+            # --------------------------------------------------------------
+            self.resident_list = list(self.dict_load_profiles[self.load_list[0]].columns.values)  # list of potential child meters - residents + cp
+
         else:
-            self.load_path = study.load_path
+            # Loads are the same for every scenario and have been read already:
+            # -----------------------------------------------------------------
+            self.dict_load_profiles = study.dict_load_profiles
+            self.resident_list = study.resident_list  # includes cp
             self.load_list = study.load_list
-            self.resident_list = study.resident_list #includes cp
+
         self.households = [c for c in self.resident_list if c != 'cp']
         self.results = pd.DataFrame()
+
+        # ---------------------------------
+        # read PV profile for this scenario
+        # ---------------------------------
+        if not self.pv_exists:
+            self.pv = pd.DataFrame(index=ts.timeseries, columns=self.resident_list).fillna(0)
+        else:
+            self.pvFile = os.path.join(study.pv_path,
+                                  self.parameters['pv_filename'])
+            if not os.path.exists(self.pvFile):
+                logging.info('***************Exception!!! PV file %s NOT FOUND', self.pvFile)
+                sys.exit("PV file missing")
+            else:
+                # Load pv generation data:
+                # -----------------------
+                self.pv = pd.read_csv(self.pvFile, parse_dates=['timestamp'], dayfirst=True)
+                self.pv.set_index('timestamp', inplace=True)
+                if not self.pv.index.equals(ts.timeseries):
+                    logging.info('***************Exception!!! PV %s index does not align with load ', self.pvFile)
+                    sys.exit("PV has bad timeseries")
+                # Scaleable PV has a 1kW gneration input file scaled to array size:
+                self.pv_scaleable = ('pv_scaleable' in self.parameters.index) and \
+                                    self.parameters['pv_scaleable']
+                if self.pv_scaleable:
+                    self.pv = self.pv * self.pv_kW_peak
 
         # ---------------------------------------
         # Set up tariffs for this scenario
@@ -990,9 +1012,9 @@ class Scenario():
         if len(self.solar_list) > 0:
             self.static_solar_imports = study.tariff_data.static_solar_imports[self.solar_list]
 
-        # ----------------------------------
+        # ------------------------------------
         # identify batteries for this scenario
-        # ----------------------------------
+        # ------------------------------------
         if 'battery_id' in self.parameters.index and 'battery_strategy' in self.parameters.index:
             self.battery_id = self.parameters['battery_id']
             self.battery_strategy = self.parameters['battery_strategy']
@@ -1012,7 +1034,6 @@ class Scenario():
         # Set up annual capex & opex costs for en in this scenario
         # --------------------------------------------------------
         # Annual capex repayments for embedded network
-
         self.pc_cap_id = self.parameters['pv_cap_id']
         if 'en' in self.arrangement:
             self.en_cap_id = self.parameters['en_capex_id']
@@ -1053,8 +1074,6 @@ class Scenario():
                              study.pv_capex_table.loc[self.pc_cap_id, 'inverter_cost'])
             #  Option to use standard 1kW PV output and scale
             #  with pv_capex and inverter cost given as $/kW
-            self.pv_scaleable = ('pv_scaleable' in self.parameters.index) and \
-                                self.parameters['pv_scaleable']
             if self.pv_scaleable:
                 self.pv_kW_peak = self.parameters['pv_kW_peak']
                 self.pv_capex = self.pv_capex * self.pv_kW_peak
@@ -1317,7 +1336,7 @@ class Study():
         # -------------------
         #  Identify load data
         # -------------------
-        if len(self.study_parameters['load_folder'].unique())==1:
+        if len(self.study_parameters['load_folder'].unique()) == 1:
             self.different_loads = False  # Same load or set of loads for each scenario
         else:
             self.different_loads = True  # Different loads for each scenario
@@ -1325,31 +1344,49 @@ class Study():
         self.load_list = os.listdir(self.load_path)
         if len(self.load_list) == 0:
             logging.info('***************** Load folder %s is empty *************************', self.load_path)
-            sys.exit("Missing load data")  # TODO: Exception handling
+            sys.exit("Missing load data")
         elif len(self.load_list) == 1:
             self.multiple_loads = False  # single load profile for each scenario
         else:
             self.multiple_loads = True  # multiple load profiles for each scenario - outputs are mean ,std dev, etc.
+
+        # ---------------------------------------------
+        # If same loads throughout Study, get them now:
+        # ---------------------------------------------
+        self.dict_load_profiles = {}
+        if not self.different_loads:
+            for load_name in self.load_list:
+                loadFile = os.path.join(self.load_path, load_name)
+                temp_load = pd.read_csv(loadFile,
+                                        parse_dates=['timestamp'],
+                                        dayfirst=True)
+                temp_load = temp_load.set_index('timestamp')
+                if not 'cp' in temp_load.columns:
+                    temp_load['cp'] = 0
+                self.dict_load_profiles[load_name] = temp_load
+
+        # Otherwise, get the first load anyway:
+        # -------------------------------------
+        else:
+            loadFile = os.path.join(self.load_path, self.load_list[0])
+            temp_load = pd.read_csv(loadFile,
+                                    parse_dates=['timestamp'],
+                                    dayfirst=True)
+            self.dict_load_profiles[self.load_list[0]] = temp_load.set_index('timestamp')
+
         # -----------------------------------------------------------------
         # Use first load profile to initialise timeseries and resident_list
         # -----------------------------------------------------------------
-        # read first load to determine timeseries
-        self.load_file = os.path.join(self.load_path, self.load_list[0])
-        self.load = pd.read_csv(self.load_file,
-                                parse_dates=['timestamp'],
-                                dayfirst=True)
-        self.load.set_index('timestamp', inplace=True)
-        if not 'cp' in self.load.columns:
-            self.load['cp'] = 0
         # Initialise timeseries
-        # (assume timeseries are all the same for all load profiles)
-        global ts
-        ts = Timeseries(self.load)
+        # ---------------------
+        global ts  # (assume timeseries are all the same for all load profiles)
+        ts = Timeseries(self.dict_load_profiles[self.load_list[0]])
+
         # Lists of meters / residents (includes cp)
         # -----------------------------------------
         # This is used for initialisation (and when different_loads = FALSE),
         # but RESIDENT_LIST CAN VARY for each scenario:
-        self.resident_list = list(self.load.columns.values)
+        self.resident_list = list(self.dict_load_profiles[self.load_list[0]].columns.values)
         # ---------------------------------------------------------------
         # Initialise Tariff Look-up table and generate all static tariffs
         # ---------------------------------------------------------------
@@ -1405,16 +1442,18 @@ def runScenario(scenario_name):
 
     # Set up pv profile if allocation not load-dependent
     if scenario.pv_allocation == 'fixed':
-        eno.allocatePv(scenario)
+        print('scenario', scenario.name, 'fixed')
+        eno.allocatePv(scenario, scenario.pv)
 
     if scenario.has_solar_block:
         eno.initialiseDailySolarBlockQuotas(scenario)
 
     # Iterate through all load profiles for this scenario:
-    for loadFile in scenario.load_list:
-        eno.initialiseBuildingLoads(loadFile, scenario)
+    for load_name in scenario.load_list:
+        eno.initialiseBuildingLoads(load_name, scenario)
         if scenario.pv_allocation == 'load_dependent':  # ie. for btm_icp, btm_s_u and btm_s_c arrangements
-            eno.allocatePv(scenario)
+            eno.allocatePv(scenario, scenario.pv)
+            print('scenario', scenario.name, 'load_dep')
         eno.initialiseSolarInstQuotas(scenario)  # depends on load and pv
 
         # If no battery, calc all internal energy flows statically (i.e. as single df calculation)
@@ -1555,7 +1594,7 @@ if __name__ == "__main__":
     if '-s' in opts:
         project = opts['-s']
     else:
-        study = 'test_indbat1'
+        study = 'test7b'
 
     main(project=project,
          study_name=study,
@@ -1564,16 +1603,17 @@ if __name__ == "__main__":
 
 # TODO - FUTURE - Variable allocation of pv between cp and residents
 # TODO - en_external scenario: cp tariff != TIDNULL
-# TODO Set up logging throughout
 
 # TODO Add import-export plot to output module
 # TODO test solar tariffs
 # TODO Add combined central and individual PV
+# TODO - Go through all tech arrangements and allow central and ind batteries / PC
 # TODO Test battery
-# TODO - Optimisaition: Separate financial settings from scenarios to reduce calculation
+# TODO - Optimisaition: load all load files at start of scenario, only if different
+# TODO - OpTIMISATION Separate financial settings from scenarios to reduce calculation
 # TODO - Optimisaition: for loops -> i in np.arange rather than iter  thru' list
 # TODO - Optimisaition: change all calcs to np.calcs
 # TODO - Optimisaition: remove print, sort, etc.
 # TODO - Optimisaition: time runs: i/o vs calcs
-# TODO - Add sys.argv to run from commandline with variables (Use `&` to run multiple processes
+# TODO: Exception handling
 # TODO Python anywhere / HPC
