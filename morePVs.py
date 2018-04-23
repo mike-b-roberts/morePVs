@@ -265,6 +265,8 @@ class Battery():
             self.charge_kW = self.capacity_kWh * 0.5
         if pd.isnull(self.maxDOD):
             self.maxDOD = 0.8
+        if pd.isnull(self.maxSOC):
+            self.maxSOC = 1.0
         if pd.isnull(self.efficiency_cycle):
             self.efficiency_cycle = 0.95
         if pd.isnull(self.max_cycles):
@@ -770,18 +772,17 @@ class Network(Customer):
         self.flows[step] = self.cum_resident_exports[step] - self.cum_resident_imports[step]
         if self.has_central_battery:
             self.flows[step] = self.battery.dispatch(available_kWh=self.flows[step], step=step)
+
         # Calc imports and exports
         # ------------------------
         self.exports[step] = self.flows[step].clip(0)
         self.imports[step] = (-1 * self.flows[step]).clip(0)
-
 
     def calcDynamicTariffs(self,step):
         """Dynamic calcs of (eg block) tariffs by timestep for ENO and for all residents."""
         for c in self.resident_list:
             self.resident[c].calcCustomerTariff(step)
         self.calcCustomerTariff(step)
-
 
     def allocateAllCapex(self, scenario):
         """ Allocates capex repayments and opex to customers according to arrangement"""
@@ -1506,7 +1507,7 @@ def main(base_path,project,study_name, use_threading = False):
     um.setup_logging(pyname, label = study_name)
     start_time = dt.datetime.now()
     global study, threading
-    use_threading = threading
+    threading = use_threading
     try:
         # --------------------------------------
         # Initialise and load data for the study
@@ -1596,15 +1597,21 @@ if __name__ == "__main__":
     if '-p' in opts:
         project = opts['-p']
     else:
-        project = 'EN1_value_of_pv'
+        project = 'EN1_pv_bat1'
     if '-s' in opts:
         study = opts['-s']
     else:
         study = 'siteJ_bat1'
+    if '-t' in opts:
+        use_threading = opts['-t']
+    else:
+        use_threading = False
+
 
     main(project=project,
          study_name=study,
-         base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
+         base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3',
+         use_threading=use_threading)
 
 
 # TODO - FUTURE - Variable allocation of pv between cp and residents
