@@ -430,8 +430,7 @@ class Customer():
         self.flows = self.generation - self.load
         self.exports = self.flows.clip(0)
         self.imports = (-1 * self.flows).clip(0)
-        self.local_imports = np.minimum(self.imports, self.local_quota) # for use of local generation
-
+        self.local_imports = np.minimum(self.imports, self.local_quota)  # for use of local generation
     def calcDynamicEnergyFlows(self,step):
         """Calculate Customer imports and exports for single timestep"""
         # -------------------------------------------------------------------------------
@@ -718,7 +717,9 @@ class Network(Customer):
                         self.resident[c].has_battery = False
                 else:
                     self.resident[c].has_battery = False
-
+        else:
+            for c in self.resident_list:
+                self.resident[c].has_battery = False
     def calcBuildingStaticEnergyFlows(self):
         """Calculate all internal energy flows for all timesteps (no storage or dm)."""
 
@@ -883,7 +884,10 @@ class Scenario():
         self.name = scenario_name
         self.label = study.name + '_' + "{:03}".format(self.name)
         # Copy all scenario parameters to allow for threading:
-        with lock:
+        if threading:
+            with lock:
+                self.parameters = study.study_parameters.loc[self.name].copy()
+        else:
             self.parameters = study.study_parameters.loc[self.name].copy()
         # --------------------------------------------
         # Set up network arrangement for this scenario
@@ -967,9 +971,11 @@ class Scenario():
                 logging.info('Missing tariff data for all_residents in study csv')
             else:  # read tariff for each customer
                 for c in self.households:
-                    # with lock: REINSTATE lock if using Threads
-                    self.parameters[c] = self.parameters['all_residents']
-
+                    if threading:
+                        with lock:
+                            self.parameters[c] = self.parameters['all_residents']
+                    else:
+                        self.parameters[c] = self.parameters['all_residents']
         # Create list of tariffs used in this scenario
         # --------------------------------------------
         self.customers_with_tariffs = self.resident_list + ['parent']
@@ -1483,43 +1489,52 @@ def runScenario(scenario_name):
             eno.logTimeseries(scenario)
         #print(scenario_name, loadFile, eno.total_building_payment/100, (eno.receipts_from_residents - eno.total_payment)/100)
     # collate / log data for all loads in scenario
-    with lock:
+    if threading:
+        with lock:
+            scenario.logScenarioData()
+    else:
         scenario.logScenarioData()
+
     logging.info('Completed Scenario %i', scenario_name)
 # ------------
 # MAIN PROGRAM
 # ------------
-def main(base_path,project,study_name):
+def main(base_path,project,study_name, use_threading = False):
 
     # set up script logging
     pyname = os.path.basename(__file__)
-    um.setup_logging(pyname)
+    um.setup_logging(pyname, label = study_name)
     start_time = dt.datetime.now()
-
+    global study, threading
+    use_threading = threading
     try:
         # --------------------------------------
         # Initialise and load data for the study
         # --------------------------------------
-        global study
+
         logging.info("study_name = %s", study_name)
         study = Study(base_path=base_path,
                     project=project,
                     study_name=study_name)
 
-        # -------------
-        # Use Threading
-        # -------------
-        global lock
-        num_worker_threads = num_threads
-        lock = threading.Lock()
-        with concurrent.futures.ThreadPoolExecutor(max_workers=num_worker_threads) as x:
-            results = list(x.map(runScenario, study.scenario_list))
 
-        # # WITHOUT Threads (simpler to debug):
-        # # ----------------------------------
-        # for s in study.scenario_list:
-        #     runScenario(s)
-        # study.logStudyData()
+        if threading:
+            # -------------
+            # Use Threading
+            # -------------
+            global lock
+            num_worker_threads = num_threads
+            lock = threading.Lock()
+            with concurrent.futures.ThreadPoolExecutor(max_workers=num_worker_threads) as x:
+                results = list(x.map(runScenario, study.scenario_list))
+        else:
+            # WITHOUT Threads (simpler to debug):
+            # ----------------------------------
+            for s in study.scenario_list:
+                runScenario(s)
+
+
+        study.logStudyData()
         # if len(study.output_list)>0:
         #     op = opm.Output(base_path = base_path,
         #                     project = project,
@@ -1581,11 +1596,11 @@ if __name__ == "__main__":
     if '-p' in opts:
         project = opts['-p']
     else:
-        project = 'p_testing'
+        project = 'EN1_value_of_pv'
     if '-s' in opts:
         study = opts['-s']
     else:
-        study = 'test7b'
+        study = 'siteJ_bat1'
 
     main(project=project,
          study_name=study,
@@ -1600,8 +1615,8 @@ if __name__ == "__main__":
 # TODO Add combined central and individual PV
 # TODO - Go through all tech arrangements and allow central and ind batteries / PC
 # TODO Test battery
-# TODO - Optimisaition: load all load files at start of scenario, only if different
-# TODO - OpTIMISATION Separate financial settings from scenarios to reduce calculation
+# TODO - Optimisation: load all load files at start of scenario, only if different
+# TODO - Optimisation Separate financial settings from scenarios to reduce calculation
 # TODO - Optimisaition: for loops -> i in np.arange rather than iter  thru' list
 # TODO - Optimisaition: change all calcs to np.calcs
 # TODO - Optimisaition: remove print, sort, etc.

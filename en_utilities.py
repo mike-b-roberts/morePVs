@@ -23,7 +23,7 @@ import matplotlib.dates as md
 # import pytz
 # import seaborn as sns
 
-def setup_logging(pyname):
+def setup_logging(pyname,label=''):
     # Set up logfile
     log_folder = "C:\\PYTHONprojects\\py_logfiles"
     pyroot =  os.path.splitext(pyname)[0]
@@ -31,7 +31,7 @@ def setup_logging(pyname):
     log_dir = os.path.join(log_folder, pyroot)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
-    logname = "python_logfile_" + str(runtime.year) + "_" + str(runtime.month).zfill(2) + "_" + str(runtime.day).zfill(
+    logname = "python_logfile_" + label + "_" + str(runtime.year) + "_" + str(runtime.month).zfill(2) + "_" + str(runtime.day).zfill(
         2) + "_" + str(runtime.hour).zfill(2) + str(runtime.minute).zfill(2) + str(runtime.second).zfill(2)+ ".txt"
     logpath = os.path.join(log_dir, logname)
 
