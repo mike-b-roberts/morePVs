@@ -271,6 +271,11 @@ class Battery():
             self.efficiency_cycle = 0.95
         if pd.isnull(self.max_cycles):
             self.max_cycles = 2000
+        if pd.isnull(self.battery_cost):
+            self.battery_cost =0.0
+        if pd.isnull(self.battery_inv_cost):
+            self.battery_inv_cost =0.0
+
         # Set up restricted discharge period and additional charge period
         # ---------------------------------------------------------------
         discharge_start1 = study.battery_strategies.loc[battery_strategy, 'discharge_start1']
@@ -324,12 +329,18 @@ class Battery():
                                        & (ts.days[charge_day].time <= pd.Timestamp(charge_end).time())]
         # Initialise battery variables
         # ----------------------------
-        self.charge_level_kWh = 0.0
+        self.initial_SOC =0 # BATTERY STARTS AT 0% SOC
+        self.charge_level_kWh = self.maxSOC * self.capacity_kWh * self.initial_SOC
         self.number_cycles = 0
         self.max_timestep_discharge = self.charge_kW * ts.interval / 3600
         self.max_timestep_charge = self.charge_kW * ts.interval / 3600
         # Initialise SOC log
         # ------------------
+        self.SOC_log = np.zeros(ts.num_steps)
+
+    def reset(self):
+        self.charge_level_kWh = self.maxSOC * self.capacity_kWh * self.initial_SOC
+        self.number_cycles = 0
         self.SOC_log = np.zeros(ts.num_steps)
 
     def charge(self, desired_charge):
@@ -351,11 +362,12 @@ class Battery():
 
     def calcBatCapex(self):
         # Battery capex includes inverter replacement if amortization period > inverter lifetime
-        if self.life_bat_inv > self.scenario.a_term:
-            bat_inv_capex = (int((self.life_bat_inv / self.scenario.a_term))+1) * self.battery_inv_cost
+        if self.life_bat_inv < self.scenario.a_term:
+            bat_inv_capex = (int((self.scenario.a_term / self.life_bat_inv ))+1) * self.battery_inv_cost
         else:
             bat_inv_capex = self.battery_inv_cost
-        # Battery capex includes battery replacement if it exceeds max_cycles in amortization period
+        # Battery capex includes battery replacement if it exceeds max_cycle
+        # in amortization period
         if self.number_cycles > self.max_cycles:
             bat_capex = (int(self.number_cycles / self.max_cycles)+1) * self.battery_cost
         else:
@@ -722,6 +734,22 @@ class Network(Customer):
         else:
             for c in self.resident_list:
                 self.resident[c].has_battery = False
+
+    def resetAllBatteries(self, scenario):
+        """reset batteries to new as required."""
+        # Central Battery
+        # ---------------
+        if self.has_central_battery:
+            self.battery.reset()
+        # Individual Batteries
+        # --------------------
+        self.cum_ind_bat_charge = np.zeros(ts.num_steps)
+        #self.tot_ind_bat_capacity = 0
+        #self.any_resident_has_battery = False
+        if self.any_resident_has_battery:
+            for c in self.resident_list:
+                    self.resident[c].battery.reset()
+
     def calcBuildingStaticEnergyFlows(self):
         """Calculate all internal energy flows for all timesteps (no storage or dm)."""
 
@@ -885,7 +913,7 @@ class Scenario():
         self.name = scenario_name
         self.label = study.name + '_' + "{:03}".format(self.name)
         # Copy all scenario parameters to allow for threading:
-        if threading:
+        if use_threading:
             with lock:
                 self.parameters = study.study_parameters.loc[self.name].copy()
         else:
@@ -972,7 +1000,7 @@ class Scenario():
                 logging.info('Missing tariff data for all_residents in study csv')
             else:  # read tariff for each customer
                 for c in self.households:
-                    if threading:
+                    if use_threading:
                         with lock:
                             self.parameters[c] = self.parameters['all_residents']
                     else:
@@ -1021,6 +1049,7 @@ class Scenario():
             self.battery_id = self.parameters['battery_id']
             self.battery_strategy = self.parameters['battery_strategy']
             self.has_central_battery = not pd.isnull(self.battery_id)
+
         else:
             self.has_central_battery = False
 
@@ -1140,6 +1169,7 @@ class Scenario():
                        network.receipts_from_residents / 100,
                        network.energy_bill / 100,
                        network.total_payment / 100,
+                       network.bat_capex_repayment,
                        (network.receipts_from_residents - network.total_payment) / 100,
                        network.retailer_receipt / 100,
                        network.retailer.energy_bill / 100,
@@ -1158,6 +1188,7 @@ class Scenario():
                         'eno$_receipts_from_residents',
                         'eno$_energy_bill',
                         'eno$_total_payment',
+                        'eno$_bat_capex_repay',
                         'eno_net$',
                         'retailer_receipt$',
                         'NUOS_charges$',
@@ -1194,6 +1225,14 @@ class Scenario():
         study.op.loc[self.name,'number_of_households'] = len(self.households)
         study.op.loc[self.name,'load_folder'] = self.load_folder
 
+        # Central battery parameters:
+        # ---------------------------
+        if self.has_central_battery:
+            study.op.loc[self.name, 'central_battery_kWh'] = study.battery_lookup.loc[self.battery_id, 'capacity_kWh']
+        else:
+            study.op.loc[self.name, 'central_battery_kWh'] = 0
+
+
         # Scenario total capex and opex repayments
         # ----------------------------------------
         study.op.loc[self.name, 'en_opex'] = self.en_opex
@@ -1213,8 +1252,8 @@ class Scenario():
         # Reduced data logging for different_loads
         # ----------------------------------------
         if study.different_loads:
-        # Don't log individual customer $ if each scenario has different load profiles
-        # (because each scenario may have different number of residents):
+            # Don't log individual customer $ if each scenario has different load profiles
+            # (because each scenario may have different number of residents):
             cols = [c for c in cols if c not in (cust_bill_list + cust_total_list)] # .tolist()
         # -------------------------------------
         # Average results across multiple loads
@@ -1224,8 +1263,8 @@ class Scenario():
         stdcols = [c + '_std' for c in cols]
         for c in cols:
             i = cols.index(c)
-            study.op.loc[self.name,mcols[i]]=self.results.loc[:,c].mean(axis=0)
-            study.op.loc[self.name,stdcols[i]]=self.results.loc[:,c].std(axis=0)
+            study.op.loc[self.name,mcols[i]] = self.results.loc[:,c].mean(axis=0)
+            study.op.loc[self.name,stdcols[i]] = self.results.loc[:,c].std(axis=0)
 
 class Study():
     """A set of different scenarios to be compared."""
@@ -1442,6 +1481,7 @@ def runScenario(scenario_name):
     eno.initialiseAllTariffs(scenario)
     eno.initialiseAllBatteries(scenario)
 
+
     # Set up pv profile if allocation not load-dependent
     if scenario.pv_allocation == 'fixed':
         eno.allocatePv(scenario, scenario.pv)
@@ -1461,8 +1501,9 @@ def runScenario(scenario_name):
         if not eno.has_central_battery and not eno.any_resident_has_battery:
             eno.calcBuildingStaticEnergyFlows()
         else:
-            # If battery, calculate energy flows stepwise:
-            # --------------------------------------------
+            # If battery, reset then calculate energy flows stepwise:
+            # -------------------------------------------------------
+            eno.resetAllBatteries(scenario)
             for step in np.arange(0, ts.num_steps):
                 eno.calcBuildingDynamicEnergyFlows(step)
 
@@ -1490,7 +1531,7 @@ def runScenario(scenario_name):
             eno.logTimeseries(scenario)
         #print(scenario_name, loadFile, eno.total_building_payment/100, (eno.receipts_from_residents - eno.total_payment)/100)
     # collate / log data for all loads in scenario
-    if threading:
+    if use_threading:
         with lock:
             scenario.logScenarioData()
     else:
@@ -1506,20 +1547,18 @@ def main(base_path,project,study_name, use_threading = False):
     pyname = os.path.basename(__file__)
     um.setup_logging(pyname, label = study_name)
     start_time = dt.datetime.now()
-    global study, threading
-    threading = use_threading
+    global study
+
     try:
         # --------------------------------------
         # Initialise and load data for the study
         # --------------------------------------
-
         logging.info("study_name = %s", study_name)
         study = Study(base_path=base_path,
                     project=project,
                     study_name=study_name)
 
-
-        if threading:
+        if use_threading:
             # -------------
             # Use Threading
             # -------------
@@ -1534,14 +1573,8 @@ def main(base_path,project,study_name, use_threading = False):
             for s in study.scenario_list:
                 runScenario(s)
 
-
         study.logStudyData()
-        # if len(study.output_list)>0:
-        #     op = opm.Output(base_path = base_path,
-        #                     project = project,
-        #                     study_name = study_name)
-        #     op.csv_output()
-        #     op.plot_output()
+
         end_time = dt.datetime.now()
         duration = end_time-start_time
         print("***COMPLETED STUDY ***", study_name)
@@ -1558,32 +1591,6 @@ def main(base_path,project,study_name, use_threading = False):
 
 if __name__ == "__main__":
 
-    # start = dt.datetime.now()
-    # main(project='p_testing',
-    #     study_name='test7a',
-    #     base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
-    # end = dt.datetime.now()
-    # duration = end - start
-    # print(duration)
-
-    # This is legacy code for optimising number of threads. left here as it is likely to be machine specific:
-    # -------------------------------------------------------------------------------------------------------
-    # global num_threads
-    # thread_options = [4,6,8, 10, 12, 15, 20]
-    # times = pd.DataFrame(columns=['start', 'end', 'time'], index=thread_options)
-    # for num_threads in thread_options:
-    #     times.loc[num_threads,'start'] = dt.datetime.now()
-    #     print ('RUNNING WITH ',num_threads,' THREADS:')
-    #     main(project='p_testing',
-    #         study_name='test7a',
-    #         base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3')
-    #     times.loc[num_threads,'end'] = dt.datetime.now()
-    #     times.loc[num_threads,'time'] = times.loc[num_threads,'end'] -times.loc[num_threads,'start']
-    # print(times)
-
-
-    # This optimised to n = 6 threads
-    # -------------------------------
     num_threads = 6
 
     # Import arguments - allows multi-processing from command line
@@ -1608,10 +1615,17 @@ if __name__ == "__main__":
         use_threading = False
 
 
-    main(project=project,
-         study_name=study,
+    # main(project=project,
+    #      study_name=study,
+    #      base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3',
+    #      use_threading=use_threading)
+
+    main(project='EN1_pv_bat1',
+         study_name='siteJ_bat2_a',
          base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3',
-         use_threading=use_threading)
+         use_threading=True)
+
+
 
 
 # TODO - FUTURE - Variable allocation of pv between cp and residents
