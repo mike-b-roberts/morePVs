@@ -884,7 +884,7 @@ class Network(Customer):
         if scenario.pv_exists:
             self.self_consumption = 100 - (self.total_building_export / self.pv.sum().sum() * 100)
         else:
-            self.self_consumption=0
+            self.self_consumption = 100  # NB No PV implies 100% self consumption
 
     def logTimeseries(self,scenario):
         """Logs timeseries data for whole building to csv file."""
@@ -1101,8 +1101,9 @@ class Scenario():
             # ------------------
             # PV capex includes inverter replacement if amortization period > inverter lifetime
             self.pv_capex = study.pv_capex_table.loc[self.pc_cap_id, 'pv_capex'] + \
-                            (int((study.pv_capex_table.loc[self.pc_cap_id, 'inverter_life'] / self.a_term)) * \
+                            (int(self.a_term / study.pv_capex_table.loc[self.pc_cap_id, 'inverter_life']-0.01) * \
                              study.pv_capex_table.loc[self.pc_cap_id, 'inverter_cost'])
+
             #  Option to use standard 1kW PV output and scale
             #  with pv_capex and inverter cost given as $/kW
             if self.pv_scaleable:
@@ -1119,7 +1120,7 @@ class Scenario():
             else:
                 self.pv_capex_repayment=0
 
-    def calcResults(self, network):
+    def calcFinancials(self, network):
         """ Calculates results for specific network within scenario.
 
          Includes: cashflows for whole period  - for each resident
@@ -1526,7 +1527,7 @@ def runScenario(scenario_name):
         # ----------
         eno.calcAllDemandCharges()
         eno.allocateAllCapex(scenario)  # per load profile to allow for scenarios where capex allocation depends on load
-        scenario.calcResults(eno)
+        scenario.calcFinancials(eno)
         if study.log_timeseries:
             eno.logTimeseries(scenario)
         #print(scenario_name, loadFile, eno.total_building_payment/100, (eno.receipts_from_residents - eno.total_payment)/100)
@@ -1620,10 +1621,10 @@ if __name__ == "__main__":
     #      base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3',
     #      use_threading=use_threading)
 
-    main(project='EN1_pv_bat1',
-         study_name='siteJ_bat2_a',
+    main(project=project,
+         study_name=study,
          base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3',
-         use_threading=True)
+         use_threading=use_threading)
 
 
 
@@ -1636,7 +1637,8 @@ if __name__ == "__main__":
 # TODO Add combined central and individual PV
 # TODO - Go through all tech arrangements and allow central and ind batteries / PC
 # TODO Test battery
-# TODO - Optimisation: load all load files at start of scenario, only if different
+# TODO Currently no capex calcs for individual batteries Need to update Network.allocateAllCapex
+
 # TODO - Optimisation Separate financial settings from scenarios to reduce calculation
 # TODO - Optimisaition: for loops -> i in np.arange rather than iter  thru' list
 # TODO - Optimisaition: change all calcs to np.calcs
