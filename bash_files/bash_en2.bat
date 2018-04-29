@@ -1,25 +1,11 @@
 cd C:/PYTHONprojects/en
 
-python morePVs.py -s siteG_value3 &
+python morePVs.py -p EN1_value_of_pv2 -s siteA_value5 -t True && python morePVs.py -p EN1_value_of_pv2 -s siteB_value5 -t True &
 sleep 60
-python morePVs.py -s siteH_value3 &
+python morePVs.py -p EN1_value_of_pv2 -s siteC_value5 -t True && python morePVs.py -p EN1_value_of_pv2 -s siteD_value5 -t True &
 sleep 60
-python morePVs.py -s siteC_value3 &
+python morePVs.py -p EN1_value_of_pv2 -s siteE_value5 -t True && python morePVs.py -p EN1_value_of_pv2 -s siteF_value5 -t True &
 sleep 60
-python morePVs.py -s siteI_value3 &
+python morePVs.py -p EN1_value_of_pv2 -s siteG_value5 -t True && python morePVs.py -p EN1_value_of_pv2 -s siteH_value5 -t True &
 sleep 60
-python morePVs.py -s siteJ_value3 &
-sleep 60
-python morePVs.py -s siteF_value3 &
-sleep 60
-python morePVs.py -s siteE_value3 &
-sleep 60
-python morePVs.py -s siteB_value3 &
-sleep 60
-python morePVs.py -s siteA_value3 &
-sleep 60
-python morePVs.py -s siteD_value3 &
-
-
-
-
+python morePVs.py -p EN1_value_of_pv2 -s siteI_value5 -t True && python morePVs.py -p EN1_value_of_pv2 -s siteJ_value5 -t True &
