@@ -30,11 +30,11 @@ For `en` or `cp` arrangement, pv file has single column, must be 'cp'
 
 For `btm_i` : btm individual:  en has column for each unit, or if not, single 'cp' or 'total' column that is split equally
 
-For `btm_icp` : en has column for eadch unit and cp. Or, single column: cp gets share according to load share; units get equal share of remainder
+For `btm_icp` : en has column for each unit and cp. Or, single column: cp gets share according to load share; units get equal share of remainder
 
 For Shared btm inc cp:  `btm_s_c` A single `total` or 'cp' column that is split according to instantaneous load between all units AND cp
 
-For Shared btm Units only:`btm_s_u` single `total` or 'cp' column that is split according to instantaneousload between all units EXCLUDING cp
+For Shared btm Units only:`btm_s_u` single `total` or 'cp' column that is split according to instantaneous load between all units EXCLUDING cp
 
 For en_external scenario: `cp tariff != TIDNULL`
 
@@ -106,11 +106,30 @@ Solar Tariffs
 `SIT_xx` Solar Instantaneous TOU tariff : 
                 Based on TOU with `xx%` discount
                 and each customer having a quota of solar energy, based on % of instantaneous generation at that timestamp 
-                after cp load has been satisfied. This is *not* a block tariff. l`local_import` is calculated statically                                       
+                after cp load has been satisfied.
+                This is *not* a block tariff. `local_import` is calculated statically
 
 `CostPlus_xx`   Based on bills paid at parent tariff + xx%. Fixed costs (and CP?) shared evenly; Volumetric costs shared by usage; 
                 How best to deal with demand charges? 
 
+`tariff_type` = `Solar_Block_Daily`
+- daily quota applied to solar tariff
+
+`tariff_type` = `Solar_Instantaneous`
+- generation allocated according to load and charged at `solar_rate`,
+- with underlying (`Flat_Rate` or `TOU`) tariff for grid consumption.
+
+If `name_x` is `solar_sc`:
+    solar tariff applied within solar period but only to self-consumed solar generation. Export is passed through at FiT rate
+Solar rate must have details for solar period (even if it is `00:00` to `23:59`)
+
+For `btm_s` arrangements, .....
+e.g. Allume:
+`tariff_type` = `Solar_Inst_SC_only`
+- solar instantaneous tariff (`solar_sc`)applied only to self-consumed solar,
+- exported solar charged at FiT rate, so passed through
+- Tariff is a combination of retailer tariff and solar tariff paid to third party
+    - i.e. underlying (`Flat_Rate` or `TOU`) tariff for grid consumption.
 
 
 'parent' tariff

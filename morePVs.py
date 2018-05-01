@@ -81,11 +81,18 @@ class TariffData():
         for tid in self.all_tariffs:
             # apply discounts to all tariffs:
             # -------------------------------
+            # excluding FiTs and solar tariffs
             if not np.isnan(self.lookup.loc[tid, 'discount']):
                 discount = self.lookup.loc[tid, 'discount']
-                rates = [c for c in self.lookup.columns if 'rate' in c and not 'fit' in c]
-                valid_rates = [c for c in rates if not np.isnan(self.lookup.loc[tid, c])]
-                self.lookup.loc[tid, valid_rates] = self.lookup.loc[tid, valid_rates] * (100 - discount) / 100
+                rates = [c for c in self.lookup.columns if 'rate' in c and not 'fit' in c ]
+                named_rates = [c for c in rates if
+                               not np.isnan(self.lookup.loc[tid, c]) and
+                               c.replace('rate', 'name') in self.lookup.columns]
+                solar_rates = [c for c in named_rates if
+                               'solar' in self.lookup.loc[tid, c.replace('rate', 'name')]
+                               or 'Solar' in self.lookup.loc[tid, c.replace('rate', 'name')]]
+                discounted_rates = [c for c in rates if c not in solar_rates]
+                self.lookup.loc[tid, discounted_rates] = self.lookup.loc[tid, discounted_rates] * (100 - discount) / 100
             # Allocate Flat rate and Zero Tariffs
             # -----------------------------------:
             if self.lookup.loc[tid, 'tariff_type'] == 'Zero_Rate':
@@ -95,35 +102,36 @@ class TariffData():
             # Allocate TOU tariffs:
             # --------------------
             # including residual (non-solar) rates for Solar_Block_TOU
-            elif 'TOU' in self.lookup.loc[tid, 'tariff_type'] or 'Solar_Block' in self.lookup.loc[tid, 'tariff_type'] :
+            elif 'TOU' in self.lookup.loc[tid, 'tariff_type'] \
+                    or 'Solar_Block' in self.lookup.loc[tid, 'tariff_type']\
+                    or 'Solar_Inst' in self.lookup.loc[tid, 'tariff_type']:
                 # calculate timeseries TOU tariff based on up to 8 periods (n=1 to 8)
                 # volumetric tariff is rate_n, between times start_n and end_n
                 # week_n is 'day' for week, 'end' for weekend, 'both' for both
                 # NB times stored in csv in form 'h:mm'. Midnight saved as 23:59
                 for name, parameter in self.tou_rate_list.items():
-                    if not pd.isnull(self.lookup.loc[tid, parameter[1]]): # parameter[1] is rate_
-
+                    if not pd.isnull(self.lookup.loc[tid, parameter[1]]):  # parameter[1] is rate_
                         if self.lookup.loc[tid, parameter[1]] == '0:00':  # start_
                             period = \
-                                    ts.days[self.lookup.loc[tid, parameter[3]]][ # week_
-                                    (ts.days[self.lookup.loc[tid, parameter[3]]].time >= pd.Timestamp( # week_
-                                        self.lookup.loc[tid,  parameter[1]]).time()) # start_
-                                    & (ts.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp( # week_
-                                        self.lookup.loc[tid, parameter[2]]).time()) # end_
+                                    ts.days[self.lookup.loc[tid, parameter[3]]][  # week_
+                                    (ts.days[self.lookup.loc[tid, parameter[3]]].time >= pd.Timestamp(  # week_
+                                        self.lookup.loc[tid,  parameter[1]]).time())  # start_
+                                    & (ts.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp(  # week_
+                                        self.lookup.loc[tid, parameter[2]]).time())  # end_
                                     ]
                         else:
                             period = \
-                                    ts.days[self.lookup.loc[tid, parameter[3]]][ # week_
-                                    (ts.days[self.lookup.loc[tid, parameter[3]]].time > pd.Timestamp( # week_
-                                        self.lookup.loc[tid, parameter[1]]).time()) # start_
-                                    & (ts.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp( # week_
-                                        self.lookup.loc[tid, parameter[2]]).time()) #end_
+                                    ts.days[self.lookup.loc[tid, parameter[3]]][  # week_
+                                    (ts.days[self.lookup.loc[tid, parameter[3]]].time > pd.Timestamp(  # week_
+                                        self.lookup.loc[tid, parameter[1]]).time())  # start_
+                                    & (ts.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp(  # week_
+                                        self.lookup.loc[tid, parameter[2]]).time())  # end_
                                     ]
-                        if not any(s in name for s in ['solar','Solar']):
+                        if not any(s in name for s in ['solar', 'Solar']):
                             # Store solar rate and period separately
                             # For non-solar periods and rates only:
-                            self.static_imports.loc[period, tid] = self.lookup.loc[tid, parameter[0]] # rate_
-                        else: # Solar (local) periods and rates only:
+                            self.static_imports.loc[period, tid] = self.lookup.loc[tid, parameter[0]]  # rate_
+                        else:  # Solar (local) periods and rates only:
                             self.static_solar_imports.loc[period, tid] = self.lookup.loc[tid, parameter[0]]  # rate_
                     pass
             # TODO: rejig this section to allow tariff periods bridging midnight \
@@ -135,7 +143,6 @@ class TariffData():
             elif self.lookup.loc[tid, 'fit_type'] == 'Flat_Rate':
                 self.static_exports[tid] = self.lookup.loc[tid, 'fit_flat_rate']
         # Save tariffs as csvs
-
         import_name = os.path.join(self.saved_tariff_path, 'static_import_tariffs.csv')
         solar_name = os.path.join(self.saved_tariff_path, 'static_solar_import_tariffs.csv')
         export_name = os.path.join(self.saved_tariff_path, 'static_export_tariffs.csv')
@@ -154,26 +161,27 @@ class Tariff():
         # Export Tariff and Fixed Charge
         # ------------------------------
         self.export_tariff = (scenario.static_exports[tariff_id]).values  # NB assumes FiTs are fixed
-        self.fixed_charge = scenario.lookup.loc[tariff_id, 'daily_fixed_rate']
-        # Add in Metering Service Charge for network tariff:
-        if scenario.lookup.loc[tariff_id, 'rorn'] == 'network':
-            self.fixed_charge += \
-                scenario.lookup.loc[tariff_id, 'metering_sc_non_cap'] + \
-                scenario.lookup.loc[tariff_id, 'metering_sc_cap']
+        self.fixed_charge = scenario.tariff_lookup.loc[tariff_id, 'daily_fixed_rate']
+        # Add in Metering Service Charge for network and combined tariffs:
+
+        self.fixed_charge += \
+            scenario.tariff_lookup['metering_sc_non_cap'].fillna(0).loc[tariff_id]
+        # scenario.tariff_lookup['metering_sc_cap'].fillna(0).loc[tariff_id]
+        # NB Capital component of MSC does not apply as meter capital costs included in en_capex
 
         # -------------
         # Demand Tariff
         # -------------
         if tariff_id in scenario.demand_list:
             self.is_demand = True
-            self.demand_type = scenario.lookup.loc[tariff_id, 'demand_type']
+            self.demand_type = scenario.tariff_lookup.loc[tariff_id, 'demand_type']
             # Demand period is weekday or weekend between demand_start and demand_end:
             self.demand_period = ts.days[
-                scenario.lookup.loc[tariff_id, 'demand_week']][
-                (ts.days[scenario.lookup.loc[tariff_id, 'demand_week']
+                scenario.tariff_lookup.loc[tariff_id, 'demand_week']][
+                (ts.days[scenario.tariff_lookup.loc[tariff_id, 'demand_week']
                  ].time > pd.Timestamp(
-                    scenario.lookup.loc[tariff_id, 'demand_start']).time())
-                & (ts.days[scenario.lookup.loc[tariff_id, 'demand_week']
+                    scenario.tariff_lookup.loc[tariff_id, 'demand_start']).time())
+                & (ts.days[scenario.tariff_lookup.loc[tariff_id, 'demand_week']
                    ].time <= pd.Timestamp(
                     study.tariff_data.lookup.loc[tariff_id, 'demand_end']).time())
                 ]
@@ -181,7 +189,7 @@ class Tariff():
             s[self.demand_period] = 1
             self.demand_period_array = np.array(s)
             self.assumed_pf = 1.0  ##   For kVA demand charges, What is good assumption for this????
-            self.demand_tariff = scenario.lookup.loc[tariff_id, 'demand_tariff']
+            self.demand_tariff = scenario.tariff_lookup.loc[tariff_id, 'demand_tariff']
         else:
             self.is_demand = False
         # ------------------------------------------------------
@@ -196,18 +204,20 @@ class Tariff():
         if tariff_id in scenario.solar_list:
             for name, parameter in study.tariff_data.tou_rate_list.items():
                 if any(s in name for s in ['solar','Solar']):
+                    self.solar_tariff_name = name
                     self.solar_period = \
-                        ts.days[scenario.lookup.loc[tariff_id, parameter[3]]][  # week_
-                            (ts.days[scenario.lookup.loc[tariff_id, parameter[3]]].time > pd.Timestamp(  # week_
-                                scenario.lookup.loc[tariff_id, parameter[1]]).time())  # start_
-                            & (ts.days[scenario.lookup.loc[tariff_id, parameter[3]]].time <= pd.Timestamp(  # week_
-                                scenario.lookup.loc[tariff_id, parameter[2]]).time())  # end_
+                        ts.days[scenario.tariff_lookup.loc[tariff_id, parameter[3]]][  # week_
+                            (ts.days[scenario.tariff_lookup.loc[tariff_id, parameter[3]]].time > pd.Timestamp(  # week_
+                                scenario.tariff_lookup.loc[tariff_id, parameter[1]]).time())  # start_
+                            & (ts.days[scenario.tariff_lookup.loc[tariff_id, parameter[3]]].time <= pd.Timestamp(  # week_
+                                scenario.tariff_lookup.loc[tariff_id, parameter[2]]).time())  # end_
                             ]
-                    self.solar_rate = scenario.lookup.loc[tariff_id, parameter[0]]  # rate_
-                    self.solar_cp_allocation = scenario.lookup.loc[tariff_id, 'solar_cp_allocation'].fillna(0) # % of total solar generation allocated to cp
+                    self.solar_rate = scenario.tariff_lookup.loc[tariff_id, parameter[0]]  # rate_
+                    self.solar_cp_allocation = scenario.tariff_lookup.loc[tariff_id, 'solar_cp_allocation'].fillna(0) # % of total solar generation allocated to cp
             self.solar_import_tariff = (scenario.static_solar_imports[tariff_id]).values
         else:
             self.solar_import_tariff = np.zeros(ts.num_steps)
+            self.solar_tariff_name = ''
         # -----------------------------
         # All volumetric import tariffs
         # -----------------------------
@@ -219,34 +229,12 @@ class Tariff():
             self.import_tariff = np.zeros(ts.num_steps)
 
 
-    def calcDynamicTariff(self,
-                          tariff_id,
-                          scenario,
-                          step,
-                          customer_load):
-        """Dynamically calculate tariffs by timestep according to status (eg cumulative load for block tariffs)."""
-        if tariff_id in scenario.dynamic_list:
-            if scenario.lookup.loc[tariff_id, 'tariff_type'] == 'Block_Quarterly':
-                # Block Quarterly tariff has fixed load tariff blocks per quarter
-                self.steps_since_reset = np.mod((step - scenario.block_quarterly_billing_start),
-                                                scenario.steps_in_block)
-                self.cumulative_energy = customer_load[step - self.steps_since_reset:step + 1].sum()
-                if self.cumulative_energy <= scenario.lookup.loc[tariff_id, 'high_1']:
-                    self.import_tariff[step] = scenario.lookup.loc[tariff_id, 'block_rate_1']
-                elif self.cumulative_energy > scenario.lookup.loc[tariff_id, 'high_1'] \
-                        and self.cumulative_energy <= scenario.lookup.loc[tariff_id, 'high_2']:
-                    self.import_tariff[step] = scenario.lookup.loc[tariff_id, 'block_rate_2']
-                elif self.cumulative_energy > scenario.lookup.loc[tariff_id, 'high_2']:
-                    self.import_tariff[step] = scenario.lookup.loc[tariff_id, 'block_rate_3']
-            else:
-                logging.info("*****************Dynamic Tariff %s of unknown Tariff type", tariff_id)
-
 class Battery():
     # adapted from script by Luke Marshall
     def __init__(self, scenario, battery_id, battery_strategy):
         self.battery_id = battery_id
         self.scenario = scenario
-        # Load battery parameters from battery lookup
+        # Load battery parameters from battery tariff_lookup
         # -------------------------------------------
         self.capacity_kWh = study.battery_lookup.loc[battery_id, 'capacity_kWh']
         self.charge_kW = study.battery_lookup.loc[battery_id, 'charge_kW']
@@ -445,6 +433,7 @@ class Customer():
         self.exports = self.flows.clip(0)
         self.imports = (-1 * self.flows).clip(0)
         self.local_imports = np.minimum(self.imports, self.local_quota)  # for use of local generation
+
     def calcDynamicEnergyFlows(self,step):
         """Calculate Customer imports and exports for single timestep"""
         # -------------------------------------------------------------------------------
@@ -455,22 +444,39 @@ class Customer():
             self.flows[step] = self.battery.dispatch(available_kWh=self.flows[step], step=step)
         self.exports[step] = self.flows[step].clip(0)
         self.imports[step] = (-1 * self.flows[step]).clip(0)
-        #TODO: @@@ Sort this local quota - might be OK
-        self.local_imports[step] = np.minimum(self.imports[step], self.local_quota[step])  # for use of local generation
+        #TODO: @@@ Check this local quota - should be OK
+        self.local_imports[step] = min(self.imports[step], self.local_quota[step])  # for use of local generation
 
-    def calcCustomerTariff (self, step):
-        """Calculates import rates for timestep for dynamic (eg block) tariff."""
-        # For block tariffs, go calculate rate for timestep:
-        # --------------------------------------------------
+    def calcCustomerBlockTariff (self, step):
+        """Calculates import rates for timestep for dynamic (eg block and solar block) tariffs."""
+        # -----------------------------------------------
+        # For block tariffs, calculate rate for timestep:
+        # -----------------------------------------------
         self.tariff.calcDynamicTariff(
                                       tariff_id=self.tariff_id,
                                       scenario=self.scenario,
                                       step=step,
                                       customer_load=self.imports
                                       )
+        if self.tariff_id in self.scenario.dynamic_list:
+            if self.scenario.tariff_lookup.loc[self.tariff_id, 'tariff_type'] == 'Block_Quarterly':
+                # Block Quarterly tariff has fixed load tariff blocks per quarter
+                self.tariff.steps_since_reset = np.mod((step - self.scenario.block_quarterly_billing_start),
+                                                self.scenario.steps_in_block)
+                self.cumulative_energy = self.imports[step - self.steps_since_reset:step + 1].sum()
+                if self.cumulative_energy <= self.scenario.tariff_lookup.loc[self.tariff_id, 'high_1']:
+                    self.import_tariff[step] = self.scenario.tariff_lookup.loc[self.tariff_id, 'block_rate_1']
+                elif self.cumulative_energy > self.scenario.tariff_lookup.loc[self.tariff_id, 'high_1'] \
+                        and self.cumulative_energy <= self.scenario.tariff_lookup.loc[self.tariff_id, 'high_2']:
+                    self.import_tariff[step] = self.scenario.tariff_lookup.loc[self.tariff_id, 'block_rate_2']
+                elif self.cumulative_energy > self.scenario.tariff_lookup.loc[self.tariff_id, 'high_2']:
+                    self.import_tariff[step] = self.scenario.tariff_lookup.loc[self.tariff_id, 'block_rate_3']
+            else:
+                logging.info("*****************Dynamic Tariff %s of unknown Tariff type", self.tariff_id)
+        # ----------------------------------------------------------------------
         # For solar block daily tariff, calc kWh local import / solar allocation
         # ----------------------------------------------------------------------
-        if self.scenario.lookup.loc[self.tariff_id, 'tariff_type'] == 'Solar_Block_Daily':
+        if self.scenario.tariff_lookup.loc[self.tariff_id, 'tariff_type'] == 'Solar_Block_Daily':
             self.tariff.steps_since_reset = np.mod((step - self.scenario.block_quarterly_billing_start),
                                             self.tariff.steps_in_day)
             # Cumulative Energy for this day:
@@ -484,10 +490,22 @@ class Customer():
                 self.local_imports[step] = self.imports[step]
             elif self.prev_cum_energy < self.daily_local_quota \
                     and self.cumulative_energy > self.daily_local_quota:
-                self.local_imports[step] = self.imports[step] - self.daily_local_quota / self.steps_in_day
+                self.local_imports[step] = self.cumulative_energy - self.daily_local_quota
             else:
-                self.local_imports[step] = self.daily_local_quota / self.steps_in_day
-
+                self.local_imports[step] = 0
+                
+            # TODO: Solar Block Tariff. Test changed algorithm
+            # (Was previously as below:)
+            
+            # if self.cumulative_energy <= self.daily_local_quota:
+            #     self.local_imports[step] = self.imports[step]
+            # elif self.prev_cum_energy < self.daily_local_quota \
+            #         and self.cumulative_energy > self.daily_local_quota:
+            #     self.local_imports[step] = self.imports[step] - self.daily_local_quota / self.steps_in_day
+            #     
+            #     
+            # else:
+            #     self.local_imports[step] = self.daily_local_quota / self.steps_in_day
 
     def calcDemandCharge(self):
         if self.tariff.is_demand:
@@ -505,14 +523,28 @@ class Customer():
         self.cashflows is net volumetric import & export charge,
         self.energy_bill is total elec bill, ic fixed charges
         self.total_payment includes opex & capex repayments"""
-        self.cashflows = \
-            np.multiply((self.imports - self.local_imports), self.tariff.import_tariff) \
-            + np.multiply(self.local_imports, self.tariff.solar_import_tariff) \
-            - np.multiply((self.exports - self.local_exports), self.tariff.export_tariff)
-            # - np.multiply(self.local_exports, self.tariff.local_export_tariff) could be added for LET / P2P
-        # These are all 1x17520 Arrays.
-        # local_tariffs are for, e.g. `solar_rate` energy,
-        # maybe extendable for p2p later
+
+        #if 'btm_s' in self.scenario.arrangement and self.scenario.tariff_lookup.loc[self.tariff_id, 'tariff_type'] == 'Solar_Inst_SC_only':
+
+        if 'sc' in self.tariff.solar_tariff_name:
+            # Solar tariff paid ONLY for self-consumed generation
+            # and export FiT paid for exported generation
+            self.cashflows = \
+                np.multiply((self.imports - self.local_imports), self.tariff.import_tariff) \
+                + np.multiply(np.maximum((self.local_imports - self.exports), np.zeros(ts))
+                              , self.tariff.solar_import_tariff) \
+                - np.multiply(self.exports, self.tariff.export_tariff) \
+                + np.multiply(self.exports, self.tariff.export_tariff)
+            # NB cost of exported self generation is received from retailer and passed to PV seller, so zero net effect
+
+        else:
+            self.cashflows = \
+                np.multiply((self.imports - self.local_imports), self.tariff.import_tariff) \
+                + np.multiply(self.local_imports, self.tariff.solar_import_tariff) \
+                - np.multiply(self.exports, self.tariff.export_tariff)
+                # - np.multiply(self.local_exports, self.tariff.local_export_tariff) could be added for LET / P2P
+            # These are all 1x17520 Arrays.
+            # local_tariffs are for, `solar_rate` energy,(maybe extendable for p2p later)
         self.energy_bill = self.cashflows.sum() + \
                            self.tariff.fixed_charge * ts.num_days + \
                            self.demand_charge
@@ -524,10 +556,6 @@ class Customer():
                              self.en_capex_repayment + \
                              self.en_opex +\
                              self.bat_capex_repayment) * 100 # capex, opex in $, energy in c (because tariffs in c/kWh)
-
-    # def staticDemandResponse(self,shift_time,shift_pc):
-    #     self.load= self.load * (100% - shift_pc) + shift(self.load,shift_time)  * shift_pc ???
-    #     pass
 
 
 class Network(Customer):
@@ -809,8 +837,8 @@ class Network(Customer):
     def calcDynamicTariffs(self,step):
         """Dynamic calcs of (eg block) tariffs by timestep for ENO and for all residents."""
         for c in self.resident_list:
-            self.resident[c].calcCustomerTariff(step)
-        self.calcCustomerTariff(step)
+            self.resident[c].calcCustomerBlockTariff(step)
+        self.calcCustomerBlockTariff(step)
 
     def allocateAllCapex(self, scenario):
         """ Allocates capex repayments and opex to customers according to arrangement"""
@@ -1012,20 +1040,20 @@ class Scenario():
         self.tariff_in_use = self.parameters[self.customers_with_tariffs] # tariff ids for each customer
         self.tariff_short_list = self.tariff_in_use.tolist()  + [self.dnsp_tariff]  # list of tariffs in use
         self.tariff_short_list = list(set(self.tariff_short_list)) # drop duplicates
-        #  Slice tariff lookup table for this scenario
-        self.lookup = study.tariff_data.lookup.loc[self.tariff_short_list]
+        #  Slice tariff tariff_lookup table for this scenario
+        self.tariff_lookup = study.tariff_data.lookup.loc[self.tariff_short_list]
         self.dynamic_list = [t for t in self.tariff_short_list \
-                if any(word in self.lookup.loc[t, 'tariff_type'] for word in ['Block','block','Dynamic','dynamic'])]
+                             if any(word in self.tariff_lookup.loc[t, 'tariff_type'] for word in ['Block', 'block', 'Dynamic', 'dynamic'])]
                 # Currently only includes block, could also add demand tariffs
                 # if needed - i.e. for demand tariffs on < 12 month period
         self.solar_list = [t for t in self.tariff_short_list \
-                if any(word in self.lookup.loc[t, 'tariff_type'] for word in ['Solar','solar'])]
+                           if any(word in self.tariff_lookup.loc[t, 'tariff_type'] for word in ['Solar', 'solar'])]
         solar_block_list = [t for t in self.solar_list \
-                if any(word in self.lookup.loc[t, 'tariff_type'] for word in ['Block','block'])]
+                            if any(word in self.tariff_lookup.loc[t, 'tariff_type'] for word in ['Block', 'block'])]
         self.solar_inst_list = [t for t in self.solar_list \
-                           if any(word in self.lookup.loc[t, 'tariff_type'] for word in ['Inst', 'inst'])]
+                                if any(word in self.tariff_lookup.loc[t, 'tariff_type'] for word in ['Inst', 'inst'])]
         self.demand_list = [t for t in self.tariff_short_list \
-                if 'Demand' in self.lookup.loc[t, 'tariff_type']]
+                            if 'Demand' in self.tariff_lookup.loc[t, 'tariff_type']]
         self.has_demand_charges = len(self.demand_list) > 0
         self.has_dynamic_tariff = len(self.dynamic_list) > 0
         #  previously:(list(set(self.tariff_short_list).intersection(self.dynamic_list)))
@@ -1370,7 +1398,7 @@ class Study():
             self.pv_capex_table.loc[:,['pv_capex', 'inverter_cost']] \
                     = self.pv_capex_table.loc[:,['pv_capex','inverter_cost']].fillna(0.0)
         # ----------------------------------
-        # read battery data into lookup file
+        # read battery data into tariff_lookup file
         # ----------------------------------
         self.battery_lookup = pd.read_csv(self.battery_file, index_col='battery_id')
         self.battery_strategies = pd.read_csv(self.battery_strategies_file, index_col='battery_strategy')
@@ -1593,6 +1621,8 @@ def main(base_path,project,study_name, use_threading = False):
 if __name__ == "__main__":
 
     num_threads = 6
+    default_project = 'EN1_value_of_pv2'
+    default_study = 'siteB_value5'
 
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
@@ -1605,11 +1635,11 @@ if __name__ == "__main__":
     if '-p' in opts:
         project = opts['-p']
     else:
-        project = 'EN1_pv_bat1'
+        project = default_project
     if '-s' in opts:
         study = opts['-s']
     else:
-        study = 'siteJ_bat1'
+        study = default_study
     if '-t' in opts:
         use_threading = opts['-t']
     else:
@@ -1635,14 +1665,15 @@ if __name__ == "__main__":
 # TODO Add import-export plot to output module
 # TODO test solar tariffs
 # TODO Add combined central and individual PV
-# TODO - Go through all tech arrangements and allow central and ind batteries / PC
+# TODO Battery: Go through all tech arrangements and allow central and ind batteries / PC
+# TODO Battery: Add capex calcs for individual batteries Need to update Network.allocateAllCapex
+# TODO Battery: add option of battery lifetime / warranty as years, not cycles (Peg W2)
 # TODO Test battery
-# TODO Currently no capex calcs for individual batteries Need to update Network.allocateAllCapex
 
 # TODO - Optimisation Separate financial settings from scenarios to reduce calculation
-# TODO - Optimisaition: for loops -> i in np.arange rather than iter  thru' list
-# TODO - Optimisaition: change all calcs to np.calcs
-# TODO - Optimisaition: remove print, sort, etc.
-# TODO - Optimisaition: time runs: i/o vs calcs
-# TODO: Exception handling
-# TODO Python anywhere / HPC
+# TODO - Optimisation: for loops -> i in np.arange rather than iter  thru' list
+# TODO - Optimisation: change all calcs to np.calcs
+# TODO - Optimisation: remove print, sort, etc.
+# TODO - Optimisation: time runs: i/o vs calcs
+# TODO - Exception handling
+# TODO - Python anywhere / HPC

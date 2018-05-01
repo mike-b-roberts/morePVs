@@ -257,7 +257,7 @@ class Output():
             d_bau = d_bau.drop(drop_cols, axis=1)
             bau = d_bau.values.flatten()
 
-            # Get lookup table to find customer numbers from vb
+            # Get tariff_lookup table to find customer numbers from vb
             # -------------------------------------------------
             vb_reference_path = 'C:\\Users\\z5044992\Documents\\MainDATA\\DATA_EN\\reference'
             vb_id = pd.read_csv(vb_reference_path + '\\vb_id_log.csv', index_col=0)
