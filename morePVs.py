@@ -51,7 +51,8 @@ class TariffData():
     def __init__(
             self,
             tariff_lookup_path,
-            reference_path):
+            reference_path,
+            parameter_list):
         """Initialise tariff look-up table."""
         self.reference_path = reference_path
         self.saved_tariff_path = os.path.join(self.reference_path, 'saved_tariffs')
@@ -59,7 +60,7 @@ class TariffData():
             os.makedirs(self.saved_tariff_path)
         # read csv of tariff parameters
         self.lookup = pd.read_csv(tariff_lookup_path, index_col=[0])
-        self.all_tariffs = self.lookup.index  # list of all tariff ids
+        self.all_tariffs = [t for t in self.lookup.index if t in parameter_list] # list of all tariff ids
         # set up dfs for static import and export tariffs
         self.static_imports = pd.DataFrame(index=ts.timeseries)
         self.static_exports = pd.DataFrame(index=ts.timeseries)
@@ -127,13 +128,14 @@ class TariffData():
                                     & (ts.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp(  # week_
                                         self.lookup.loc[tid, parameter[2]]).time())  # end_
                                     ]
-                        if not any(s in name for s in ['solar', 'Solar']):
+                        if not any(s in self.lookup.loc[tid, name] for s in ['solar', 'Solar']):
                             # Store solar rate and period separately
                             # For non-solar periods and rates only:
                             self.static_imports.loc[period, tid] = self.lookup.loc[tid, parameter[0]]  # rate_
                         else:  # Solar (local) periods and rates only:
                             self.static_solar_imports.loc[period, tid] = self.lookup.loc[tid, parameter[0]]  # rate_
                     pass
+
             # TODO: rejig this section to allow tariff periods bridging midnight \
             # (use method used for battery charge & discharge tariffs) and also change tariff_lookup.csv
             # todo: create timeseries for FiT Tariffs in the same way
@@ -203,17 +205,18 @@ class Tariff():
         # Get solar tariff data:
         if tariff_id in scenario.solar_list:
             for name, parameter in study.tariff_data.tou_rate_list.items():
-                if any(s in name for s in ['solar','Solar']):
-                    self.solar_tariff_name = name
-                    self.solar_period = \
-                        ts.days[scenario.tariff_lookup.loc[tariff_id, parameter[3]]][  # week_
-                            (ts.days[scenario.tariff_lookup.loc[tariff_id, parameter[3]]].time > pd.Timestamp(  # week_
-                                scenario.tariff_lookup.loc[tariff_id, parameter[1]]).time())  # start_
-                            & (ts.days[scenario.tariff_lookup.loc[tariff_id, parameter[3]]].time <= pd.Timestamp(  # week_
-                                scenario.tariff_lookup.loc[tariff_id, parameter[2]]).time())  # end_
-                            ]
-                    self.solar_rate = scenario.tariff_lookup.loc[tariff_id, parameter[0]]  # rate_
-                    self.solar_cp_allocation = scenario.tariff_lookup.loc[tariff_id, 'solar_cp_allocation'].fillna(0) # % of total solar generation allocated to cp
+                if not pd.isnull(study.tariff_data.lookup.loc[tariff_id, name]):
+                    if any(s in study.tariff_data.lookup.loc[tariff_id, name] for s in ['solar','Solar']):
+                        self.solar_tariff_name = study.tariff_data.lookup.loc[tariff_id, name]
+                        self.solar_period = \
+                            ts.days[scenario.tariff_lookup.loc[tariff_id, parameter[3]]][  # week_
+                                (ts.days[scenario.tariff_lookup.loc[tariff_id, parameter[3]]].time > pd.Timestamp(  # week_
+                                    scenario.tariff_lookup.loc[tariff_id, parameter[1]]).time())  # start_
+                                & (ts.days[scenario.tariff_lookup.loc[tariff_id, parameter[3]]].time <= pd.Timestamp(  # week_
+                                    scenario.tariff_lookup.loc[tariff_id, parameter[2]]).time())  # end_
+                                ]
+                        self.solar_rate = scenario.tariff_lookup.loc[tariff_id, parameter[0]]  # rate_
+                        self.solar_cp_allocation = scenario.tariff_lookup['solar_cp_allocation'].fillna(0).loc[tariff_id] # % of total solar generation allocated to cp
             self.solar_import_tariff = (scenario.static_solar_imports[tariff_id]).values
         else:
             self.solar_import_tariff = np.zeros(ts.num_steps)
@@ -529,9 +532,10 @@ class Customer():
         if 'sc' in self.tariff.solar_tariff_name:
             # Solar tariff paid ONLY for self-consumed generation
             # and export FiT paid for exported generation
+
             self.cashflows = \
                 np.multiply((self.imports - self.local_imports), self.tariff.import_tariff) \
-                + np.multiply(np.maximum((self.local_imports - self.exports), np.zeros(ts))
+                + np.multiply(np.maximum((self.local_imports - self.exports), np.zeros(ts.num_steps))
                               , self.tariff.solar_import_tariff) \
                 - np.multiply(self.exports, self.tariff.export_tariff) \
                 + np.multiply(self.exports, self.tariff.export_tariff)
@@ -619,12 +623,12 @@ class Network(Customer):
         self.has_dynamic_tariff = scenario.has_dynamic_tariff
 
 
-    def allocatePv(self, scenario, pv):
+    def allocatePV(self, scenario, pv):
         """set up and allocate pv generation for this scenario."""
 
         # Also used to allocate pv capex costs for some scenarios
         # Copy profile from scenario and then allocate
-        # Allocation happens here as the Customers are part of the Network
+        # Allocation happens here as the Customers are part of the Network (not scenario)
         self.pv_exists = scenario.pv_exists
         self.pv = pv.copy()
 
@@ -842,7 +846,7 @@ class Network(Customer):
 
     def allocateAllCapex(self, scenario):
         """ Allocates capex repayments and opex to customers according to arrangement"""
-        # For some arrangements, this depends on pv allocation, so must follow allocatePv call
+        # For some arrangements, this depends on pv allocation, so must follow allocatePV call
         # Called once per load profile where capex is allocated according to load; once per scenario otherwise
         # Moved from start of iterations to end to incorporate battery lifecycle impacts
         # Initialise all to zero:
@@ -1460,9 +1464,11 @@ class Study():
         # ---------------------------------------------------------------
         # Initialise Tariff Look-up table and generate all static tariffs
         # ---------------------------------------------------------------
+        parameter_list = self.study_parameters.values.flatten().tolist()
         self.tariff_data = TariffData(tariff_lookup_path=self.t_lookupFile,
-                                     reference_path=self.reference_path
-                                     )
+                                     reference_path=self.reference_path,
+                                     parameter_list=parameter_list)
+
         self.tariff_data.generateStaticTariffs()
         # -----------------------------
         # Initialise output dataframes:
@@ -1513,7 +1519,7 @@ def runScenario(scenario_name):
 
     # Set up pv profile if allocation not load-dependent
     if scenario.pv_allocation == 'fixed':
-        eno.allocatePv(scenario, scenario.pv)
+        eno.allocatePV(scenario, scenario.pv)
 
     if scenario.has_solar_block:
         eno.initialiseDailySolarBlockQuotas(scenario)
@@ -1522,7 +1528,7 @@ def runScenario(scenario_name):
     for load_name in scenario.load_list:
         eno.initialiseBuildingLoads(load_name, scenario)
         if scenario.pv_allocation == 'load_dependent':  # ie. for btm_icp, btm_s_u and btm_s_c arrangements
-            eno.allocatePv(scenario, scenario.pv)
+            eno.allocatePV(scenario, scenario.pv)
         eno.initialiseSolarInstQuotas(scenario)  # depends on load and pv
 
         # If no battery, calc all internal energy flows statically (i.e. as single df calculation)
@@ -1622,8 +1628,8 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 'EN1_value_of_pv2'
-    default_study = 'siteB_value5'
-
+    default_study = 'siteF_value6'
+    #use_threading= False
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
     opts = {}  # Empty dictionary to store key-value pairs.
