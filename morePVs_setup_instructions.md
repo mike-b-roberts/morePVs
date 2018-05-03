@@ -36,6 +36,7 @@ For Shared btm inc cp:  `btm_s_c` A single `total` or 'cp' column that is split 
 
 For Shared btm Units only:`btm_s_u` single `total` or 'cp' column that is split according to instantaneous load between all units EXCLUDING cp
 
+`btm_p_c` and `btm_p_u` are similar, but generation is paid for under a ppa to a solar retailer
 For en_external scenario: `cp tariff != TIDNULL`
 
 Scaleable PV:
@@ -123,7 +124,7 @@ If `name_x` is `solar_sc`:
     solar tariff applied within solar period but only to self-consumed solar generation. Export is passed through at FiT rate
 Solar rate must have details for solar period (even if it is `00:00` to `23:59`)
 
-For `btm_s` arrangements, .....
+For `btm_p` arrangements, .....
 e.g. Allume:
 `tariff_type` = `Solar_Inst_SC_only`
 - solar instantaneous tariff (`solar_sc`)applied only to self-consumed solar,
@@ -131,6 +132,9 @@ e.g. Allume:
 - Tariff is a combination of retailer tariff and solar tariff paid to third party
     - i.e. underlying (`Flat_Rate` or `TOU`) tariff for grid consumption.
 
+for `btm_s` (eg `upfront`). btm capex and opex are treated as en capex and opex
+and shared between customers. PV is treated as if owned individually,
+with instantaneous generation allocated equally
 
 'parent' tariff
 ---------------

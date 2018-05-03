@@ -143,7 +143,7 @@ class TariffData():
             if self.lookup.loc[tid, 'fit_type'] == 'Zero_Rate':
                 self.static_exports[tid] = 0
             elif self.lookup.loc[tid, 'fit_type'] == 'Flat_Rate':
-                self.static_exports[tid] = self.lookup.loc[tid, 'fit_flat_rate']
+                self.static_exports[tid] = self.lookup['fit_flat_rate'].fillna(0).loc[tid]
         # Save tariffs as csvs
         import_name = os.path.join(self.saved_tariff_path, 'static_import_tariffs.csv')
         solar_name = os.path.join(self.saved_tariff_path, 'static_solar_import_tariffs.csv')
@@ -207,7 +207,7 @@ class Tariff():
             for name, parameter in study.tariff_data.tou_rate_list.items():
                 if not pd.isnull(study.tariff_data.lookup.loc[tariff_id, name]):
                     if any(s in study.tariff_data.lookup.loc[tariff_id, name] for s in ['solar','Solar']):
-                        self.solar_tariff_name = study.tariff_data.lookup.loc[tariff_id, name]
+                        self.solar_rate_name = study.tariff_data.lookup.loc[tariff_id, name]
                         self.solar_period = \
                             ts.days[scenario.tariff_lookup.loc[tariff_id, parameter[3]]][  # week_
                                 (ts.days[scenario.tariff_lookup.loc[tariff_id, parameter[3]]].time > pd.Timestamp(  # week_
@@ -220,7 +220,7 @@ class Tariff():
             self.solar_import_tariff = (scenario.static_solar_imports[tariff_id]).values
         else:
             self.solar_import_tariff = np.zeros(ts.num_steps)
-            self.solar_tariff_name = ''
+            self.solar_rate_name = ''
         # -----------------------------
         # All volumetric import tariffs
         # -----------------------------
@@ -406,17 +406,21 @@ class Customer():
         self.en_capex_repayment = 0
         self.en_opex = 0
         self.bat_capex_repayment = 0
+        self.exports = np.zeros(ts.num_steps)
+        self.imports = np.zeros(ts.num_steps)
+        # self.local_exports = np.zeros(ts.num_steps)  # not used, available for local trading
+        self.local_imports = np.zeros(ts.num_steps)  # used for import of local generation
+        self.self_consumption = np.zeros(ts.num_steps)
+        self.flows = np.zeros(ts.num_steps)
+        self.cashflows = np.zeros(ts.num_steps)
+        self.local_solar_bill = 0
+        self.total_payment =0
 
     def initialiseCustomerLoad(self,
                                customer_load):  # as 1-d np.array
         """Set customer load, energy flows and cashflows to zero."""
         self.load = customer_load
-        self.exports = np.zeros(ts.num_steps)
-        self.imports = np.zeros(ts.num_steps)
-        self.local_exports = np.zeros(ts.num_steps)  # not used, available for local trading
-        self.local_imports = np.zeros(ts.num_steps)  # used for import of local generation
-        self.flows = np.zeros(ts.num_steps)
-        self.cashflows = np.zeros(ts.num_steps)
+
 
     def initialiseCustomerTariff(self,
                                  customer_tariff_id,  # string
@@ -427,7 +431,7 @@ class Customer():
                             tariff_id=self.tariff_id,
                             scenario=scenario)
 
-    def initialiseCustomerPv(self, pv_generation):  # 1-D array
+    def initialiseCustomerPV(self, pv_generation):  # 1-D array
         self.generation = pv_generation
 
     def calcStaticEnergyFlows(self):
@@ -435,7 +439,10 @@ class Customer():
         self.flows = self.generation - self.load
         self.exports = self.flows.clip(0)
         self.imports = (-1 * self.flows).clip(0)
+        # Calculate local quota here??
         self.local_imports = np.minimum(self.imports, self.local_quota)  # for use of local generation
+        # for btm_p arrangement:
+        self.self_consumption = np.minimum(self.generation,self.load)
 
     def calcDynamicEnergyFlows(self,step):
         """Calculate Customer imports and exports for single timestep"""
@@ -448,7 +455,9 @@ class Customer():
         self.exports[step] = self.flows[step].clip(0)
         self.imports[step] = (-1 * self.flows[step]).clip(0)
         #TODO: @@@ Check this local quota - should be OK
+        # CAlculate local quota here??
         self.local_imports[step] = min(self.imports[step], self.local_quota[step])  # for use of local generation
+        self.self_consumption[step] = np.minimum(self.generation[step], self.load[step])
 
     def calcCustomerBlockTariff (self, step):
         """Calculates import rates for timestep for dynamic (eg block and solar block) tariffs."""
@@ -496,10 +505,10 @@ class Customer():
                 self.local_imports[step] = self.cumulative_energy - self.daily_local_quota
             else:
                 self.local_imports[step] = 0
-                
+
             # TODO: Solar Block Tariff. Test changed algorithm
             # (Was previously as below:)
-            
+
             # if self.cumulative_energy <= self.daily_local_quota:
             #     self.local_imports[step] = self.imports[step]
             # elif self.prev_cum_energy < self.daily_local_quota \
@@ -527,36 +536,32 @@ class Customer():
         self.energy_bill is total elec bill, ic fixed charges
         self.total_payment includes opex & capex repayments"""
 
-        #if 'btm_s' in self.scenario.arrangement and self.scenario.tariff_lookup.loc[self.tariff_id, 'tariff_type'] == 'Solar_Inst_SC_only':
-
-        if 'sc' in self.tariff.solar_tariff_name:
-            # Solar tariff paid ONLY for self-consumed generation
+        if any(s in self.tariff.solar_rate_name for s in ['self_con', 'Self_Con', 'sc', 'SC']):
+            # IFF solar tariff paid for self-consumed generation
             # and export FiT paid for exported generation
-
-            self.cashflows = \
-                np.multiply((self.imports - self.local_imports), self.tariff.import_tariff) \
-                + np.multiply(np.maximum((self.local_imports - self.exports), np.zeros(ts.num_steps))
-                              , self.tariff.solar_import_tariff) \
-                - np.multiply(self.exports, self.tariff.export_tariff) \
-                + np.multiply(self.exports, self.tariff.export_tariff)
             # NB cost of exported self generation is received from retailer and passed to PV seller, so zero net effect
-
+            self.local_solar_bill = (np.multiply(self.self_consumption, self.tariff.solar_import_tariff) + \
+                                     np.multiply(self.exports, self.tariff.export_tariff)).sum()
         else:
-            self.cashflows = \
-                np.multiply((self.imports - self.local_imports), self.tariff.import_tariff) \
-                + np.multiply(self.local_imports, self.tariff.solar_import_tariff) \
-                - np.multiply(self.exports, self.tariff.export_tariff)
-                # - np.multiply(self.local_exports, self.tariff.local_export_tariff) could be added for LET / P2P
-            # These are all 1x17520 Arrays.
-            # local_tariffs are for, `solar_rate` energy,(maybe extendable for p2p later)
+            self.local_solar_bill = 0.0
+
+        self.cashflows = \
+            np.multiply((self.imports - self.local_imports), self.tariff.import_tariff) \
+            + np.multiply(self.local_imports, self.tariff.solar_import_tariff) \
+            - np.multiply(self.exports, self.tariff.export_tariff)
+            # - np.multiply(self.local_exports, self.tariff.local_export_tariff) could be added for LET / P2P
+        # These are all 1x17520 Arrays.
+        # local_tariffs are for, `solar_rate` energy,(maybe extendable for p2p later)
         self.energy_bill = self.cashflows.sum() + \
                            self.tariff.fixed_charge * ts.num_days + \
                            self.demand_charge
+
         if self.name == 'retailer':
             self.total_payment = self.energy_bill
         else:
             self.total_payment = self.energy_bill + \
-                            (self.pv_capex_repayment + \
+                                 self.local_solar_bill + \
+                                 (self.pv_capex_repayment + \
                              self.en_capex_repayment + \
                              self.en_opex +\
                              self.bat_capex_repayment) * 100 # capex, opex in $, energy in c (because tariffs in c/kWh)
@@ -579,6 +584,9 @@ class Network(Customer):
         # (includes residents and cp)
         self.resident = {c: Customer(name=c) for c in self.resident_list}
         self.retailer = Customer(name='retailer')
+        if 'btm_p' in scenario.arrangement:
+            self.solar_retailer = Customer(name='solar_retailer')
+
 
     def initialiseBuildingLoads(self,
                                 load_name,  # file name only
@@ -594,6 +602,10 @@ class Network(Customer):
         self.initialiseCustomerLoad(np.zeros(ts.num_steps))
         self.cum_resident_imports = np.zeros(ts.num_steps)
         self.cum_resident_exports = np.zeros(ts.num_steps)
+        self.cum_local_imports = np.zeros(ts.num_steps)
+
+
+
         # initialise residents' loads
         # ---------------------------
         for c in self.resident_list:
@@ -607,9 +619,11 @@ class Network(Customer):
 
         # Initialise cash totals
         # ----------------------
-        self.receipts_from_residents = 0
-        self.total_building_payment = 0
-        self.energy_bill = 0
+        self.receipts_from_residents = 0.0
+        self.total_building_payment = 0.0
+        self.cum_resident_total_payments = 0.0
+        self.cum_local_solar_bill = 0.0
+        self.energy_bill = 0.0
 
     def initialiseAllTariffs(self, scenario):
         # initialise parent meter tariff
@@ -626,31 +640,35 @@ class Network(Customer):
     def allocatePV(self, scenario, pv):
         """set up and allocate pv generation for this scenario."""
 
-        # Also used to allocate pv capex costs for some scenarios
+        # PV allocation is used to allocate PV capex costs for some arrangements
         # Copy profile from scenario and then allocate
         # Allocation happens here as the Customers are part of the Network (not scenario)
         self.pv_exists = scenario.pv_exists
         self.pv = pv.copy()
 
-        # Set up pv dataframe for each scenario:
+        # Set up PV dataframe for each scenario:
         # --------------------------------------
         if 'en' in scenario.arrangement:
             # rename single column in pv file if necessary
-            # TODO This will change to allow distributed PV within EN
+            # TODO Change PV allocation to allow individual distributed PV within EN
             if 'cp' not in self.pv.columns:
                 self.pv.columns = ['cp']
+
         elif scenario.arrangement == 'cp_only':
             # no action required
             # rename single column in pv file if necessary
             if 'cp' not in self.pv.columns:
                 self.pv.columns = ['cp']
+
         elif scenario.arrangement == 'btm_i':
             # For btm_i, if only single pv column, split equally between all units (NOT CP)
+            # If more than 1 column, leave as allocated
             if len(self.pv.columns) == 1:
                 self.pv.columns = ['total']
                 for r in scenario.households:
                     self.pv[r] = self.pv['total']/len(scenario.households)
                 self.pv = self.pv.drop('total', axis=1)
+
         elif scenario.arrangement == 'btm_icp':
             # For btm_icp, if only single pv column, split % to cp according tp cp_ratio and split remainder equally between all units
             # If more than 1 column, leave as allocated
@@ -660,25 +678,27 @@ class Network(Customer):
                 for r in scenario.households:
                     self.pv[r] = (self.pv['total'] - self.pv['cp']) / len(scenario.households)
                 self.pv = self.pv.drop('total', axis=1)
-        elif scenario.arrangement == 'btm_s_c':
-            # For btm_s_c, split pv between all residents INCLUDING CP according to INSTANTANEOUS load
+
+        elif scenario.arrangement in ['btm_s_c', 'btm_p_c']:
+            # For btm_s_c and btm_p_c, split pv between all residents INCLUDING CP according to INSTANTANEOUS load
             if len(self.pv.columns) != 1:
                 logging.info('***************Exception!!! PV %s has more than one column for shared btm arrangement ', scenario.pvFile)
                 sys.exit("PV file doesn't match btm_s_c arrangement")
             else:
                 self.pv.columns = ['total']
                 self.pv = self.network_load.div(self.network_load.sum(axis=1), axis=0).multiply(
-                    self.pv.loc[:,'total'], axis=0)
-        elif scenario.arrangement == 'btm_s_u':
-            # For btm_s_u, split pv between all residents EXCLUDING CP according to INSTANTANEOUS  load
+                    self.pv.loc[:, 'total'], axis=0)
+
+        elif scenario.arrangement in ['btm_s_u', 'btm_p_u']:
+            # For btm_s_u and btm_p_u, split pv between all residents EXCLUDING CP according to INSTANTANEOUS  load
             if len(self.pv.columns) != 1:
                 logging.info(
                     '***************Exception!!! PV %s has more than one column for shared btm arrangement ',
                     scenario.pvFile)
-                sys.exit("PV file doesn't match btm_s_u arrangement")
+                sys.exit("PV file doesn't match btm_s_u or btm_p_u arrangement")
             else:
                 self.pv.columns = ['total']
-                load_units_only = self.network_load.copy().drop('cp',axis=1)
+                load_units_only = self.network_load.copy().drop('cp', axis=1)
                 self.pv = load_units_only.div(load_units_only.sum(axis=1), axis=0).multiply(
                     self.pv.loc[:, 'total'], axis=0)
 
@@ -694,7 +714,8 @@ class Network(Customer):
         # Initialise all residents with their allocated PV generation
         # -----------------------------------------------------------
         for c in self.resident_list:
-            self.resident[c].initialiseCustomerPv(np.array(self.pv[c]).astype(np.float64))
+            self.resident[c].initialiseCustomerPV(np.array(self.pv[c]).astype(np.float64))
+
 
     def initialiseDailySolarBlockQuotas(self, scenario):
         """For Solar Block Daily tariff, allocate block limits for all residents."""
@@ -714,7 +735,9 @@ class Network(Customer):
     def initialiseSolarInstQuotas(self, scenario):
         # calculate local quotas for solar or LET tariffs
         # -----------------------------------------------
-        # (NB Applies to EN arrangements only, so PV allocation is fixed and PV has already been initialised.)
+        # (NB PV allocation is fixed and PV has already been initialised.)
+        # Quota is equal share of pv generation at this timestep
+        # Applies to EN arrangements only
         # This is for instantaneous solar tariff.
         self.local_quota = np.zeros(ts.num_steps)
         self.retailer.local_quota = np.zeros(ts.num_steps)
@@ -725,7 +748,7 @@ class Network(Customer):
                                                             (self.pv['cp'] - self.resident['cp'].load) / len(
                                                             self.households), 0)
                 else:
-                    self.resident[c].local_quota =np.zeros(ts.num_steps)
+                    self.resident[c].local_quota = np.zeros(ts.num_steps)
         else:
             for c in self.resident_list:
                 self.resident[c].local_quota = np.zeros(ts.num_steps)
@@ -791,16 +814,13 @@ class Network(Customer):
             # Cumulative load and generation are what the "ENO" presents to the retailer:
             self.cum_resident_imports += self.resident[c].imports
             self.cum_resident_exports += self.resident[c].exports
+            # Cumulative local imports are load presented to solar_retailer (in btm_s PPA scenario)
+            self.cum_local_imports += self.resident[c].local_imports
         # Calculate aggregate flows for ENO
         self.flows = self.cum_resident_exports - self.cum_resident_imports
         self.exports = self.flows.clip(0)
         self.imports = (-1 * self.flows).clip(0)
 
-    def setupRetailerFlows(self):
-        # NB retailer acts like a customer too, buying from DNSP
-        # These are the load and generation that it presents to DNSP
-        self.retailer.initialiseCustomerLoad(self.imports)
-        self.retailer.initialiseCustomerPv(self.exports)
 
     def calcAllDemandCharges(self):
         """Calculates demand charges for ENO and for all residents."""
@@ -846,10 +866,12 @@ class Network(Customer):
 
     def allocateAllCapex(self, scenario):
         """ Allocates capex repayments and opex to customers according to arrangement"""
-        # For some arrangements, this depends on pv allocation, so must follow allocatePV call
+        # For some arrangements, this depends on pv allocation, so must FOLLOW allocatePV call
         # Called once per load profile where capex is allocated according to load; once per scenario otherwise
         # Moved from start of iterations to end to incorporate battery lifecycle impacts
+
         # Initialise all to zero:
+        # -----------------------
         self.en_opex = 0
         self.pv_capex_repayment = 0
         self.en_capex_repayment = 0
@@ -877,25 +899,39 @@ class Network(Customer):
             self.en_opex = scenario.en_opex
             self.pv_capex_repayment = scenario.pv_capex_repayment
             self.en_capex_repayment = scenario.en_capex_repayment
+
         elif scenario.arrangement =='cp_only':
             # pv capex allocated by customer 'cp' (ie strata)
             self.resident['cp'].pv_capex_repayment = scenario.pv_capex_repayment
+
         elif 'btm_i' in scenario.arrangement:
             # For btm_i apportion capex costs according to pv allocation
             for c in self.pv_customers:
                 self.resident[c].pv_capex_repayment = self.pv[c].sum() / self.pv.sum().sum() * scenario.pv_capex_repayment
-        elif 'btm_s_c' in scenario.arrangement:
+
+        elif scenario.arrangement == 'btm_s_c':
             # For btm_s_c, apportion capex costs equally between units and cp.
             # (Not ideal - needs more sophisticated analysis of practical btm_s arrangements)
             for c in self.resident_list:
                 self.resident[c].pv_capex_repayment = scenario.pv_capex_repayment / len(self.resident_list)
-        elif 'btm_s_u' in scenario.arrangement:
+                self.resident[c].en_capex_repayment = scenario.en_capex_repayment / len(self.resident_list)
+                self.resident[c].en_opex = scenario.en_opex / len(self.resident_list)
+
+        elif scenario.arrangement == 'btm_s_u':
             # For btm_s_u, apportion capex costs equally between units only
             # (Not ideal - needs more sophisticated analysis of practical btm_s arrangements)
             for c in self.households:
-                self.resident[c].pv_capex_repayment =  scenario.pv_capex_repayment / len(self.households)
+                self.resident[c].pv_capex_repayment = scenario.pv_capex_repayment / len(self.households)
+                self.resident[c].en_opex = scenario.en_opex / len(self.households)
+                self.resident[c].en_capex_repayment = scenario.en_capex_repayment / len(self.households)
 
-    def calcEnergyParameters(self, scenario):
+        elif 'btm_p' in scenario.arrangement:
+            # all solar and btm capex costs paid by solar retailer
+            self.solar_retailer.pv_capex_repayment = scenario.pv_capex_repayment
+            self.solar_retailer.en_capex_repayment = scenario.en_capex_repayment
+            self.solar_retailer.en_opex = scenario.en_opex
+
+    def calcEnergyMetrics(self, scenario):
         # ---------------------------------------------------------------
         # calculate total exports / imports & pvr, cpr & self consumption
         # ---------------------------------------------------------------
@@ -955,7 +991,7 @@ class Scenario():
         # --------------------------------------------
         self.arrangement = self.parameters['arrangement']
         self.pv_exists = not (self.parameters.isnull()['pv_filename']) and study.pv_exists
-        if self.arrangement in ['btm_s_c', 'btm_s_u','btm_icp']:
+        if self.arrangement in ['btm_s_c', 'btm_s_u', 'btm_p_c', 'btm_p_u', 'btm_icp']:
             self.pv_allocation = 'load_dependent'
         else:
             self.pv_allocation = 'fixed'
@@ -1037,6 +1073,7 @@ class Scenario():
                             self.parameters[c] = self.parameters['all_residents']
                     else:
                         self.parameters[c] = self.parameters['all_residents']
+        # --------------------------------------------
         # Create list of tariffs used in this scenario
         # --------------------------------------------
         self.customers_with_tariffs = self.resident_list + ['parent']
@@ -1096,35 +1133,60 @@ class Scenario():
         # --------------------------------------------------------
         # Set up annual capex & opex costs for en in this scenario
         # --------------------------------------------------------
-        # Annual capex repayments for embedded network
+        # Annual capex repayments for embedded network or for btm_s or btm_p network
         self.pc_cap_id = self.parameters['pv_cap_id']
-        if 'en' in self.arrangement:
+        if 'en' in self.arrangement or 'btm_s' in self.arrangement or 'btm_p' in self.arrangement:
             self.en_cap_id = self.parameters['en_capex_id']
-            self.en_capex = study.en_capex.loc[self.en_cap_id, 'site_capex'] + \
-                (study.en_capex.loc[self.en_cap_id, 'unit_capex']  * \
-                len(self.households))
+            if self.arrangement in ['btm_s_c', 'btm_p_c']:
+                # -----------------------------------
+                # metering capex for all units and cp:
+                # ------------------------------------
+                self.en_capex = study.en_capex.loc[self.en_cap_id, 'site_capex'] + \
+                                (study.en_capex.loc[self.en_cap_id, 'unit_capex'] *
+                                 len(self.resident_list))
+            else:
+                # ----------------------------
+                # metering capex for units only
+                # ----------------------------
+                self.en_capex = study.en_capex.loc[self.en_cap_id, 'site_capex'] + \
+                                (study.en_capex.loc[self.en_cap_id, 'unit_capex'] *
+                                len(self.households))
         else:
-            self.en_capex =0
+            self.en_capex = 0.0
+
         self.a_term = self.parameters['a_term']
         self.a_rate = self.parameters['a_rate']
 
-        if self.en_capex>0:
+        if self.en_capex > 0.0:
             self.en_capex_repayment = -12 * np.pmt(rate=self.a_rate/12,
                                          nper=12 * self.a_term,
                                          pv=self.en_capex,
                                          fv=0,
                                          when='end')
         else:
-            self.en_capex_repayment=0
-        # Opex for embedded network:
-        if 'en' in self.arrangement:
-            self.en_opex = study.en_capex.loc[self.en_cap_id, 'site_opex'] + \
-                          (study.en_capex.loc[self.en_cap_id, 'unit_opex'] * \
-                           len(self.households))
+            self.en_capex_repayment = 0.0
+        # ------------------------------------------------
+        # Opex for embedded network or btm metering costs:
+        # ------------------------------------------------
+        if 'en' in self.arrangement or 'btm_s' in self.arrangement or 'btm_p' in self.arrangement:
+            if self.arrangement in ['btm_s_c', 'btm_p_c']:
+                # -----------------------------------
+                # billing / opex for all units and cp:
+                # ------------------------------------
+                self.en_opex = study.en_capex.loc[self.en_cap_id, 'site_opex'] + \
+                              (study.en_capex.loc[self.en_cap_id, 'unit_opex'] * \
+                               len(self.resident_list))
+            else:
+                # ------------------------------
+                # billing / opex for units only:
+                # ------------------------------
+                self.en_opex = study.en_capex.loc[self.en_cap_id, 'site_opex'] + \
+                              (study.en_capex.loc[self.en_cap_id, 'unit_opex'] * \
+                               len(self.households))
         else:
             self.en_opex = 0
         # --------------------------------------------------------
-        # Allocate annual capex repayments for pv in this scenario
+        # Calc total annual capex repayments for pv in this scenario
         # --------------------------------------------------------
         if not self.pv_exists:
             self.pv_capex_repayment = 0
@@ -1141,6 +1203,7 @@ class Scenario():
             if self.pv_scaleable:
                 self.pv_kW_peak = self.parameters['pv_kW_peak']
                 self.pv_capex = self.pv_capex * self.pv_kW_peak
+
             # Calculate annual repayments
             # ---------------------------
             if self.pv_capex>0:
@@ -1152,93 +1215,128 @@ class Scenario():
             else:
                 self.pv_capex_repayment=0
 
-    def calcFinancials(self, network):
-        """ Calculates results for specific network within scenario.
+    def calcFinancials(self, net):
+        """ Calculates results for specific net within scenario.
 
          Includes: cashflows for whole period  - for each resident
-                   cashflows for network and retailer
+                   cashflows for net and retailer
                    total imports and exports,
                    self consumption and pv_ratio."""
         # This function and Customer.calcCashflow() are the heart of the finances
         # -------------------------------
-        # Calculate cashflows for network
+        # Calculate cashflows for net
         # -------------------------------
-        # Use network import and export which are summed from resident & cp import and export
+        # Use net import and export which are summed from resident & cp import and export
         # (plus dynamic battery calcs)
         # to calculate external cashflows.
         # NB if non-en scenario, tariffs are zero, so cashflows =0
-        network.calcCashflow()
+        net.calcCashflow()
         # ----------------------------------
         # Cashflows for individual residents
         # ----------------------------------
-        for c in network.resident_list:
-            network.resident[c].calcCashflow()
-            network.receipts_from_residents = network.receipts_from_residents + network.resident[c].energy_bill
-            network.total_building_payment = network.total_building_payment + network.resident[c].total_payment
-        # For en, total_building_payment is sum of customer payments less ENO profit
-        if 'en' in self.arrangement:
-            # Sum of all resident (bills + cap/opex) plus eno total (bills plus cap/opex) less what residents pay to eno
-            network.total_building_payment = network.total_building_payment + network.total_payment - network.receipts_from_residents
-        # Calculate external retailer cashflows:
-        network.retailer.calcCashflow()
+        for c in net.resident_list:
+            net.resident[c].calcCashflow()
+            net.receipts_from_residents += net.resident[c].energy_bill
+            net.cum_resident_total_payments += net.resident[c].total_payment
+            net.cum_local_solar_bill += net.resident[c].local_solar_bill
+
+        # ----------------------------
+        # External retailer cashflows:
+        # ----------------------------
+        net.retailer.calcCashflow()
         # -----------------
         # Retailer receipts
         # -----------------
-        if self.arrangement == 'bau' or self.arrangement == 'cp_only' or 'btm' in self.arrangement :
-            network.energy_bill = 0
-            network.total_payment = 0
-            network.retailer_receipt = network.receipts_from_residents.copy()
-            network.receipts_from_residents = 0
+        if self.arrangement == 'bau' or self.arrangement == 'cp_only' or 'btm' in self.arrangement:
+            net.energy_bill = 0
+            net.total_payment = 0
+            net.retailer_receipt = net.receipts_from_residents.copy()
+            net.receipts_from_residents = 0  # because this is eno receipts
         elif 'en' in self.arrangement:
-            network.retailer_receipt = network.energy_bill.copy()
+            net.retailer_receipt = net.energy_bill.copy()
         else:
-            print('************************Unknown network arrangement********************')
-            logging.info('************************Unknown network arrangement********************')
-        # --------------------------------------------------------
-        # Collate all results for network in one row of results df
-        # --------------------------------------------------------
+            print('************************Unknown net arrangement********************')
+            logging.info('************************Unknown net arrangement********************')
+        # -------------------------
+        # Solar Retailer Financials
+        # -------------------------
+        if 'btm_p' in self.arrangement:
+            net.solar_retailer_profit = net.cum_local_solar_bill -\
+                                    (net.solar_retailer.en_capex_repayment + \
+                                        net.solar_retailer.en_opex + \
+                                        net.solar_retailer.pv_capex_repayment) * 100
+        else:
+            net.solar_retailer_profit = 0
+        # ----------------------------
+        # Total Net Costs for Building
+        # ----------------------------
+        # total_building_payment is sum of customer payments to retailer (+ cap/opex) en and solar retailer, less ENO profit
+        net.total_building_payment = net.cum_resident_total_payments \
+                                     + net.total_payment - net.receipts_from_residents
+
+        net.checksum_total_payments = net.retailer_receipt \
+            + net.solar_retailer_profit \
+            + (self.en_opex + self.en_capex_repayment + self.pv_capex_repayment)*100
+        # NB checksum: These two total should be the same for all arrangements
+        if abs(net.total_building_payment - net.checksum_total_payments) > 0.005:
+            print('**************CHECKSUM ERROR***See log ******* Study: ', study.name, ' Scenario: ', self.name)
+            logging.info('**************CHECKSUM ERROR************************')
+            logging.info ('Study: %s  Scenario: %s ', study.name, self.name)
+            logging.info ('Tot Building Load %f Checksum %f', net.total_building_payment, net.checksum_total_payments)
+
+        # ---------------------------------------------------------------
+        # Collate all results for network / eno  in one row of results df
+        # ---------------------------------------------------------------
         # includes c -> $ conversion
-        result_list = [network.total_building_payment / 100,
-                       network.receipts_from_residents / 100,
-                       network.energy_bill / 100,
-                       network.total_payment / 100,
-                       network.bat_capex_repayment,
-                       (network.receipts_from_residents - network.total_payment) / 100,
-                       network.retailer_receipt / 100,
-                       network.retailer.energy_bill / 100,
-                       network.total_building_load,
-                       network.total_building_export,
-                       network.total_import,
-                       network.cp_ratio,
-                       network.pv_ratio,
-                       network.self_consumption] + \
-                    [network.resident['cp'].energy_bill/100] + \
-                    [network.resident[c].energy_bill/100 for c in network.resident_list if c != 'cp'] + \
-                    [network.resident['cp'].total_payment/100] + \
-                    [network.resident[c].total_payment/100 for c in network.resident_list if c != 'cp']
+        result_list = [net.total_building_payment / 100,
+                       net.checksum_total_payments / 100,
+                       net.receipts_from_residents / 100,
+                       net.energy_bill / 100,
+                       net.total_payment / 100,
+                       net.bat_capex_repayment,
+                       (net.receipts_from_residents - net.total_payment) / 100,
+                       net.retailer_receipt / 100,
+                       net.retailer.energy_bill / 100,
+                       net.solar_retailer_profit / 100,
+                       net.total_building_load,
+                       net.total_building_export,
+                       net.total_import,
+                       net.cp_ratio,
+                       net.pv_ratio,
+                       net.self_consumption] + \
+                      [net.resident['cp'].energy_bill / 100] + \
+                      [net.resident[c].energy_bill / 100 for c in net.resident_list if c != 'cp'] + \
+                      [net.resident['cp'].local_solar_bill / 100] + \
+                      [net.resident[c].local_solar_bill / 100 for c in net.resident_list if c != 'cp'] + \
+                      [net.resident['cp'].total_payment / 100] + \
+                      [net.resident[c].total_payment / 100 for c in net.resident_list if c != 'cp']
 
         result_labels = ['total$_building_costs',
-                        'eno$_receipts_from_residents',
-                        'eno$_energy_bill',
-                        'eno$_total_payment',
-                        'eno$_bat_capex_repay',
-                        'eno_net$',
-                        'retailer_receipt$',
-                        'NUOS_charges$',
-                        'total_building_load',
-                        'export_kWh',
-                        'import_kWh',
-                        'cp_ratio',
-                        'pv_ratio',
-                        'self-consumption'] +\
+                         'checksum_total_payments$',
+                            'eno$_receipts_from_residents',
+                            'eno$_energy_bill',
+                            'eno$_total_payment',
+                            'eno$_bat_capex_repay',
+                            'eno_net$',
+                            'retailer_receipt$',
+                            'retailer_bill$',
+                            'solar_retailer_profit',
+                            'total_building_load',
+                            'export_kWh',
+                            'import_kWh',
+                            'cp_ratio',
+                            'pv_ratio',
+                            'self-consumption'] + \
                         ['cust_bill_cp'] + \
-                        ['cust_bill_' + '%03d' % int(r) for r in network.resident_list if r != 'cp']  + \
+                        ['cust_bill_' + '%03d' % int(r) for r in net.resident_list if r != 'cp'] + \
+                        ['cust_solar_bill_cp'] + \
+                        ['cust_solar_bill_' + '%03d' % int(r) for r in net.resident_list if r != 'cp'] + \
                         ['cust_total$_cp'] + \
-                        ['cust_total$_' + '%03d' % int(r) for r in network.resident_list if r != 'cp']
+                        ['cust_total$_' + '%03d' % int(r) for r in net.resident_list if r != 'cp']
 
         self.results = self.results.append(pd.Series(result_list,
                                                      index=result_labels,
-                                                     name=network.load_name))
+                                                     name=net.load_name))
 
 
     def logScenarioData(self):
@@ -1265,7 +1363,6 @@ class Scenario():
         else:
             study.op.loc[self.name, 'central_battery_kWh'] = 0
 
-
         # Scenario total capex and opex repayments
         # ----------------------------------------
         study.op.loc[self.name, 'en_opex'] = self.en_opex
@@ -1277,8 +1374,11 @@ class Scenario():
         # ----------------------------------------------------------------
         cust_bill_list = [c for c in cols if 'cust_bill_' in c and 'cp' not in c ]
         cust_total_list = [c for c in cols if 'cust_total$_' in c and 'cp' not in c ]
+        cust_solar_list = [c for c in cols if 'cust_solar_bill_' in c and 'cp' not in c ]
         study.op.loc[self.name,'average_hh_bill$'] = self.results[cust_bill_list].mean().mean()
         study.op.loc[self.name,'std_hh_bill$'] = self.results[cust_bill_list].values.std(ddof=1)
+        study.op.loc[self.name,'average_hh_solar_bill$'] = self.results[cust_solar_list].mean().mean()
+        study.op.loc[self.name,'std_hh_solar_bill$'] = self.results[cust_solar_list].values.std(ddof=1)
         study.op.loc[self.name,'average_hh_total$'] = self.results[cust_total_list].mean().mean()
         study.op.loc[self.name,'std_hh_total$'] = self.results[cust_total_list].values.std(ddof=1)
         # ----------------------------------------
@@ -1287,7 +1387,7 @@ class Scenario():
         if study.different_loads:
             # Don't log individual customer $ if each scenario has different load profiles
             # (because each scenario may have different number of residents):
-            cols = [c for c in cols if c not in (cust_bill_list + cust_total_list)] # .tolist()
+            cols = [c for c in cols if c not in (cust_bill_list + cust_total_list + cust_solar_list)]  # .tolist()
         # -------------------------------------
         # Average results across multiple loads
         # -------------------------------------
@@ -1527,7 +1627,7 @@ def runScenario(scenario_name):
     # Iterate through all load profiles for this scenario:
     for load_name in scenario.load_list:
         eno.initialiseBuildingLoads(load_name, scenario)
-        if scenario.pv_allocation == 'load_dependent':  # ie. for btm_icp, btm_s_u and btm_s_c arrangements
+        if scenario.pv_allocation == 'load_dependent':  # ie. for btm_icp, btm_s and btm_p arrangements
             eno.allocatePV(scenario, scenario.pv)
         eno.initialiseSolarInstQuotas(scenario)  # depends on load and pv
 
@@ -1548,14 +1648,17 @@ def runScenario(scenario_name):
             for step in np.arange(0, ts.num_steps):
                 eno.calcDynamicTariffs
 
-        # Energy Flows for retailler (static)
+        # Energy Flows for retailer (static)
         # -----------------------------------
-        eno.setupRetailerFlows()  # Move this??
+        # NB retailer acts like a customer too, buying from DNSP
+        # These are the load and generation that it presents to DNSP
+        eno.retailer.initialiseCustomerLoad(eno.imports)
+        eno.retailer.initialiseCustomerPV(eno.exports)
         eno.retailer.calcStaticEnergyFlows()
 
         # Summary energy metrics
         # ----------------------
-        eno.calcEnergyParameters(scenario)
+        eno.calcEnergyMetrics(scenario)
 
         # Financials
         # ----------
@@ -1564,7 +1667,7 @@ def runScenario(scenario_name):
         scenario.calcFinancials(eno)
         if study.log_timeseries:
             eno.logTimeseries(scenario)
-        #print(scenario_name, loadFile, eno.total_building_payment/100, (eno.receipts_from_residents - eno.total_payment)/100)
+
     # collate / log data for all loads in scenario
     if use_threading:
         with lock:
@@ -1627,15 +1730,15 @@ def main(base_path,project,study_name, use_threading = False):
 if __name__ == "__main__":
 
     num_threads = 6
-    default_project = 'EN1_value_of_pv2'
-    default_study = 'siteF_value6'
+    default_project = 'p_testing' # EN1_value_of_pv2'
+    default_study = 'btm_p_test'
     #use_threading= False
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
     opts = {}  # Empty dictionary to store key-value pairs.
     while sys.argv:  # While there are arguments left to parse...
         if sys.argv[0][0] == '-':  # Found a "-name value" pair.
-            opts[sys.argv[0]] =sys.argv[1]  # Add key and value to the dictionary.
+            opts[sys.argv[0]] = sys.argv[1]  # Add key and value to the dictionary.
         sys.argv = sys.argv[1:]
         # Reduce the argument list by copying it starting from index 1.
     if '-p' in opts:
