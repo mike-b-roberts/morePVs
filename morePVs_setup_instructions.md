@@ -2,7 +2,7 @@
 morePVs Copyright (C) 2018 Mike B Roberts
 
 multi-occupancy residential electricity with PV and storage model
- 
+
 *This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
@@ -17,7 +17,6 @@ All input parameters for each study are contained or referenced in `study_xxxxxx
 `output_type`:
 This column lists output formats required, applied to the whole study, not individual scenarios.
 All other parameters are given *per scenario* i.e. per line of `.csv` file.
-
 
 
 
@@ -75,6 +74,9 @@ NB if `capex_en_lookup` has duplicate `capex id`s, it all goes to cock. (read_cs
 
 `pv_capex` is full system cost (*including inverter cost * ), after rebates and including GST
 `inverter_cost` is only required if `inverter_life` > amortization period
+
+N.B. Different `pv_capex_id` ids required for individual systems (`btm_i` and `btm_icp`)
+to allow for higher $/W costs for smaller systems:
 
 -------
 TARIFFS
@@ -152,6 +154,23 @@ __For Individual Batteries__
 Batteries are identified by `x_battery_id` and battery control strategy by `x_battery_strategy` 
     where `x = customer id` from load file
 
+*OR* `all_battery_id` and `all_battery_strategy` for all *households* having the same battery arrangement, plus `cp_battery_id` and `cp_battery_stratagey` (this overrides individual settings).
+
+N.B. (all `_id`s require `_strategy` too.)
+
+| Arrangement                               | Battery Set-up                                             |
+| ----------------------------------------- | ---------------------------------------------------------- |
+| `en` or `en_pv`  - with central battery   | `central_battery_id`                                       |
+| `en` or `en_pv` with individual batteries | `all_battery_id`  (or multiple `x_bat....`)                |
+|                                           | `cp_battery_id`                                            |
+| `en...` with central *and* individual ??  | `central_` and `all_` and `cp_` ??                         |
+| `co_only` - central bat only              | `central_battery_id`                                       |
+| `btm_icp`  `btm_i`- only ind batteries    | `all_battery_id`  (or multiple `x_bat....`)`cp_battery_id` |
+| `btm_s_c`  `btm_s_u` - only ind batteries | `all_battery_id`  (or multiple `x_bat....`)`cp_battery_id` |
+|                                           |                                                            |
+
+
+
 
 __Battery Characteristics__
 All battery technical data is kept in `reference\battery_lookup.csv`
@@ -163,7 +182,7 @@ All battery technical data is kept in `reference\battery_lookup.csv`
 `maxSOC` (default `0.9`)
 `max_cycles`(default `2000`)
 
-`battery_cost`: Installed battery cost *excluding* inverter, including GST
+`battery_cost`: Installed battery cost __*excluding*__ inverter, including GST
 `battery_inv_cost` : Installed cost of battery inverter, inc GST
 `life_bat_inv` : lifetime of battery inverter (years)) (Defaults to capital amortization period `a_term` )
 
@@ -186,9 +205,11 @@ OUTPUT TYPES
 ------------
 Column `output_type` in `'study_...csv` *applies to all scenarios*
 
-|   `output_type`     |            |    Fields          |
-------------| ---------------------------------------|--------|
-| `log_timeseries_csv` | timeseries `.csv` for each scenario and load profile |  ` total load  `,` total building import`, `total building export`,`total generation`,`battery saved charge` |
-| `csv_total_vs_type` | Summary `.csv` | `scenario_label`,`load_folder`, `arrangement`, `number_of_households`,`total$_building_costs_mean`,`cp_ratio_mean`,`pv_ratio_mean`   |
-| `csv_total_vs_bat`  | summary `.csv` |   `scenario_label`,`load_folder`, `arrangement`, `number_of_households`,`total$_building_costs_mean`,`self-consumption_mean`,`pv_ratio_mean`, `battery_id` `battery_strategy`  |
+| `output_type`        |                                                      | Fields                                                       |
+| -------------------- | ---------------------------------------------------- | ------------------------------------------------------------ |
+| `log_timeseries_csv` | timeseries `.csv` for each scenario and load profile | ` total load  `,` total building import`, `total building export`,`total generation`,`battery saved charge` |
+| `csv_total_vs_type`  | Summary `.csv`                                       | `scenario_label`,`load_folder`, `arrangement`, `number_of_households`,`total$_building_costs_mean`,`cp_ratio_mean`,`pv_ratio_mean` |
+| `csv_total_vs_bat`   | summary `.csv`                                       | `scenario_label`,`load_folder`, `arrangement`, `number_of_households`,`total$_building_costs_mean`,`self-consumption_mean`,`pv_ratio_mean`, `battery_id` `battery_strategy` |
+|                      |                                                      |                                                              |
+|                      |                                                      |                                                              |
 

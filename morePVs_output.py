@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 import sys
+import numpy as np
 import en_utilities as um
 
 
@@ -12,14 +13,14 @@ class Output():
     def __init__(self,
                  project,
                  study_name,
-                 base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3'
+                 base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3\\studies'
                  ):
         """sets up paths and loads input & output data"""
 
         # NB `data` is the results file, `study_parameters' is the study parameters
         self.base_path = base_path
         self.study_name = study_name
-        self.project_path = os.path.join(self.base_path, project)
+        self.project_path = os.path.join(self.base_path, project,)
         self.input_path = os.path.join(self.project_path, 'inputs')
         # study file contains all scenarios (input parameters)
         self.study_filename = 'study_' + study_name + '.csv'
@@ -81,7 +82,7 @@ class Output():
 
         if type == 'bar_total_vs_site_arrangement':
             # -----------------------------
-            # Barchart used for APSRC paper
+            # Barchart used for APSRC paper and EN1 paper
             # -----------------------------
             # Barchart of total annual costs for different sites
             # (includes en and pv capex opex costs)
@@ -348,14 +349,56 @@ class Output():
             df = self.data.copy() # results
             df_in = self.study_parameters.copy() # input parameters
 
-            sites = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
-            values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-            dict_sites = dict(zip(sites, values))
-            for s in df.index:
-                df.loc[s,'s'] = df_in.loc[s,'load_folder'][-1]
-                df.loc[s,'kWp'] = df_in.loc[s,'pv_kW_peak']
-                df.loc[s,'kWp/unit'] = df.loc[s,'kWp'] / df.loc[s,'number_of_households']
-                df.loc[s,'colour'] = dict_sites[df.loc[s,'s']]
+            sites = ['A', 'E', 'D', 'B', 'H', 'I', 'G', 'C', 'J', 'F']
+            floors = {'A': 12, 'E': 7, 'D': 9, 'B': 8, 'H': 3, 'I': 4, 'G': 4, 'C': 4, 'J': 4, 'F': 5}
+            numhouses = {'A': 208, 'E': 161, 'D': 138, 'B': 104, 'H': 52, 'I': 48, 'G': 44, 'C': 34, 'J': 26, 'F': 20}
+
+            dict_tags ={'A': 'a208_f12_cp34',
+                     'B': 'a104_f8_cp57',
+                     'C': 'a34_f4_cp34',
+                     'D': 'a138_f9_cp45',
+                     'E': 'a161_f7_cp38',
+                     'F': 'a20_f5_cp37',
+                     'G': 'a44_f4_cp17',
+                     'H': 'a52_f3_cp27',
+                     'I': 'a48_f4_cp09',
+                     'J': 'a26_f4_cp44'}
+            pv_lookup = {np.nan: 0,
+                         'vb_pv\\site_A_max.csv': 0.23,
+                         'vb_pv\\site_B_max.csv': 0.18,
+                         'vb_pv\\site_C_max.csv': 0.28,
+                         'vb_pv\\site_D_max.csv': 0.31,
+                         'vb_pv\\site_E_max.csv': 0.56,
+                         'vb_pv\\site_F_max.csv': 1.58,
+                         'vb_pv\\site_F_0_5kw.csv': 0.5,
+                         'vb_pv\\site_F_1_0kw.csv': 1.0,
+                         'vb_pv\\site_G_max.csv': 1.74,
+                         'vb_pv\\site_G_0_5kw.csv': 0.5,
+                         'vb_pv\\site_G_1_0kw.csv': 1.0,
+                         'vb_pv\\site_G_1_5kw.csv': 1.5,
+                         'vb_pv\\site_H_max.csv': 2.72,
+                         'vb_pv\\site_H_0_5kw.csv': 0.5,
+                         'vb_pv\\site_H_1_0kw.csv': 1.0,
+                         'vb_pv\\site_H_1_5kw.csv': 1.5,
+                         'vb_pv\\site_H_2_0kw.csv': 2.0,
+                         'vb_pv\\site_H_2_5kw.csv': 2.5,
+                         'vb_pv\\site_I_max.csv': 1.09,
+                         'vb_pv\\site_I_0_5kw.csv': 0.5,
+                         'vb_pv\\site_I_1_0kw.csv': 1.0,
+                         'vb_pv\\site_J_max.csv': 3.02,
+                         'vb_pv\\site_J_0_5kw.csv': 0.5,
+                         'vb_pv\\site_J_1_0kw.csv': 1.0,
+                         'vb_pv\\site_J_1_5kw.csv': 1.5,
+                         'vb_pv\\site_J_2_0kw.csv': 2.0,
+                         'vb_pv\\site_J_2_5kw.csv': 2.5}
+            df['kWp/unit'] = df_in['pv_filename'].apply(lambda x: pv_lookup[x])
+            #df['kWp'] = df_in['pv_kW_peak']
+            for idx in df.index:
+                site = idx[0]
+                df.loc[idx,'s'] = df_in.loc[idx,'load_folder'][-1]
+                #df.loc[s,'kWp'] = df_in.loc[s,'pv_kW_peak']
+                df.loc[idx,'kWp'] = df.loc[idx,'kWp/unit'] * df.loc[idx,'number_of_households']
+                df.loc[idx,'colour'] = float(sites.index(idx[0]))
             # df = df.drop([ 'arrangement', 'number_of_households',
             #        'load_folder', 'en_opex', 'en_capex_repayment', 'pv_capex_repayment',
             #        'average_hh_bill$', 'average_hh_total$', 'NUOS_charges$_mean',
@@ -366,30 +409,29 @@ class Output():
             #         'total$_building_costs_mean'
             #        ], axis=1)
 
-            # Plot self consumption metric  vs PV kW peak
-            # -------------------------------------------
-            cmap = mpl.cm.tab10
+            # # Plot self consumption metric  vs PV kW peak
+            # # -------------------------------------------
+            cmap = mpl.cm.tab10_r
             fig, ax = plt.subplots()
-            cmap = mpl.cm.tab10
-            s = ax.scatter(df['kWp'], df['self-consumption_mean'], cmap=cmap, c=df['colour'], s=5, label=df['s'])
-            cb = plt.colorbar(s)
-            cb.set_label('site')
-            cb.set_ticks(([s.colorbar.vmin + t * (s.colorbar.vmax - s.colorbar.vmin) for t in cb.ax.get_yticks()]))
-            cb.set_ticklabels(sites)
-            ax.set_xlabel("PV System kWp", fontsize=14)
-            ax.set_ylabel("Self-Consumption % ", fontsize=14)
-            ax.grid(True)
-            ax.set_xlim([0,220])
-            ax.set_ylim([0,110])
-            plot_name = 'SelfConsumption_v_pv.png'
-            plotFile = os.path.join(self.plot_path, plot_name)
-            plt.savefig(plotFile, dpi=1000)
+            # s = ax.scatter(df['kWp'], df['self-consumption_mean'], cmap=cmap,  c=df['colour'], s=5, label=df_in['site_tag'])
+            # cb = plt.colorbar(s)
+            # cb.set_label('site')
+            # cb.set_ticks(([s.colorbar.vmin + t * (s.colorbar.vmax - s.colorbar.vmin) for t in cb.ax.get_yticks()]))
+            # cb.set_ticklabels(sites)
+            # ax.set_xlabel("PV System kWp", fontsize=14)
+            # ax.set_ylabel("Self-Consumption % ", fontsize=14)
+            # ax.grid(True)
+            # ax.set_xlim([0,220])
+            # ax.set_ylim([0,110])
+            # plot_name = 'SelfConsumption_v_pv.png'
+            # plotFile = os.path.join(self.plot_path, plot_name)
+            # plt.savefig(plotFile, dpi=1000)
 
             # Plot self consumption metric  vs PV per unit
             # --------------------------------------------
             fig, ax = plt.subplots()
-            cmap = mpl.cm.tab10
-            s = ax.scatter(df['kWp/unit'], df['self-consumption_mean'], cmap=cmap, c=df['colour'], s=5, label=df['s'])
+
+            s = ax.scatter(df['kWp/unit'], df['self-consumption_mean'], cmap=cmap, c=df['colour'], s=5, label=df_in['site_tag'])
             cb = plt.colorbar(s)
             cb.set_label('site')
             cb.set_ticks(([s.colorbar.vmin + t * (s.colorbar.vmax - s.colorbar.vmin) for t in cb.ax.get_yticks()]))
@@ -413,30 +455,30 @@ class Output():
 
 
 
-            # Plot self sufficiency metric  vs PV kW peak
-            # -------------------------------------------
-            cmap = mpl.cm.tab10
-            fig, ax = plt.subplots()
-            cmap = mpl.cm.tab10
-            s = ax.scatter(df['kWp'], df['self-sufficiency_mean'], cmap=cmap, c=df['colour'], s=5, label=df['s'])
-            cb = plt.colorbar(s)
-            cb.set_label('site')
-            cb.set_ticks(([s.colorbar.vmin + t * (s.colorbar.vmax - s.colorbar.vmin) for t in cb.ax.get_yticks()]))
-            cb.set_ticklabels(sites)
-            ax.set_xlabel("PV System kWp", fontsize=14)
-            ax.set_ylabel("Self-Sufficiency % ", fontsize=14)
-            ax.grid(True)
-            ax.set_xlim([0,220])
-            ax.set_ylim([0,50])
-            plot_name = 'Selfsufficiency_v_pv.png'
-            plotFile = os.path.join(self.plot_path, plot_name)
-            plt.savefig(plotFile, dpi=1000)
+            # # Plot self sufficiency metric  vs PV kW peak
+            # # -------------------------------------------
+            #
+            # fig, ax = plt.subplots()
+            #
+            # s = ax.scatter(df['kWp'], df['self-sufficiency_mean'], cmap=cmap, c=df['colour'], s=5, label=df_in['site_tag'])
+            # cb = plt.colorbar(s)
+            # cb.set_label('site')
+            # cb.set_ticks(([s.colorbar.vmin + t * (s.colorbar.vmax - s.colorbar.vmin) for t in cb.ax.get_yticks()]))
+            # cb.set_ticklabels(sites)
+            # ax.set_xlabel("PV System kWp", fontsize=14)
+            # ax.set_ylabel("Self-Sufficiency % ", fontsize=14)
+            # ax.grid(True)
+            # ax.set_xlim([0,220])
+            # ax.set_ylim([0,50])
+            # plot_name = 'Selfsufficiency_v_pv.png'
+            # plotFile = os.path.join(self.plot_path, plot_name)
+            # plt.savefig(plotFile, dpi=1000)
 
             # Plot self sufficiency metric  vs PV per unit
             # --------------------------------------------
             fig, ax = plt.subplots()
-            cmap = mpl.cm.tab10
-            s = ax.scatter(df['kWp/unit'], df['self-sufficiency_mean'], cmap=cmap, c=df['colour'], s=5, label=df['s'])
+
+            s = ax.scatter(df['kWp/unit'], df['self-sufficiency_mean'], cmap=cmap, c=df['colour'], s=5, label=df_in['site_tag'])
             cb = plt.colorbar(s)
             cb.set_label('site')
             cb.set_ticks(([s.colorbar.vmin + t * (s.colorbar.vmax - s.colorbar.vmin) for t in cb.ax.get_yticks()]))
@@ -454,7 +496,7 @@ class Output():
             # ---------------
             fig, ax = plt.subplots()
             cmap = mpl.cm.tab10
-            s = ax.scatter(df['self-consumption_mean'], df['self-sufficiency_mean'], cmap=cmap, c=df['colour'], s=5, label=df['s'])
+            s = ax.scatter(df['self-consumption_mean'], df['self-sufficiency_mean'], cmap=cmap, c=df['colour'], s=5, label=df_in['site_tag'])
             cb = plt.colorbar(s)
             cb.set_label('site')
             cb.set_ticks(([s.colorbar.vmin + t * (s.colorbar.vmax - s.colorbar.vmin) for t in cb.ax.get_yticks()]))
@@ -482,10 +524,48 @@ class Output():
             sites = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
             values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
             dict_sites = dict(zip(sites, values))
-
+            dict_tags = {'A': 'a208_f12_cp34',
+                         'B': 'a104_f8_cp57',
+                         'C': 'a34_f4_cp34',
+                         'D': 'a138_f9_cp45',
+                         'E': 'a161_f7_cp38',
+                         'F': 'a20_f5_cp37',
+                         'G': 'a44_f4_cp17',
+                         'H': 'a52_f3_cp27',
+                         'I': 'a48_f4_cp09',
+                         'J': 'a26_f4_cp44'}
+            tags = list(dict_tags.values())
+            pv_lookup = {np.nan: 0,
+                         'vb_pv\\site_A_max.csv': 0.23,
+                         'vb_pv\\site_B_max.csv': 0.18,
+                         'vb_pv\\site_C_max.csv': 0.28,
+                         'vb_pv\\site_D_max.csv': 0.31,
+                         'vb_pv\\site_E_max.csv': 0.56,
+                         'vb_pv\\site_F_max.csv': 1.58,
+                         'vb_pv\\site_F_0_5kw.csv': 0.5,
+                         'vb_pv\\site_F_1_0kw.csv': 1.0,
+                         'vb_pv\\site_G_max.csv': 1.74,
+                         'vb_pv\\site_G_0_5kw.csv': 0.5,
+                         'vb_pv\\site_G_1_0kw.csv': 1.0,
+                         'vb_pv\\site_G_1_5kw.csv': 1.5,
+                         'vb_pv\\site_H_max.csv': 2.72,
+                         'vb_pv\\site_H_0_5kw.csv': 0.5,
+                         'vb_pv\\site_H_1_0kw.csv': 1.0,
+                         'vb_pv\\site_H_1_5kw.csv': 1.5,
+                         'vb_pv\\site_H_2_0kw.csv': 2.0,
+                         'vb_pv\\site_H_2_5kw.csv': 2.5,
+                         'vb_pv\\site_I_max.csv': 1.09,
+                         'vb_pv\\site_I_0_5kw.csv': 0.5,
+                         'vb_pv\\site_I_1_0kw.csv': 1.0,
+                         'vb_pv\\site_J_max.csv': 3.02,
+                         'vb_pv\\site_J_0_5kw.csv': 0.5,
+                         'vb_pv\\site_J_1_0kw.csv': 1.0,
+                         'vb_pv\\site_J_1_5kw.csv': 1.5,
+                         'vb_pv\\site_J_2_0kw.csv': 2.0,
+                         'vb_pv\\site_J_2_5kw.csv': 2.5}
             # Set up df for data
             # ------------------
-            dfo = pd.DataFrame()
+            dfall = pd.DataFrame()
 
 
             # Load data from each scenario
@@ -503,112 +583,137 @@ class Output():
                 dfs['kWp'] = df_in.loc[i, 'pv_kW_peak']
                 dfs['kWp/unit'] = dfs['kWp'] / df.loc[i, 'number_of_households']
                 dfs['colour'] = dfs['s'].apply(lambda x: dict_sites[x])
-
+                dfs['arrangement'] = df_in.loc[i,'arrangement']
                 # Calculate Self-Sufficiency
                 # --------------------------
                 for vb in dfs.index:
                     dfs.loc[vb, 'self-sufficiency'] = (dfs.loc[vb, 'total_building_load']
                                                               - dfs.loc[vb, 'import_kWh']) / dfs.loc[
                                                                  vb, 'total_building_load'] * 100
-                dfs = dfs[['s', 'kWp', 'kWp/unit', 'colour', 'self-consumption', 'self-sufficiency']]
-                dfo = dfo.append(dfs)
+                dfs = dfs[['s','arrangement', 'kWp', 'kWp/unit', 'colour', 'self-consumption', 'self-sufficiency']]
+                dfall = dfall.append(dfs)
 
-            alpha = 0.3
-            size = 1
-            # Plot self consumption metric  vs PV kW peak
-            # -------------------------------------------
-            cmap = mpl.cm.tab10
-            fig, ax = plt.subplots()
-            cmap = mpl.cm.tab10
-            s = ax.scatter(dfo['kWp'], dfo['self-consumption'], cmap=cmap, c=dfo['colour'], s=size, alpha=alpha, label=dfo['s'])
-            cb = plt.colorbar(s)
-            cb.set_label('site')
-            cb.set_ticks(([s.colorbar.vmin + t * (s.colorbar.vmax - s.colorbar.vmin) for t in cb.ax.get_yticks()]))
-            cb.set_ticklabels(sites)
-            ax.set_xlabel("PV System kWp", fontsize=14)
-            ax.set_ylabel("Self-Consumption % ", fontsize=14)
-            ax.grid(True)
-            ax.set_xlim([0,220])
-            ax.set_ylim([0,110])
-            plot_name = 'SelfConsumption_v_pv.png'
-            plotFile = os.path.join(self.plot_path, plot_name)
-            plt.savefig(plotFile, dpi=1000)
-
-            # Plot self consumption metric  vs PV per unit
-            # --------------------------------------------
-            fig, ax = plt.subplots()
-            cmap = mpl.cm.tab10
-            s = ax.scatter(dfo['kWp/unit'], dfo['self-consumption'], cmap=cmap, c=dfo['colour'], s=size, alpha=alpha, label=dfo['s'])
-            cb = plt.colorbar(s)
-            cb.set_label('site')
-            cb.set_ticks(([s.colorbar.vmin + t * (s.colorbar.vmax - s.colorbar.vmin) for t in cb.ax.get_yticks()]))
-            cb.set_ticklabels(sites)
-            ax.set_xlabel("PV kWp per unit", fontsize=14)
-            ax.set_ylabel("Self-Consumption % ", fontsize=14)
-            ax.grid(True)
-            ax.set_xlim([0,4])
-            ax.set_ylim([0,110])
-            plot_name = 'SelfConsumption_v_p_perUnit.png'
-            plotFile = os.path.join(self.plot_path, plot_name)
-            plt.savefig(plotFile, dpi=1000)
-
-
-
-            # Plot self sufficiency metric  vs PV kW peak
-            # -------------------------------------------
-            cmap = mpl.cm.tab10
-            fig, ax = plt.subplots()
-            cmap = mpl.cm.tab10
-            s = ax.scatter(dfo['kWp'], dfo['self-sufficiency'], cmap=cmap, c=dfo['colour'], s=size, alpha=alpha, label=dfo['s'])
-            cb = plt.colorbar(s)
-            cb.set_label('site')
-            cb.set_ticks(([s.colorbar.vmin + t * (s.colorbar.vmax - s.colorbar.vmin) for t in cb.ax.get_yticks()]))
-            cb.set_ticklabels(sites)
-            ax.set_xlabel("PV System kWp", fontsize=14)
-            ax.set_ylabel("Self-Sufficiency % ", fontsize=14)
-            ax.grid(True)
-            ax.set_xlim([0,220])
-            ax.set_ylim([0,50])
-            plot_name = 'Selfsufficiency_v_pv.png'
-            plotFile = os.path.join(self.plot_path, plot_name)
-            plt.savefig(plotFile, dpi=1000)
-
-            # Plot self sufficiency metric  vs PV per unit
-            # --------------------------------------------
-            fig, ax = plt.subplots()
-            cmap = mpl.cm.tab10
-            s = ax.scatter(dfo['kWp/unit'], dfo['self-sufficiency'], cmap=cmap, c=dfo['colour'], s=size, alpha=alpha, label=dfo['s'])
-            cb = plt.colorbar(s)
-            cb.set_label('site')
-            cb.set_ticks(([s.colorbar.vmin + t * (s.colorbar.vmax - s.colorbar.vmin) for t in cb.ax.get_yticks()]))
-            cb.set_ticklabels(sites)
-            ax.set_xlabel("PV kWp per unit", fontsize=14)
-            ax.set_ylabel("Self-Sufficiency % ", fontsize=14)
-            ax.grid(True)
-            ax.set_xlim([0,4])
-            ax.set_ylim([0,50])
-            plot_name = 'Selfsufficiency_v_pv_perUnit.png'
-            plotFile = os.path.join(self.plot_path, plot_name)
-            plt.savefig(plotFile, dpi=1000)
-
-            # Plot scm vs ssm
+            # Plotting Settings
             # ---------------
-            fig, ax = plt.subplots()
+            alpha = 0.6
+            size = 1
             cmap = mpl.cm.tab10
-            s = ax.scatter(dfo['self-consumption'], dfo['self-sufficiency'], cmap=cmap, c=dfo['colour'], s=size, alpha=alpha, label=dfo['s'])
-            cb = plt.colorbar(s)
-            cb.set_label('site')
-            cb.set_ticks(([s.colorbar.vmin + t * (s.colorbar.vmax - s.colorbar.vmin) for t in cb.ax.get_yticks()]))
-            cb.set_ticklabels(sites)
-            ax.set_xlabel("self Consumption", fontsize=14)
-            ax.set_ylabel("Self-Sufficiency % ", fontsize=14)
-            ax.grid(True)
-            ax.set_xlim([0, 110])
-            ax.set_ylim([0, 50])
-            plot_name = 'ssm_scm.png'
-            plotFile = os.path.join(self.plot_path, plot_name)
-            plt.savefig(plotFile, dpi=1000)
+            markers = {'btm_icp': 'X',
+                       'en_pv': '0'}
+            # Separate Plots for different arrangements
+            for types in [['btm_icp','en_pv']]:
+                    # [['en_pv', 'en'],
+                    #         ['btm_icp'],
+                    #         ['btm_i'],
+                    #         ['btm_s_c','btm_p_c'],
+                    #         ['btm_s_u','btm_p_u'],
+                    #         ['cp_only']]:
+                arr_label = types[0][0:7]
+                dfo = dfall.loc[dfall['arrangement'].isin(types)]
+                if len(dfo) >0:
+                    # Plot self consumption metric  vs PV kW peak
+                    # -------------------------------------------
+                    fig, ax = plt.subplots()
+                    cmap = mpl.cm.tab10
+                    s = ax.scatter(dfo['kWp'], dfo['self-consumption'], cmap=cmap, c=dfo['colour'], s=size, alpha=alpha, label=dfo['s'])
+                    cb = plt.colorbar(s)
+                    cb.set_label('site')
+                    delta = (s.colorbar.vmax - s.colorbar.vmin) * 9 / 10
+                    cb.set_ticks(([s.colorbar.vmin + delta / 18 + t * delta for t in cb.ax.get_yticks()]))
+                    cb.set_ticklabels(tags)
+                    ax.set_xlabel("PV System kWp", fontsize=14)
+                    ax.set_ylabel("Self-Consumption % ", fontsize=14)
+                    ax.set_title(arr_label, fontsize=14)
+                    ax.grid(True)
+                    ax.set_xlim([0,220])
+                    ax.set_ylim([0,110])
+                    plot_name = 'SelfConsumption_v_pv_'+arr_label+'.tiff'
+                    plotFile = os.path.join(self.plot_path, plot_name)
+                    plt.savefig(plotFile, dpi=1000)
+                    plt.close()
 
+
+                    # Plot self consumption metric  vs PV per unit
+                    # --------------------------------------------
+                    fig, ax = plt.subplots()
+                    cmap = mpl.cm.tab10
+                    s = ax.scatter(dfo['kWp/unit'], dfo['self-consumption'], cmap=cmap, c=dfo['colour'], s=size, alpha=alpha, label=dfo['s'])
+                    cb.set_label('site')
+                    delta = (s.colorbar.vmax - s.colorbar.vmin)*9/10
+                    cb.set_ticks(([s.colorbar.vmin + delta/18 + t * delta for t in cb.ax.get_yticks()]))
+                    cb.set_ticklabels(tags)
+                    ax.set_xlabel("PV kWp per unit", fontsize=14)
+                    ax.set_ylabel("Self-Consumption % ", fontsize=14)
+                    ax.set_title(arr_label, fontsize=14)
+                    ax.grid(True)
+                    ax.set_xlim([0,4])
+                    ax.set_ylim([0,110])
+                    plot_name = 'SelfConsumption_v_p_perUnit_'+arr_label+'.tiff'
+                    plotFile = os.path.join(self.plot_path, plot_name)
+                    plt.savefig(plotFile, dpi=1000)
+                    plt.close()
+
+                    # Plot self sufficiency metric  vs PV kW peak
+                    # -------------------------------------------
+                    cmap = mpl.cm.tab10
+                    fig, ax = plt.subplots()
+                    cmap = mpl.cm.tab10
+                    s = ax.scatter(dfo['kWp'], dfo['self-sufficiency'], cmap=cmap, c=dfo['colour'], s=size, alpha=alpha, label=dfo['s'])
+                    cb = plt.colorbar(s)
+                    cb.set_label('site')
+                    delta = (s.colorbar.vmax - s.colorbar.vmin) * 9 / 10
+                    cb.set_ticks(([s.colorbar.vmin + delta / 18 + t * delta for t in cb.ax.get_yticks()]))
+                    cb.set_ticklabels(tags)
+                    ax.set_xlabel("PV System kWp", fontsize=14)
+                    ax.set_ylabel("Self-Sufficiency % ", fontsize=14)
+                    ax.set_title(arr_label, fontsize=14)
+                    ax.grid(True)
+                    ax.set_xlim([0,220])
+                    ax.set_ylim([0,50])
+                    plot_name = 'Selfsufficiency_v_pv_'+arr_label+'.tiff'
+                    plotFile = os.path.join(self.plot_path, plot_name)
+                    plt.savefig(plotFile, dpi=1000)
+                    plt.close()
+                    # Plot self sufficiency metric  vs PV per unit
+                    # --------------------------------------------
+                    fig, ax = plt.subplots()
+                    cmap = mpl.cm.tab10
+                    s = ax.scatter(dfo['kWp/unit'], dfo['self-sufficiency'], cmap=cmap, c=dfo['colour'], s=size, alpha=alpha, label=dfo['s'])
+                    cb = plt.colorbar(s)
+                    cb.set_label('site')
+                    delta = (s.colorbar.vmax - s.colorbar.vmin) * 9 / 10
+                    cb.set_ticks(([s.colorbar.vmin + delta / 18 + t * delta for t in cb.ax.get_yticks()]))
+                    cb.set_ticklabels(tags)
+                    ax.set_xlabel("PV kWp per unit", fontsize=14)
+                    ax.set_ylabel("Self-Sufficiency % ", fontsize=14)
+                    ax.set_title(arr_label, fontsize=14)
+                    ax.grid(True)
+                    ax.set_xlim([0,4])
+                    ax.set_ylim([0,50])
+                    plot_name = 'Selfsufficiency_v_pv_perUnit_'+arr_label+'.tiff'
+                    plotFile = os.path.join(self.plot_path, plot_name)
+                    plt.savefig(plotFile, dpi=1000)
+                    plt.close()
+                    # Plot scm vs ssm
+                    # ---------------
+                    fig, ax = plt.subplots()
+                    cmap = mpl.cm.tab10
+                    s = ax.scatter(dfo['self-consumption'], dfo['self-sufficiency'], cmap=cmap, c=dfo['colour'], s=size, alpha=alpha, label=dfo['s'])
+                    cb = plt.colorbar(s)
+                    cb.set_label('site')
+                    delta = (s.colorbar.vmax - s.colorbar.vmin) * 9 / 10
+                    cb.set_ticks(([s.colorbar.vmin + delta / 18 + t * delta for t in cb.ax.get_yticks()]))
+                    cb.set_ticklabels(tags)
+                    ax.set_xlabel("Self-Consumption", fontsize=14)
+                    ax.set_ylabel("Self-Sufficiency % ", fontsize=14)
+                    ax.set_title(arr_label, fontsize=14)
+                    ax.grid(True)
+                    ax.set_xlim([0, 110])
+                    ax.set_ylim([0, 50])
+                    plot_name = 'ssm_scm_'+arr_label+'.tiff'
+                    plotFile = os.path.join(self.plot_path, plot_name)
+                    plt.savefig(plotFile, dpi=1000)
+                    plt.close()
         if type == 'bar_total_vs_site_arrangement':
             # -----------------------------
             # Barchart used for APSRC paper

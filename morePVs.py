@@ -354,7 +354,7 @@ class Battery():
     def calcBatCapex(self):
         # Battery capex includes inverter replacement if amortization period > inverter lifetime
         if self.life_bat_inv < self.scenario.a_term:
-            bat_inv_capex = (int((self.scenario.a_term / self.life_bat_inv ))+1) * self.battery_inv_cost
+            bat_inv_capex = (int((self.scenario.a_term / self.life_bat_inv))+1) * self.battery_inv_cost
         else:
             bat_inv_capex = self.battery_inv_cost
         # Battery capex includes battery replacement if it exceeds max_cycle
@@ -755,21 +755,57 @@ class Network(Customer):
 
     def initialiseAllBatteries(self, scenario):
         """Initialise central and individual batteries as required."""
+        # ---------------
         # Central Battery
         # ---------------
         self.has_central_battery = scenario.has_central_battery
         if self.has_central_battery:
             self.battery = Battery(scenario=scenario,
-                                   battery_id=scenario.battery_id,
-                                   battery_strategy=scenario.battery_strategy)
+                                   battery_id=scenario.central_battery_id,
+                                   battery_strategy=scenario.central_battery_strategy)
 
+        # --------------------
         # Individual Batteries
         # --------------------
         self.cum_ind_bat_charge = np.zeros(ts.num_steps)
         self.tot_ind_bat_capacity =0
         self.any_resident_has_battery = False
-        if scenario.has_ind_batteries != 'none':
-            for c in self.resident_list:
+
+        # CP battery
+        # ----------
+        if 'cp_battery_id' in scenario.parameters.index and 'cp_battery_strategy' in scenario.parameters.index:
+            if not pd.isnull(scenario.parameters['cp_battery_id']) and \
+                    not pd.isnull(scenario.parameters['cp_battery_strategy']):
+                self.resident['cp'].battery = Battery(scenario=scenario,
+                                                   battery_id=scenario.parameters['cp_battery_id'],
+                                                   battery_strategy=scenario.parameters['cp_battery_strategy'])
+                self.resident['cp'].has_battery = True
+                self.any_resident_has_battery = True  # NB 'resident' here means householder or cp
+                scenario.has_ind_batteries = 'True'
+                self.tot_ind_bat_capacity += self.resident['cp'].battery.capacity_kWh
+            else:
+                self.resident['cp'].has_battery = False
+
+        # Household batteries - all the same
+        # ----------------------------------
+        if 'all_battery_id' in scenario.parameters.index and 'all_battery_strategy' in scenario.parameters.index:
+            self.any_resident_has_battery = True
+            scenario.has_ind_batteries = 'True'
+            bat_name = 'all_battery_id'
+            bat_strategy = 'all_battery_strategy'
+            if not pd.isnull(scenario.parameters[bat_name]) and \
+                    not pd.isnull(scenario.parameters[bat_strategy]):
+                    for c in self.households:
+                        self.resident[c].battery = Battery(scenario=scenario,
+                                                           battery_id=scenario.parameters[bat_name],
+                                                           battery_strategy=scenario.parameters[bat_strategy])
+                        self.resident[c].has_battery = True
+                        self.tot_ind_bat_capacity += self.resident[c].battery.capacity_kWh
+
+        # Household batteries - separately defined
+        # ----------------------------------------
+        elif scenario.has_ind_batteries != 'none':
+            for c in self.households:
                 bat_name = str(c) + '_battery_id'
                 bat_strategy = str(c) + '_battery_strategy'
                 if bat_name in scenario.parameters.index and bat_strategy in scenario.parameters.index:
@@ -786,8 +822,10 @@ class Network(Customer):
                         self.resident[c].has_battery = False
                 else:
                     self.resident[c].has_battery = False
+        # No individual household batteries
+        # ---------------------------------
         else:
-            for c in self.resident_list:
+            for c in self.households:
                 self.resident[c].has_battery = False
 
     def resetAllBatteries(self, scenario):
@@ -803,6 +841,7 @@ class Network(Customer):
         #self.any_resident_has_battery = False
         if self.any_resident_has_battery:
             for c in self.resident_list:
+                if self.resident[c].has_battery:
                     self.resident[c].battery.reset()
 
     def calcBuildingStaticEnergyFlows(self):
@@ -876,12 +915,17 @@ class Network(Customer):
         self.pv_capex_repayment = 0
         self.en_capex_repayment = 0
         self.bat_capex_repayment =0
+
+        # Individual battery capex:
+        # -------------------------
         for c in self.resident_list:
             self.resident[c].pv_capex_repayment = 0
             self.resident[c].bat_capex_repayment = 0
+            if self.resident[c].has_battery:
+                self.resident[c].bat_capex = self.resident[c].battery.calcBatCapex()
 
-        # Calculate capex costs for battery
-        # ---------------------------------
+        # Central battery capex
+        # ---------------------
         if self.has_central_battery:
             self.bat_capex = self.battery.calcBatCapex()
         else:
@@ -894,6 +938,7 @@ class Network(Customer):
                                                    when='end')
         # Allocate capex & opex payments depending on network arrangements
         # ----------------------------------------------------------------
+        # TODO Allocation of capex needs refining. e.g in some `btm_s` arrangements, capex payable by owners, not residents
         if scenario.arrangement in ['en_strata', 'en', 'en_pv']:
             # For en, all capex & opex are borne by the ENO
             self.en_opex = scenario.en_opex
@@ -948,20 +993,24 @@ class Network(Customer):
             self.total_building_export = self.exports.sum()
             self.total_import = self.imports.sum()
         self.pv_ratio = self.pv.sum().sum() / self.total_building_load * 100
-        self.cp_ratio =self.resident['cp'].load.sum()/ self.total_building_load *100
+        self.cp_ratio = self.resident['cp'].load.sum() / self.total_building_load * 100
         if scenario.pv_exists:
             self.self_consumption = 100 - (self.total_building_export / self.pv.sum().sum() * 100)
+            self.self_sufficiency = 100 - (self.total_import / self.total_building_load * 100)
         else:
             self.self_consumption = 100  # NB No PV implies 100% self consumption
-
-    def logTimeseries(self,scenario):
+            self.self_sufficiency = 0
+    def logTimeseries(self, scenario):
         """Logs timeseries data for whole building to csv file."""
 
         timedata = pd.DataFrame(index=ts.timeseries)
         timedata['network_load'] = self.network_load.sum(axis=1)
         timedata['pv_generation'] = self.pv.sum(axis=1)
-        timedata['grid_import'] = self.imports
-        timedata['grid_export'] = self.exports
+        timedata['en_import'] = self.imports
+        timedata['en_export'] = self.exports
+        timedata['total_grid_import'] = self.cum_resident_imports
+        timedata['total_grid_export'] = self.cum_resident_exports
+
         if scenario.has_central_battery:
             timedata['battery_SOC'] = self.battery.SOC_log
             timedata['battery_charge_kWh'] = self.battery.SOC_log * self.battery.capacity_kWh / 100
@@ -969,7 +1018,7 @@ class Network(Customer):
             timedata['ind_battery_SOC'] = self.cum_ind_bat_charge / self.tot_ind_bat_capacity *100
         time_file = os.path.join(study.timeseries_path,
                                  self.scenario.label + '_' +
-                                 self.load_name )
+                                 self.load_name)
         um.df_to_csv(timedata, time_file)
 
 class Scenario():
@@ -1055,6 +1104,7 @@ class Scenario():
                 self.pv_scaleable = ('pv_scaleable' in self.parameters.index) and \
                                     self.parameters['pv_scaleable']
                 if self.pv_scaleable:
+                    self.pv_kW_peak = self.parameters['pv_kW_peak']
                     self.pv = self.pv * self.pv_kW_peak
 
         # ---------------------------------------
@@ -1114,21 +1164,24 @@ class Scenario():
         # ------------------------------------
         # identify batteries for this scenario
         # ------------------------------------
-        if 'battery_id' in self.parameters.index and 'battery_strategy' in self.parameters.index:
-            self.battery_id = self.parameters['battery_id']
-            self.battery_strategy = self.parameters['battery_strategy']
-            self.has_central_battery = not pd.isnull(self.battery_id)
-
+        possible_batteries = [i for i in self.parameters.index if 'battery' in i]
+        # Central battery
+        # ---------------
+        if 'central_battery_id' in possible_batteries and 'central_battery_strategy' in possible_batteries:
+            self.central_battery_id = self.parameters['central_battery_id']
+            self.central_battery_strategy = self.parameters['central_battery_strategy']
+            self.has_central_battery = not pd.isnull(self.central_battery_id)
+            possible_batteries.remove('central_battery_id', 'central_battery_strategy')
         else:
             self.has_central_battery = False
 
         # Possible individual batteries:
-        if self.parameters.index.str.contains('_battery_id').any() \
-                and self.parameters.index.str.contains('_battery_strategy').any():
+        # ------------------------------
+        if any('_battery_id' in i for i in possible_batteries)  \
+                and any('_battery_strategy' in i for i in possible_batteries):
             self.has_ind_batteries = 'maybe'
         else:
             self.has_ind_batteries = 'none'
-
 
         # --------------------------------------------------------
         # Set up annual capex & opex costs for en in this scenario
@@ -1201,7 +1254,6 @@ class Scenario():
             #  Option to use standard 1kW PV output and scale
             #  with pv_capex and inverter cost given as $/kW
             if self.pv_scaleable:
-                self.pv_kW_peak = self.parameters['pv_kW_peak']
                 self.pv_capex = self.pv_capex * self.pv_kW_peak
 
             # Calculate annual repayments
@@ -1303,7 +1355,8 @@ class Scenario():
                        net.total_import,
                        net.cp_ratio,
                        net.pv_ratio,
-                       net.self_consumption] + \
+                       net.self_consumption,
+                       net.self_sufficiency] + \
                       [net.resident['cp'].energy_bill / 100] + \
                       [net.resident[c].energy_bill / 100 for c in net.resident_list if c != 'cp'] + \
                       [net.resident['cp'].local_solar_bill / 100] + \
@@ -1313,20 +1366,21 @@ class Scenario():
 
         result_labels = ['total$_building_costs',
                          'checksum_total_payments$',
-                            'eno$_receipts_from_residents',
-                            'eno$_energy_bill',
-                            'eno$_total_payment',
-                            'eno$_bat_capex_repay',
-                            'eno_net$',
-                            'retailer_receipt$',
-                            'retailer_bill$',
-                            'solar_retailer_profit',
-                            'total_building_load',
-                            'export_kWh',
-                            'import_kWh',
-                            'cp_ratio',
-                            'pv_ratio',
-                            'self-consumption'] + \
+                         'eno$_receipts_from_residents',
+                         'eno$_energy_bill',
+                         'eno$_total_payment',
+                         'eno$_bat_capex_repay',
+                         'eno_net$',
+                         'retailer_receipt$',
+                         'retailer_bill$',
+                         'solar_retailer_profit',
+                         'total_building_load',
+                         'export_kWh',
+                         'import_kWh',
+                         'cp_ratio',
+                         'pv_ratio',
+                         'self-consumption',
+                         'self-sufficiency'] + \
                         ['cust_bill_cp'] + \
                         ['cust_bill_' + '%03d' % int(r) for r in net.resident_list if r != 'cp'] + \
                         ['cust_solar_bill_cp'] + \
@@ -1359,7 +1413,7 @@ class Scenario():
         # Central battery parameters:
         # ---------------------------
         if self.has_central_battery:
-            study.op.loc[self.name, 'central_battery_kWh'] = study.battery_lookup.loc[self.battery_id, 'capacity_kWh']
+            study.op.loc[self.name, 'central_battery_kWh'] = study.battery_lookup.loc[self.central_battery_id, 'capacity_kWh']
         else:
             study.op.loc[self.name, 'central_battery_kWh'] = 0
 
@@ -1731,7 +1785,7 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 'p_testing' # EN1_value_of_pv2'
-    default_study = 'btm_p_test'
+    default_study = 'btm_p_test2'
     #use_threading= False
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
