@@ -164,7 +164,7 @@ N.B. (all `_id`s require `_strategy` too.)
 | `en` or `en_pv` with individual batteries | `all_battery_id`  (or multiple `x_bat....`)                |
 |                                           | `cp_battery_id`                                            |
 | `en...` with central *and* individual ??  | `central_` and `all_` and `cp_` ??                         |
-| `co_only` - central bat only              | `central_battery_id`                                       |
+| `cp_only` - central bat only              | `central_battery_id`                                       |
 | `btm_icp`  `btm_i`- only ind batteries    | `all_battery_id`  (or multiple `x_bat....`)`cp_battery_id` |
 | `btm_s_c`  `btm_s_u` - only ind batteries | `all_battery_id`  (or multiple `x_bat....`)`cp_battery_id` |
 |                                           |                                                            |

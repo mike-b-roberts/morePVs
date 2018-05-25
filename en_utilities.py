@@ -158,23 +158,33 @@ def plot_battery(project,
         file = os.path.join(path, name)
         plotfile = os.path.join(plotpath, name[0:-3] + 'png')
         df = pd.read_csv(file)
+        df = df.set_index('timestamp')
         if 'battery_charge_kWh' in df.columns:
             df = df.drop(['battery_charge_kWh'], axis=1)
-        fig,ax=plt.subplots()
+
+        # remove irrelevant / unnecessary columns:
+        if 'en' in name:
+            df = df.drop(['total_grid_import','total_grid_export'], axis=1)
+        if 'btm' in name:
+            df = df.drop(['en_import', 'en_export'], axis=1)
+        max_kwh = df[[c for c in df.columns if 'SOC' not in c]].max().max()
+        fig, ax = plt.subplots()
         ax = df[[c for c in df.columns if 'SOC' not in c]].plot()
 
-        ax.set_xlabel("Time", fontsize=14)
-        ax.set_ylabel("kWh", fontsize=14)
+        ax.set_xlabel ("Time", fontsize=14)
+        ax.set_ylabel ("kWh", fontsize=14)
         ax.grid(True)
-
+        ax.set_ylim(0, max_kwh)
         if 'battery_SOC' in df.columns:
             ax2 = df['battery_SOC'].plot(secondary_y=True, ax=ax, style='--')
             ax2.set_ylabel("Battery SOC %")
             ax2.set_ylim(0,100)
+
         if 'ind_battery_SOC' in df.columns:
             ax2 = df['ind_battery_SOC'].plot(secondary_y=True, ax=ax, style='--')
             ax2.set_ylabel("Battery SOC %")
             ax2.set_ylim(0, 100)
+
 
         leg = ax.legend(fancybox=True)
         leg.get_frame().set_alpha(0.5)
@@ -188,7 +198,11 @@ def plot_battery(project,
 
 def main():
 
-    plot_battery(project='p_testing', study_name='test_indbat1')
+    # plot_battery(project='p_testing', study_name='test_indbat1')
+
+    project = 'EN1a_pv_bat2'
+    study_name = 'siteJ_bat2_test1'
+    plot_battery(project=project, study_name=study_name)
 
     pass
 

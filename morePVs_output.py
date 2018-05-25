@@ -714,6 +714,7 @@ class Output():
                     plotFile = os.path.join(self.plot_path, plot_name)
                     plt.savefig(plotFile, dpi=1000)
                     plt.close()
+
         if type == 'bar_total_vs_site_arrangement':
             # -----------------------------
             # Barchart used for APSRC paper

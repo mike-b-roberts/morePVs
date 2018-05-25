@@ -785,22 +785,25 @@ class Network(Customer):
                 self.tot_ind_bat_capacity += self.resident['cp'].battery.capacity_kWh
             else:
                 self.resident['cp'].has_battery = False
+        else:
+            self.resident['cp'].has_battery = False
 
         # Household batteries - all the same
         # ----------------------------------
-        if 'all_battery_id' in scenario.parameters.index and 'all_battery_strategy' in scenario.parameters.index:
-            self.any_resident_has_battery = True
-            scenario.has_ind_batteries = 'True'
-            bat_name = 'all_battery_id'
-            bat_strategy = 'all_battery_strategy'
-            if not pd.isnull(scenario.parameters[bat_name]) and \
-                    not pd.isnull(scenario.parameters[bat_strategy]):
-                    for c in self.households:
-                        self.resident[c].battery = Battery(scenario=scenario,
-                                                           battery_id=scenario.parameters[bat_name],
-                                                           battery_strategy=scenario.parameters[bat_strategy])
-                        self.resident[c].has_battery = True
-                        self.tot_ind_bat_capacity += self.resident[c].battery.capacity_kWh
+        bat_name = 'all_battery_id'
+        bat_strategy = 'all_battery_strategy'
+        if bat_name in scenario.parameters.index and bat_strategy in scenario.parameters.index and \
+            not pd.isnull(scenario.parameters[bat_name]) and \
+            not pd.isnull(scenario.parameters[bat_strategy]):
+                self.any_resident_has_battery = True
+                scenario.has_ind_batteries = 'True'
+                for c in self.households:
+                    self.resident[c].battery = Battery(scenario=scenario,
+                                                       battery_id=scenario.parameters[bat_name],
+                                                       battery_strategy=scenario.parameters[bat_strategy])
+                    self.resident[c].has_battery = True
+                    self.tot_ind_bat_capacity += self.resident[c].battery.capacity_kWh
+
 
         # Household batteries - separately defined
         # ----------------------------------------
@@ -822,6 +825,7 @@ class Network(Customer):
                         self.resident[c].has_battery = False
                 else:
                     self.resident[c].has_battery = False
+
         # No individual household batteries
         # ---------------------------------
         else:
@@ -914,7 +918,8 @@ class Network(Customer):
         self.en_opex = 0
         self.pv_capex_repayment = 0
         self.en_capex_repayment = 0
-        self.bat_capex_repayment =0
+        self.bat_capex_repayment = 0
+        scenario.total_battery_capex_repayment = 0
 
         # Individual battery capex:
         # -------------------------
@@ -923,6 +928,12 @@ class Network(Customer):
             self.resident[c].bat_capex_repayment = 0
             if self.resident[c].has_battery:
                 self.resident[c].bat_capex = self.resident[c].battery.calcBatCapex()
+                self.bat_capex_repayment = -12 * np.pmt(rate=scenario.a_rate / 12,
+                                                        nper=12 * scenario.a_term,
+                                                        pv=self.resident[c].bat_capex,
+                                                        fv=0,
+                                                        when='end')
+                scenario.total_battery_capex_repayment += self.resident[c].bat_capex_repayment
 
         # Central battery capex
         # ---------------------
@@ -936,6 +947,8 @@ class Network(Customer):
                                                    pv=self.bat_capex,
                                                    fv=0,
                                                    when='end')
+            scenario.total_battery_capex_repayment += self.bat_capex_repayment
+
         # Allocate capex & opex payments depending on network arrangements
         # ----------------------------------------------------------------
         # TODO Allocation of capex needs refining. e.g in some `btm_s` arrangements, capex payable by owners, not residents
@@ -1018,6 +1031,7 @@ class Network(Customer):
             timedata['ind_battery_SOC'] = self.cum_ind_bat_charge / self.tot_ind_bat_capacity *100
         time_file = os.path.join(study.timeseries_path,
                                  self.scenario.label + '_' +
+                                 scenario.arrangement + '_' +
                                  self.load_name)
         um.df_to_csv(timedata, time_file)
 
@@ -1028,7 +1042,7 @@ class Scenario():
         # Set up key scenario parameters
         # ------------------------------
         self.name = scenario_name
-        self.label = study.name + '_' + "{:03}".format(self.name)
+        self.label = study.name + '_' + "{:03}".format(int(self.name))
         # Copy all scenario parameters to allow for threading:
         if use_threading:
             with lock:
@@ -1171,7 +1185,8 @@ class Scenario():
             self.central_battery_id = self.parameters['central_battery_id']
             self.central_battery_strategy = self.parameters['central_battery_strategy']
             self.has_central_battery = not pd.isnull(self.central_battery_id)
-            possible_batteries.remove('central_battery_id', 'central_battery_strategy')
+            possible_batteries.remove('central_battery_id')
+            possible_batteries.remove('central_battery_strategy')
         else:
             self.has_central_battery = False
 
@@ -1328,7 +1343,8 @@ class Scenario():
 
         net.checksum_total_payments = net.retailer_receipt \
             + net.solar_retailer_profit \
-            + (self.en_opex + self.en_capex_repayment + self.pv_capex_repayment)*100
+            + (self.en_opex + self.en_capex_repayment + self.pv_capex_repayment \
+               + self.total_battery_capex_repayment)*100
         # NB checksum: These two total should be the same for all arrangements
         if abs(net.total_building_payment - net.checksum_total_payments) > 0.005:
             print('**************CHECKSUM ERROR***See log ******* Study: ', study.name, ' Scenario: ', self.name)
@@ -1784,8 +1800,8 @@ def main(base_path,project,study_name, use_threading = False):
 if __name__ == "__main__":
 
     num_threads = 6
-    default_project = 'p_testing' # EN1_value_of_pv2'
-    default_study = 'btm_p_test2'
+    default_project = 'EN1a_pv_bat2'
+    default_study = 'siteJ_bat2_test1'
     #use_threading= False
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
