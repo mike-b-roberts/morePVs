@@ -182,8 +182,11 @@ All battery technical data is kept in `reference\battery_lookup.csv`
 `maxSOC` (default `0.9`)
 `max_cycles`(default `2000`)
 
-`battery_cost`: Installed battery cost __*excluding*__ inverter, including GST
-`battery_inv_cost` : Installed cost of battery inverter, inc GST
+`battery_cost`: Installed battery cost __*excluding*__ inverter (if inverter cost is given) , including GST
+`battery_inv_cost` : Installed cost of battery inverter, inc GST (If = zero, inverter and battery treated as single unit).
+
+N.B. If `battery_capex_per_kW` is given in the `study_` parameter file, it overrides capital costs given in `battery_lookup.csv`
+
 `life_bat_inv` : lifetime of battery inverter (years)) (Defaults to capital amortization period `a_term` )
 
 

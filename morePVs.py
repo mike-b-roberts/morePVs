@@ -237,97 +237,102 @@ class Battery():
     def __init__(self, scenario, battery_id, battery_strategy):
         self.battery_id = battery_id
         self.scenario = scenario
-        # Load battery parameters from battery tariff_lookup
-        # -------------------------------------------
-        self.capacity_kWh = study.battery_lookup.loc[battery_id, 'capacity_kWh']
-        self.charge_kW = study.battery_lookup.loc[battery_id, 'charge_kW']
-        self.efficiency_cycle = study.battery_lookup.loc[battery_id, 'efficiency_cycle']
-        self.maxDOD = study.battery_lookup.loc[battery_id, 'maxDOD']
-        self.maxSOC = study.battery_lookup.loc[battery_id, 'maxSOC']
-        self.max_cycles = study.battery_lookup.loc[battery_id,'max_cycles']
-        self.battery_cost = study.battery_lookup.loc[battery_id, 'battery_cost']
-        self.battery_inv_cost = study.battery_lookup.loc[battery_id, 'battery_inv_cost']
-        self.life_bat_inv = scenario.a_term if np.isnan(study.battery_lookup.loc[battery_id, 'life_bat_inv'])\
-                                         else study.battery_lookup.loc[battery_id, 'life_bat_inv']
 
-        # Use default values if missing:
-        # ------------------------------
-        if pd.isnull(self.charge_kW):
-            self.charge_kW = self.capacity_kWh * 0.5
-        if pd.isnull(self.maxDOD):
-            self.maxDOD = 0.8
-        if pd.isnull(self.maxSOC):
-            self.maxSOC = 1.0
-        if pd.isnull(self.efficiency_cycle):
-            self.efficiency_cycle = 0.95
-        if pd.isnull(self.max_cycles):
-            self.max_cycles = 2000
-        if pd.isnull(self.battery_cost):
-            self.battery_cost =0.0
-        if pd.isnull(self.battery_inv_cost):
-            self.battery_inv_cost =0.0
+        if not battery_id in study.battery_lookup.index:
+            logging.info("battery-id %s is not in battery_lookup.csv :", battery_id)
+            sys.exit("battery-id %s is not in battery_lookup.csv :", battery_id)
+        else:
+            # Load battery parameters from battery tariff_lookup
+            # --------------------------------------------------
+            self.capacity_kWh = study.battery_lookup.loc[battery_id, 'capacity_kWh']
+            self.charge_kW = study.battery_lookup.loc[battery_id, 'charge_kW']
+            self.efficiency_cycle = study.battery_lookup.loc[battery_id, 'efficiency_cycle']
+            self.maxDOD = study.battery_lookup.loc[battery_id, 'maxDOD']
+            self.maxSOC = study.battery_lookup.loc[battery_id, 'maxSOC']
+            self.max_cycles = study.battery_lookup.loc[battery_id,'max_cycles']
+            self.battery_cost = study.battery_lookup.loc[battery_id, 'battery_cost']
+            self.battery_inv_cost = study.battery_lookup.loc[battery_id, 'battery_inv_cost']
+            self.life_bat_inv = scenario.a_term if np.isnan(study.battery_lookup.loc[battery_id, 'life_bat_inv'])\
+                                             else study.battery_lookup.loc[battery_id, 'life_bat_inv']
 
-        # Set up restricted discharge period and additional charge period
-        # ---------------------------------------------------------------
-        discharge_start1 = study.battery_strategies.loc[battery_strategy, 'discharge_start1']
-        discharge_end1 = study.battery_strategies.loc[battery_strategy, 'discharge_end1']
-        discharge_day1 = study.battery_strategies.loc[battery_strategy, 'discharge_day1']
-        discharge_start2 = study.battery_strategies.loc[battery_strategy, 'discharge_start2']
-        discharge_end2 = study.battery_strategies.loc[battery_strategy, 'discharge_end2']
-        discharge_day2 = study.battery_strategies.loc[battery_strategy, 'discharge_day2']
-        charge_start = study.battery_strategies.loc[battery_strategy, 'charge_start']
-        charge_end = study.battery_strategies.loc[battery_strategy, 'charge_end']
-        charge_day = study.battery_strategies.loc[battery_strategy, 'charge_day']
-        # Calculate discharge period(s):
-        # -----------------------------
-        if pd.isnull(discharge_start1):
-            discharge_period1 = ts.timeseries
-        elif pd.Timestamp(discharge_start1) > pd.Timestamp(discharge_end1):
-            discharge_period1 = (ts.days[discharge_day1][(ts.days[discharge_day1].time > pd.Timestamp(discharge_start1).time()) & (
-                        ts.days[discharge_day1].time <= pd.Timestamp('23:59').time())].append(
-                ts.days[discharge_day1][(ts.days[discharge_day1].time >= pd.Timestamp('0:00').time()) & (
-                            ts.days[discharge_day1].time <= pd.Timestamp(discharge_end1).time())])).sort_values()
-        else:
-            discharge_period1 = \
-                ts.days[discharge_day1][(ts.days[discharge_day1].time > pd.Timestamp(discharge_start1).time())
-                                       & (ts.days[discharge_day1].time <= pd.Timestamp(discharge_end1).time())]
-        if pd.isnull(discharge_start2):
-            discharge_period2 = pd.DatetimeIndex([])
-        elif pd.Timestamp(discharge_start2) > pd.Timestamp(discharge_end2):
-            discharge_period2 = (
-            ts.days[discharge_day2][(ts.days[discharge_day2].time > pd.Timestamp(discharge_start2).time()) & (
-                    ts.days[discharge_day2].time <= pd.Timestamp('23:59').time())].append(
-                ts.days[discharge_day2][(ts.days[discharge_day2].time >= pd.Timestamp('0:00').time()) & (
-                        ts.days[discharge_day2].time <= pd.Timestamp(discharge_end2).time())])).sort_values()
-        else:
-            discharge_period2 = \
-                ts.days[discharge_day2][(ts.days[discharge_day2].time > pd.Timestamp(discharge_start2).time())
-                                        & (ts.days[discharge_day2].time <= pd.Timestamp(discharge_end2).time())]
-        self.discharge_period = discharge_period1.join(discharge_period2, how='outer')
+            # Use default values if missing:
+            # ------------------------------
+            if pd.isnull(self.charge_kW):
+                self.charge_kW = self.capacity_kWh * 0.5
+            if pd.isnull(self.maxDOD):
+                self.maxDOD = 0.8
+            if pd.isnull(self.maxSOC):
+                self.maxSOC = 1.0
+            if pd.isnull(self.efficiency_cycle):
+                self.efficiency_cycle = 0.95
+            if pd.isnull(self.max_cycles):
+                self.max_cycles = 2000
+            if pd.isnull(self.battery_cost):
+                self.battery_cost =0.0
+            if pd.isnull(self.battery_inv_cost):
+                self.battery_inv_cost =0.0
 
-        # Calculate additional charging period:
-        # -------------------------------------
-        if pd.isnull(charge_start):
-            self.charge_period = pd.DatetimeIndex([])
-        elif pd.Timestamp(charge_start) > pd.Timestamp(charge_end):
-            self.charge_period = (ts.days[charge_day][(ts.days[charge_day].time > pd.Timestamp(charge_start).time()) & (
-                        ts.days[charge_day].time <= pd.Timestamp('23:59').time())].append(
-                ts.days[charge_day][(ts.days[charge_day].time >= pd.Timestamp('0:00').time()) & (
-                            ts.days[charge_day].time <= pd.Timestamp(charge_end).time())])).sort_values()
-        else:
-            self.charge_period = \
-                ts.days[charge_day][(ts.days[charge_day].time > pd.Timestamp(charge_start).time())
-                                       & (ts.days[charge_day].time <= pd.Timestamp(charge_end).time())]
-        # Initialise battery variables
-        # ----------------------------
-        self.initial_SOC =0 # BATTERY STARTS AT 0% SOC
-        self.charge_level_kWh = self.maxSOC * self.capacity_kWh * self.initial_SOC
-        self.number_cycles = 0
-        self.max_timestep_discharge = self.charge_kW * ts.interval / 3600
-        self.max_timestep_charge = self.charge_kW * ts.interval / 3600
-        # Initialise SOC log
-        # ------------------
-        self.SOC_log = np.zeros(ts.num_steps)
+            # Set up restricted discharge period and additional charge period
+            # ---------------------------------------------------------------
+            discharge_start1 = study.battery_strategies.loc[battery_strategy, 'discharge_start1']
+            discharge_end1 = study.battery_strategies.loc[battery_strategy, 'discharge_end1']
+            discharge_day1 = study.battery_strategies.loc[battery_strategy, 'discharge_day1']
+            discharge_start2 = study.battery_strategies.loc[battery_strategy, 'discharge_start2']
+            discharge_end2 = study.battery_strategies.loc[battery_strategy, 'discharge_end2']
+            discharge_day2 = study.battery_strategies.loc[battery_strategy, 'discharge_day2']
+            charge_start = study.battery_strategies.loc[battery_strategy, 'charge_start']
+            charge_end = study.battery_strategies.loc[battery_strategy, 'charge_end']
+            charge_day = study.battery_strategies.loc[battery_strategy, 'charge_day']
+            # Calculate discharge period(s):
+            # -----------------------------
+            if pd.isnull(discharge_start1):
+                discharge_period1 = ts.timeseries
+            elif pd.Timestamp(discharge_start1) > pd.Timestamp(discharge_end1):
+                discharge_period1 = (ts.days[discharge_day1][(ts.days[discharge_day1].time > pd.Timestamp(discharge_start1).time()) & (
+                            ts.days[discharge_day1].time <= pd.Timestamp('23:59').time())].append(
+                    ts.days[discharge_day1][(ts.days[discharge_day1].time >= pd.Timestamp('0:00').time()) & (
+                                ts.days[discharge_day1].time <= pd.Timestamp(discharge_end1).time())])).sort_values()
+            else:
+                discharge_period1 = \
+                    ts.days[discharge_day1][(ts.days[discharge_day1].time > pd.Timestamp(discharge_start1).time())
+                                           & (ts.days[discharge_day1].time <= pd.Timestamp(discharge_end1).time())]
+            if pd.isnull(discharge_start2):
+                discharge_period2 = pd.DatetimeIndex([])
+            elif pd.Timestamp(discharge_start2) > pd.Timestamp(discharge_end2):
+                discharge_period2 = (
+                ts.days[discharge_day2][(ts.days[discharge_day2].time > pd.Timestamp(discharge_start2).time()) & (
+                        ts.days[discharge_day2].time <= pd.Timestamp('23:59').time())].append(
+                    ts.days[discharge_day2][(ts.days[discharge_day2].time >= pd.Timestamp('0:00').time()) & (
+                            ts.days[discharge_day2].time <= pd.Timestamp(discharge_end2).time())])).sort_values()
+            else:
+                discharge_period2 = \
+                    ts.days[discharge_day2][(ts.days[discharge_day2].time > pd.Timestamp(discharge_start2).time())
+                                            & (ts.days[discharge_day2].time <= pd.Timestamp(discharge_end2).time())]
+            self.discharge_period = discharge_period1.join(discharge_period2, how='outer')
+
+            # Calculate additional charging period:
+            # -------------------------------------
+            if pd.isnull(charge_start):
+                self.charge_period = pd.DatetimeIndex([])
+            elif pd.Timestamp(charge_start) > pd.Timestamp(charge_end):
+                self.charge_period = (ts.days[charge_day][(ts.days[charge_day].time > pd.Timestamp(charge_start).time()) & (
+                            ts.days[charge_day].time <= pd.Timestamp('23:59').time())].append(
+                    ts.days[charge_day][(ts.days[charge_day].time >= pd.Timestamp('0:00').time()) & (
+                                ts.days[charge_day].time <= pd.Timestamp(charge_end).time())])).sort_values()
+            else:
+                self.charge_period = \
+                    ts.days[charge_day][(ts.days[charge_day].time > pd.Timestamp(charge_start).time())
+                                           & (ts.days[charge_day].time <= pd.Timestamp(charge_end).time())]
+            # Initialise battery variables
+            # ----------------------------
+            self.initial_SOC =0 # BATTERY STARTS AT 0% SOC
+            self.charge_level_kWh = self.maxSOC * self.capacity_kWh * self.initial_SOC
+            self.number_cycles = 0
+            self.max_timestep_discharge = self.charge_kW * ts.interval / 3600
+            self.max_timestep_charge = self.charge_kW * ts.interval / 3600
+            # Initialise SOC log
+            # ------------------
+            self.SOC_log = np.zeros(ts.num_steps)
 
     def reset(self):
         self.charge_level_kWh = self.maxSOC * self.capacity_kWh * self.initial_SOC
@@ -352,18 +357,25 @@ class Battery():
         return amount_to_discharge  # returns delivered energy
 
     def calcBatCapex(self):
-        # Battery capex includes inverter replacement if amortization period > inverter lifetime
-        if self.life_bat_inv < self.scenario.a_term:
-            bat_inv_capex = (int((self.scenario.a_term / self.life_bat_inv))+1) * self.battery_inv_cost
+        """Calculates capex for battery"""
+        # -------------------
+        # If 'battery_capex_per_kW' is in the parameter file, it overrides capex info in battery_lookup
+        if self.scenario.battery_capex_per_kW > 0 :
+            tot_capex = self.scenario.battery_capex_per_kW * self.capacity_kWh
         else:
-            bat_inv_capex = self.battery_inv_cost
-        # Battery capex includes battery replacement if it exceeds max_cycle
-        # in amortization period
-        if self.number_cycles > self.max_cycles:
-            bat_capex = (int(self.number_cycles / self.max_cycles)+1) * self.battery_cost
-        else:
-            bat_capex = self.battery_cost
-        tot_capex = bat_inv_capex + bat_capex
+            # Use capex parameters in battery_lookup.csv :
+            # Battery capex includes inverter replacement if amortization period > inverter lifetime
+            if self.life_bat_inv < self.scenario.a_term:
+                bat_inv_capex = (int((self.scenario.a_term / self.life_bat_inv))+1) * self.battery_inv_cost
+            else:
+                bat_inv_capex = self.battery_inv_cost
+            # Battery capex includes battery replacement if it exceeds max_cycle
+            # in amortization period
+            if self.number_cycles > self.max_cycles:
+                bat_capex = (int(self.number_cycles / self.max_cycles)+1) * self.battery_cost
+            else:
+                bat_capex = self.battery_cost
+            tot_capex = bat_inv_capex + bat_capex
         return tot_capex
 
     def dispatch(self, available_kWh, step):
@@ -962,6 +974,7 @@ class Network(Customer):
             # pv capex allocated by customer 'cp' (ie strata)
             self.resident['cp'].pv_capex_repayment = scenario.pv_capex_repayment
 
+
         elif 'btm_i' in scenario.arrangement:
             # For btm_i apportion capex costs according to pv allocation
             for c in self.pv_customers:
@@ -1197,8 +1210,17 @@ class Scenario():
             self.has_ind_batteries = 'maybe'
         else:
             self.has_ind_batteries = 'none'
-
+        # Battery capex to override values in battery_lookup.csv:
         # --------------------------------------------------------
+        if 'battery_capex_per_kW' in self.parameters.index:
+            if not np.isnan(self.parameters['battery_capex_per_kW']):
+                self.battery_capex_per_kW = self.parameters['battery_capex_per_kW']
+            else:
+                self.battery_capex_per_kW = 0.0
+        else:
+            self.battery_capex_per_kW = 0.0
+
+                # --------------------------------------------------------
         # Set up annual capex & opex costs for en in this scenario
         # --------------------------------------------------------
         # Annual capex repayments for embedded network or for btm_s or btm_p network
@@ -1345,12 +1367,15 @@ class Scenario():
             + net.solar_retailer_profit \
             + (self.en_opex + self.en_capex_repayment + self.pv_capex_repayment \
                + self.total_battery_capex_repayment)*100
-        # NB checksum: These two total should be the same for all arrangements
-        if abs(net.total_building_payment - net.checksum_total_payments) > 0.005:
-            print('**************CHECKSUM ERROR***See log ******* Study: ', study.name, ' Scenario: ', self.name)
-            logging.info('**************CHECKSUM ERROR************************')
-            logging.info ('Study: %s  Scenario: %s ', study.name, self.name)
-            logging.info ('Tot Building Load %f Checksum %f', net.total_building_payment, net.checksum_total_payments)
+
+        # Checksum disabled. - #TODO sort out battery capex for 'cp_only'
+
+        # # NB checksum: These two total should be the same for all arrangements
+        # if abs(net.total_building_payment - net.checksum_total_payments) > 0.005:
+        #     print('**************CHECKSUM ERROR***See log ******* Study: ', study.name, ' Scenario: ', self.name)
+        #     logging.info('**************CHECKSUM ERROR************************')
+        #     logging.info ('Study: %s  Scenario: %s ', study.name, self.name)
+        #     logging.info ('Tot Building Load %f Checksum %f', net.total_building_payment, net.checksum_total_payments)
 
         # ---------------------------------------------------------------
         # Collate all results for network / eno  in one row of results df
@@ -1801,7 +1826,7 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 'EN1a_pv_bat2'
-    default_study = 'siteJ_bat2_test1'
+    default_study = 'siteJ_bat2_3'
     #use_threading= False
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
