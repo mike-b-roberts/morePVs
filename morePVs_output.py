@@ -200,27 +200,35 @@ class Output():
             # reindex and stack data
             # ----------------------
             self.df.index = [self.df.all_residents,self.df.label]
+            self.df = self.df[~self.df.index.duplicated(keep='first')]
             self.df = self.df['en$_per_unit'].unstack()
 
             # --------------------------
             # Choose order of categories
             # --------------------------
-            self.df = self.df[['max PV8.0','max PV12.0',  'reduced PV8.0', 'reduced PV12.0','no PVnan']]
+            #self.df = self.df[['max PV8.0','max PV12.0',  'reduced PV8.0', 'reduced PV12.0','no PVnan']]
 
             # plot barchart
             # -------------
-            ax = self.df.plot(kind='bar',figsize=(15, 10), fontsize=20)
-            ax.set_xlabel("Site", fontsize=20)
-            ax.set_ylabel("ENO income $ / unit", fontsize=20)
-            ax.set_title ("Embedded Network Income $ / Unit",fontsize=24)
-            ax.legend(fontsize=20)
+            fs=20
+            ax = self.df.plot(kind='bar',figsize=(15, 10), fontsize=fs)
+            ax.set_xlabel("Site", fontsize=fs)
+            ax.set_ylabel("ENO income ($ / unit)", fontsize=fs)
+            ax.set_title ("Embedded Network Income $ / Unit",fontsize=fs)
+            ax.legend(fontsize=fs)
             ax.grid(True)
 
             # plot en capex thresholds
             # ------------------------
 
+
+
+
+
+
+
             plt.show()
-            plotFile = os.path.join(self.plot_path,type  + '.png')
+            plotFile = os.path.join(self.plot_path,type  + '.jpg')
             plt.savefig(plotFile,dpi=1000)
 
         if type == 'scat_cust_sav_vs_sc_per_tariff':
@@ -238,8 +246,10 @@ class Output():
 
             # Select EN scenarios with different EN tariffs , plus bau, or for different sites
             # --------------------------------------------------------------------------------
+            self.study_parameters.loc[:, 'site'] = self.study_parameters.loc[:, 'load_folder'].apply(
+                lambda x: x[-1])
             self.study_parameters['label'] = self.study_parameters['site'].apply(lambda x: 'Site ' + x + ' ') + \
-                                             self.study_parameters['all_residents']
+                                 self.study_parameters['all_residents']
             self.study_parameters[self.study_parameters['arrangement'].isin(['en', 'en_pv', 'bau'])]
             self.df = self.df[self.df.index.isin(self.study_parameters[self.study_parameters['arrangement']
                                            .isin(['en', 'en_pv', 'bau'])].drop_duplicates('label').index)]
@@ -260,8 +270,8 @@ class Output():
 
             # Get tariff_lookup table to find customer numbers from vb
             # -------------------------------------------------
-            vb_reference_path = 'C:\\Users\\z5044992\Documents\\MainDATA\\DATA_EN\\reference'
-            vb_id = pd.read_csv(vb_reference_path + '\\vb_id_log.csv', index_col=0)
+            vb_reference_path = 'C:\\Users\\z5044992\Documents\\MainDATA\\DATA_EN_3\\load_profiles'
+            vb_id = pd.read_csv(vb_reference_path + '\\vb_id_log_original.csv', index_col=0)
             sgsc_stats = pd.read_csv(vb_reference_path + '\\sgsc_self_consumption_metric.csv', index_col=0)
 
             # extract unit loads and sc metrics to plot against
@@ -295,14 +305,14 @@ class Output():
                 # ------------
                 plt.interactive(False)
                 fig, ax = plt.subplots()
-                title = 'Tariff: ' + label
+                title = 'Tariff: ' + tariff
 
                 # Set up colour map
                 # -----------------
                 cmap = mpl.cm.Reds
                 colours = []
 
-                plot_name = label + '_%benefit_scm_kWh.png'
+                plot_name = label + '_%benefit_scm.png'
                 plotFile = os.path.join(self.plot_path, plot_name)
                 x_name = 'Self-consumption Metric %'
                 y_name = 'Customer Saving (%)'
@@ -331,6 +341,17 @@ class Output():
                 x_min = 0
                 y_min = min(y_min, min(y) * 1.1)
                 y_max = max(y_max, max(y) * 1.1)
+
+                if 'STC' in tariff:
+                    y_min = 0
+                    y_max=16
+                if 'STS' in tariff:
+                    y_min=-30
+                    y_max= 40
+                if 'TOU' in tariff:
+                    y_min = 0
+                    y_max = 12
+
                 fig.text(0.5, 0.02, x_name, ha='center', fontsize=16)
                 fig.text(0.02, 0.5, y_name, va='center', rotation='vertical', fontsize=16)
                 ax.set_xlim([x_min, x_max])
@@ -787,3 +808,30 @@ class Output():
         for type in self.output_list:
             print(type)
             self.plotOutput(type)
+
+
+# MAIN PROGRAM
+
+def main():
+
+    project = 'envb6'
+    study_name = 'envb_6r_REVISED'
+    base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3\\studies'
+    op = Output(base_path=base_path,
+                    project=project,
+                    study_name=study_name)
+    # op.plotOutput('bar_en_income_vs_tariff')
+    op.plotOutput('scat_cust_sav_vs_sc_per_tariff')
+
+    # project = 'envb6'
+    # study_name = 'envb_6s_REVISED'
+    # base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3\\studies'
+    # op = Output(base_path=base_path,
+    #                 project=project,
+    #                 study_name=study_name)
+    # op.plotOutput('scat_cust_sav_vs_sc_per_tariff')
+
+
+if __name__ == "__main__":
+   # stuff only to run when not called via 'import' here
+   main()

@@ -138,7 +138,7 @@ class TariffData():
 
             # TODO: rejig this section to allow tariff periods bridging midnight \
             # (use method used for battery charge & discharge tariffs) and also change tariff_lookup.csv
-            # todo: create timeseries for FiT Tariffs in the same way
+            # todo: create timeseries for TOU  FiT Tariffs in the same way
             # currently only zero or flat rate FiTs)
             if self.lookup.loc[tid, 'fit_type'] == 'Zero_Rate':
                 self.static_exports[tid] = 0
@@ -1368,14 +1368,14 @@ class Scenario():
             + (self.en_opex + self.en_capex_repayment + self.pv_capex_repayment \
                + self.total_battery_capex_repayment)*100
 
-        # Checksum disabled. - #TODO sort out battery capex for 'cp_only'
+        # Checksum disabled. - #TODO sort out battery capex for 'cp_only' ?????
 
-        # # NB checksum: These two total should be the same for all arrangements
-        # if abs(net.total_building_payment - net.checksum_total_payments) > 0.005:
-        #     print('**************CHECKSUM ERROR***See log ******* Study: ', study.name, ' Scenario: ', self.name)
-        #     logging.info('**************CHECKSUM ERROR************************')
-        #     logging.info ('Study: %s  Scenario: %s ', study.name, self.name)
-        #     logging.info ('Tot Building Load %f Checksum %f', net.total_building_payment, net.checksum_total_payments)
+        # NB checksum: These two total should be the same for all arrangements
+        if abs(net.total_building_payment - net.checksum_total_payments) > 0.005:
+            print('**************CHECKSUM ERROR***See log ******* Study: ', study.name, ' Scenario: ', self.name)
+            logging.info('**************CHECKSUM ERROR************************')
+            logging.info ('Study: %s  Scenario: %s ', study.name, self.name)
+            logging.info ('Tot Building Load %f Checksum %f', net.total_building_payment, net.checksum_total_payments)
 
         # ---------------------------------------------------------------
         # Collate all results for network / eno  in one row of results df
@@ -1848,6 +1848,10 @@ if __name__ == "__main__":
         use_threading = opts['-t']
     else:
         use_threading = False
+    if '-b' in opts:
+        base_path = opts['-b']
+    else:
+        base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3'
 
 
     # main(project=project,
@@ -1857,7 +1861,7 @@ if __name__ == "__main__":
 
     main(project=project,
          study_name=study,
-         base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3',
+         base_path=base_path,
          use_threading=use_threading)
 
 
