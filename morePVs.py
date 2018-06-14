@@ -963,9 +963,7 @@ class Network(Customer):
         if self.pv_exists:
             coincidence = np.minimum(self.network_load.sum(axis=1)[step], self.pv.sum(axis=1)[step] + total_discharge)
             self.total_coincidence += coincidence
-        logging.info(" %s,  %s,   %s,  %s,  %s,  %s",
-                     str(step), str(self.network_load.sum(axis=1)[step]), str(self.pv.sum(axis=1)[step]), str(total_discharge),
-                     str(coincidence), str(self.total_coincidence))
+
     def calcDynamicTariffs(self,step):
         """Dynamic calcs of (eg block) tariffs by timestep for ENO and for all residents."""
         for c in self.resident_list:
@@ -1066,16 +1064,13 @@ class Network(Customer):
         else:
             self.battery_cycles = 0
             self.battery_SOH = 0
-        logging.info("END OF TIME, central: Cycles %s, SOH %s, Total Battery losses %s", \
-                     str(self.battery_cycles), str(self.battery_SOH), str(self.total_battery_losses))
+
 
         if scenario.has_ind_batteries:
             for c in self.resident_list:
                 if self.resident[c].has_battery:
                     self.total_battery_losses += self.resident[c].battery.cumulative_losses
-        logging.info("END OF TIME, all: Cycles %s, SOH %s, Total Battery losses %s", \
-                     str(self.battery_cycles), str(self.battery_SOH),
-                     str(self.total_battery_losses))
+
         # ---------------------------------------------------------------
         # calculate total exports / imports & pvr, cpr & self consumption
         # ---------------------------------------------------------------
@@ -1095,22 +1090,13 @@ class Network(Customer):
         self.pv_ratio = self.pv.sum().sum() / self.total_building_load * 100
         self.cp_ratio = self.resident['cp'].load.sum() / self.total_building_load * 100
         if self.pv_exists:
-
-            self.self_consumption1 = 100 - ((self.total_building_export + self.total_battery_losses) / self.pv.sum().sum() * 100)
-            self.self_consumption2 = (self.total_building_load - self.total_import + self.total_building_export) / self.pv.sum().sum() * 100
-            self.self_consumption3 = self.total_coincidence / self.pv.sum().sum() * 100
-
-            self.self_sufficiency_old = 100 - (self.total_import / self.total_building_load * 100)
-            self.self_sufficiency1 = 100 - ((self.total_import - self.total_building_export) / self.total_building_load * 100)
-            self.self_sufficiency2 = self.total_coincidence / self.total_building_load * 100
+            self.self_consumption = self.total_coincidence / self.pv.sum().sum() * 100
+            self.self_sufficiency = self.total_coincidence / self.total_building_load * 100
 
         else:
-            self.self_consumption1 = 100  # NB No PV implies 100% self consumption
-            self.self_consumption2 = 100
-            self.self_consumption3 = 100
-            self.self_sufficiency_old = 0
-            self.self_sufficiency1 = 0
-            self.self_sufficiency2 = 0
+
+            self.self_consumption = 100
+            self.self_sufficiency = 0
 
 
     def logTimeseries(self, scenario):
@@ -1483,12 +1469,8 @@ class Scenario():
                        net.total_import,
                        net.cp_ratio,
                        net.pv_ratio,
-                       net.self_consumption1,
-                       net.self_consumption2,
-                       net.self_consumption3,
-                       net.self_sufficiency_old,
-                       net.self_sufficiency1,
-                       net.self_sufficiency2,
+                       net.self_consumption,
+                       net.self_sufficiency,
                        net.total_battery_losses,
                        net.battery_cycles,
                        net.battery_SOH] + \
@@ -1514,12 +1496,8 @@ class Scenario():
                          'import_kWh',
                          'cp_ratio',
                          'pv_ratio',
-                         'self-consumption1',
-                         'self-consumption2',
-                         'self-consumption3',
-                         'self-sufficiency_old',
-                         'self-sufficiency1',
-                         'self-sufficiency2',
+                         'self-consumption',
+                         'self-sufficiency',
                          'total_battery_losses',
                          'central_battery_cycles',
                          'central_battery_SOH'] + \
