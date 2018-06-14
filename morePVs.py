@@ -325,36 +325,60 @@ class Battery():
                                            & (ts.days[charge_day].time <= pd.Timestamp(charge_end).time())]
             # Initialise battery variables
             # ----------------------------
-            self.initial_SOC =0 # BATTERY STARTS AT 0% SOC
-            self.charge_level_kWh = self.maxSOC * self.capacity_kWh * self.initial_SOC
+            self.initial_SOC = 0 # BATTERY STARTS AT 0% SOC
+            self.charge_level_kWh = self.capacity_kWh * self.initial_SOC
             self.number_cycles = 0
-            self.max_timestep_discharge = self.charge_kW * ts.interval / 3600
-            self.max_timestep_charge = self.charge_kW * ts.interval / 3600
+            self.SOH = 100  # State of health
+            # Max charge / discharge rate is accepted / delivered energy
+            self.max_timestep_delivered = self.charge_kW * ts.interval / 3600
+            self.max_timestep_accepted = self.charge_kW * ts.interval / 3600
+            self.cumulative_losses = 0
+            self.net_discharge_for_ts = 0  # For timestep, this is +ve for discharge, -ve for charge. Used for SC and SS calcs
+
+            # Assume losses are all in charging cycle:
+            # This works if energy capacity is actually "useful discharge capacity"
+            # see discussion here: https://electronics.stackexchange.com/questions/379778/how-to-estimate-li-ion-battery-soc/379793?noredirect=1#comment921865_379793
+            self.efficiency_charge = self.efficiency_cycle
+            self.efficiency_discharge = 1
+
             # Initialise SOC log
             # ------------------
             self.SOC_log = np.zeros(ts.num_steps)
 
     def reset(self):
-        self.charge_level_kWh = self.maxSOC * self.capacity_kWh * self.initial_SOC
+        self.charge_level_kWh = self.capacity_kWh * self.initial_SOC
         self.number_cycles = 0
+        self.SOH = 100
         self.SOC_log = np.zeros(ts.num_steps)
+        self.cumulative_losses = 0
+        self.net_discharge_for_ts = 0
 
     def charge(self, desired_charge):
-        amount_to_charge = min((self.capacity_kWh * self.maxSOC - self.charge_level_kWh)
-                               / self.efficiency_cycle, desired_charge)
-        self.charge_level_kWh += amount_to_charge*self.efficiency_cycle
-        return desired_charge - amount_to_charge  # returns unstored portion of energy
+        amount_to_charge = min((self.capacity_kWh * self.maxSOC - self.charge_level_kWh),
+                               self.max_timestep_accepted * self.efficiency_charge,
+                               desired_charge * self.efficiency_charge)
+        self.charge_level_kWh += amount_to_charge
+        energy_accepted = amount_to_charge / self.efficiency_charge
+        self.number_cycles += 0.5 * amount_to_charge / (self.capacity_kWh * (self.maxSOC - 1 + self.maxDOD))
+        self.net_discharge_for_ts = - energy_accepted
+        self.cumulative_losses += energy_accepted * (1 - self.efficiency_charge)
+
+        return desired_charge - energy_accepted  # returns unstored portion of energy
 
     def discharge(self, desired_discharge):
         if self.charge_level_kWh > self.capacity_kWh * (1 - self.maxDOD):
-            amount_to_discharge = min(desired_discharge,
-                                  self.charge_level_kWh - self.capacity_kWh * (1 - self.maxDOD),
-                                  self.max_timestep_discharge)
+            amount_to_discharge = min(desired_discharge / self.efficiency_discharge,
+                                      (self.charge_level_kWh - self.capacity_kWh * (1 - self.maxDOD)),
+                                      self.max_timestep_delivered / self.efficiency_discharge)
         else:
-            amount_to_discharge =0
+            amount_to_discharge = 0
         self.charge_level_kWh -= amount_to_discharge
-        self.number_cycles += amount_to_discharge / self.capacity_kWh
-        return amount_to_discharge  # returns delivered energy
+        energy_delivered = amount_to_discharge * self.efficiency_discharge  # Unneccessary step if losses are all in charge cycle
+        self.number_cycles += 0.5 * amount_to_discharge / (self.capacity_kWh * (self.maxSOC - 1 + self.maxDOD))
+        self.cumulative_losses += amount_to_discharge * (1 - self.efficiency_discharge)
+
+        self.net_discharge_for_ts = energy_delivered
+        return energy_delivered  # returns delivered energy
 
     def calcBatCapex(self):
         """Calculates capex for battery"""
@@ -397,14 +421,18 @@ class Battery():
         # 3) Charge from grid in additional charge period:
         # ------------------------------------------------
         elif available_kWh <= 0 and ts.timeseries[step] in self.charge_period:
-            available_kWh -= (self.max_timestep_charge -
-                                 self.charge(self.max_timestep_charge))
+            available_kWh -= (self.max_timestep_accepted -
+                              self.charge(self.max_timestep_accepted))
+
+
         # TODO 4) Dispatch battery to address peak demand ....(later)
 
         # For monitoring purposes, log battery SOC:
         # -----------------------------------------
         self.SOC_log[step] = self.charge_level_kWh / self.capacity_kWh * 100
+        self.SOH = 100 - (self.number_cycles / self.max_cycles) * 100
         return available_kWh
+
 
 
 class Customer():
@@ -422,7 +450,7 @@ class Customer():
         self.imports = np.zeros(ts.num_steps)
         # self.local_exports = np.zeros(ts.num_steps)  # not used, available for local trading
         self.local_imports = np.zeros(ts.num_steps)  # used for import of local generation
-        self.self_consumption = np.zeros(ts.num_steps)
+        self.local_consumption = np.zeros(ts.num_steps)
         self.flows = np.zeros(ts.num_steps)
         self.cashflows = np.zeros(ts.num_steps)
         self.local_solar_bill = 0
@@ -454,7 +482,7 @@ class Customer():
         # Calculate local quota here??
         self.local_imports = np.minimum(self.imports, self.local_quota)  # for use of local generation
         # for btm_p arrangement:
-        self.self_consumption = np.minimum(self.generation,self.load)
+        self.local_consumption = np.minimum(self.generation, self.load)
 
     def calcDynamicEnergyFlows(self,step):
         """Calculate Customer imports and exports for single timestep"""
@@ -467,9 +495,9 @@ class Customer():
         self.exports[step] = self.flows[step].clip(0)
         self.imports[step] = (-1 * self.flows[step]).clip(0)
         #TODO: @@@ Check this local quota - should be OK
-        # CAlculate local quota here??
+        # Calculate local quota here??
         self.local_imports[step] = min(self.imports[step], self.local_quota[step])  # for use of local generation
-        self.self_consumption[step] = np.minimum(self.generation[step], self.load[step])
+        self.local_consumption[step] = np.minimum(self.generation[step], self.load[step])
 
     def calcCustomerBlockTariff (self, step):
         """Calculates import rates for timestep for dynamic (eg block and solar block) tariffs."""
@@ -552,7 +580,7 @@ class Customer():
             # IFF solar tariff paid for self-consumed generation
             # and export FiT paid for exported generation
             # NB cost of exported self generation is received from retailer and passed to PV seller, so zero net effect
-            self.local_solar_bill = (np.multiply(self.self_consumption, self.tariff.solar_import_tariff) + \
+            self.local_solar_bill = (np.multiply(self.local_consumption, self.tariff.solar_import_tariff) + \
                                      np.multiply(self.exports, self.tariff.export_tariff)).sum()
         else:
             self.local_solar_bill = 0.0
@@ -615,6 +643,7 @@ class Network(Customer):
         self.cum_resident_imports = np.zeros(ts.num_steps)
         self.cum_resident_exports = np.zeros(ts.num_steps)
         self.cum_local_imports = np.zeros(ts.num_steps)
+        self.total_coincidence = 0
 
 
 
@@ -767,6 +796,11 @@ class Network(Customer):
 
     def initialiseAllBatteries(self, scenario):
         """Initialise central and individual batteries as required."""
+        # -------------------------------
+        # Total battery losses in network
+        # -------------------------------
+        self.total_battery_losses = 0
+
         # ---------------
         # Central Battery
         # ---------------
@@ -817,7 +851,7 @@ class Network(Customer):
                     self.tot_ind_bat_capacity += self.resident[c].battery.capacity_kWh
 
 
-        # Household batteries - separately defined
+        # Household batteries - seperately defined
         # ----------------------------------------
         elif scenario.has_ind_batteries != 'none':
             for c in self.households:
@@ -859,6 +893,7 @@ class Network(Customer):
             for c in self.resident_list:
                 if self.resident[c].has_battery:
                     self.resident[c].battery.reset()
+        self.total_battery_losses = 0
 
     def calcBuildingStaticEnergyFlows(self):
         """Calculate all internal energy flows for all timesteps (no storage or dm)."""
@@ -875,7 +910,12 @@ class Network(Customer):
         self.flows = self.cum_resident_exports - self.cum_resident_imports
         self.exports = self.flows.clip(0)
         self.imports = (-1 * self.flows).clip(0)
-
+        # For calculation of Self-Consumption and Self-Sufficiency
+        # --------------------------------------------------------
+        # Co-incidence = min (load, generation)
+        if self.pv_exists:
+            self.total_coincidence = np.sum(np.minimum(self.network_load.sum(axis=1),
+                                                       self.pv.sum(axis=1))) # No battery, so don't add total_discharge)
 
     def calcAllDemandCharges(self):
         """Calculates demand charges for ENO and for all residents."""
@@ -887,6 +927,7 @@ class Network(Customer):
     def calcBuildingDynamicEnergyFlows(self, step):
         """Calculate all internal energy flows for SINGLE timesteps (with storage)."""
 
+        total_discharge = 0  # (for this period)
         # ---------------------------------------------------------------
         # Calculate flows for each resident and cumulative values for ENO
         # ---------------------------------------------------------------
@@ -897,9 +938,11 @@ class Network(Customer):
             # Cumulative load and generation are what the "ENO" presents to the retailer:
             self.cum_resident_imports[step] += self.resident[c].imports[step]
             self.cum_resident_exports[step] += self.resident[c].exports[step]
-            # For diagnostics, log cumulative charge state
+            # Log cumulative charge state and amount of discharge (charge)
             if self.resident[c].has_battery:
                 self.cum_ind_bat_charge[step] += self.resident[c].battery.charge_level_kWh
+                total_discharge += self.resident[c].battery.net_discharge_for_ts
+                self.resident[c].battery.net_discharge_for_ts = 0
 
         # ----------------------------------------------------------------------------------------
         # Calculate energy flow without central  battery, then modify by calling battery.dispatch:
@@ -907,12 +950,22 @@ class Network(Customer):
         self.flows[step] = self.cum_resident_exports[step] - self.cum_resident_imports[step]
         if self.has_central_battery:
             self.flows[step] = self.battery.dispatch(available_kWh=self.flows[step], step=step)
-
+            total_discharge += self.battery.net_discharge_for_ts
+            self.battery.net_discharge_for_ts = 0
         # Calc imports and exports
         # ------------------------
         self.exports[step] = self.flows[step].clip(0)
         self.imports[step] = (-1 * self.flows[step]).clip(0)
 
+        # For calculation of Self-Consumption and Self-Sufficiency
+        # --------------------------------------------------------
+        # Co-incidence = min (load, generation + net discharge)
+        if self.pv_exists:
+            coincidence = np.minimum(self.network_load.sum(axis=1)[step], self.pv.sum(axis=1)[step] + total_discharge)
+            self.total_coincidence += coincidence
+        logging.info(" %s,  %s,   %s,  %s,  %s,  %s",
+                     str(step), str(self.network_load.sum(axis=1)[step]), str(self.pv.sum(axis=1)[step]), str(total_discharge),
+                     str(coincidence), str(self.total_coincidence))
     def calcDynamicTariffs(self,step):
         """Dynamic calcs of (eg block) tariffs by timestep for ENO and for all residents."""
         for c in self.resident_list:
@@ -1003,6 +1056,26 @@ class Network(Customer):
             self.solar_retailer.en_opex = scenario.en_opex
 
     def calcEnergyMetrics(self, scenario):
+        # ----------------------------------------------------------
+        # Calc sum of battery losses across all batteries in network
+        # ----------------------------------------------------------
+        if self.has_central_battery:
+            self.total_battery_losses += self.battery.cumulative_losses
+            self.battery_cycles = self.battery.number_cycles
+            self.battery_SOH = self.battery.SOH
+        else:
+            self.battery_cycles = 0
+            self.battery_SOH = 0
+        logging.info("END OF TIME, central: Cycles %s, SOH %s, Total Battery losses %s", \
+                     str(self.battery_cycles), str(self.battery_SOH), str(self.total_battery_losses))
+
+        if scenario.has_ind_batteries:
+            for c in self.resident_list:
+                if self.resident[c].has_battery:
+                    self.total_battery_losses += self.resident[c].battery.cumulative_losses
+        logging.info("END OF TIME, all: Cycles %s, SOH %s, Total Battery losses %s", \
+                     str(self.battery_cycles), str(self.battery_SOH),
+                     str(self.total_battery_losses))
         # ---------------------------------------------------------------
         # calculate total exports / imports & pvr, cpr & self consumption
         # ---------------------------------------------------------------
@@ -1014,18 +1087,32 @@ class Network(Customer):
             for c in self.resident_list:
                 self.total_building_export += self.resident[c].exports.sum()
                 self.total_import += self.resident[c].imports.sum()
-        else:
+        elif 'en' in scenario.arrangement:
             # For en scenarios, import and exports are aggregated:
             self.total_building_export = self.exports.sum()
             self.total_import = self.imports.sum()
+
         self.pv_ratio = self.pv.sum().sum() / self.total_building_load * 100
         self.cp_ratio = self.resident['cp'].load.sum() / self.total_building_load * 100
-        if scenario.pv_exists:
-            self.self_consumption = 100 - (self.total_building_export / self.pv.sum().sum() * 100)
-            self.self_sufficiency = 100 - (self.total_import / self.total_building_load * 100)
+        if self.pv_exists:
+
+            self.self_consumption1 = 100 - ((self.total_building_export + self.total_battery_losses) / self.pv.sum().sum() * 100)
+            self.self_consumption2 = (self.total_building_load - self.total_import + self.total_building_export) / self.pv.sum().sum() * 100
+            self.self_consumption3 = self.total_coincidence / self.pv.sum().sum() * 100
+
+            self.self_sufficiency_old = 100 - (self.total_import / self.total_building_load * 100)
+            self.self_sufficiency1 = 100 - ((self.total_import - self.total_building_export) / self.total_building_load * 100)
+            self.self_sufficiency2 = self.total_coincidence / self.total_building_load * 100
+
         else:
-            self.self_consumption = 100  # NB No PV implies 100% self consumption
-            self.self_sufficiency = 0
+            self.self_consumption1 = 100  # NB No PV implies 100% self consumption
+            self.self_consumption2 = 100
+            self.self_consumption3 = 100
+            self.self_sufficiency_old = 0
+            self.self_sufficiency1 = 0
+            self.self_sufficiency2 = 0
+
+
     def logTimeseries(self, scenario):
         """Logs timeseries data for whole building to csv file."""
 
@@ -1366,16 +1453,16 @@ class Scenario():
         net.checksum_total_payments = net.retailer_receipt \
             + net.solar_retailer_profit \
             + (self.en_opex + self.en_capex_repayment + self.pv_capex_repayment \
-               + self.total_battery_capex_repayment)*100
+               + self.total_battery_capex_repayment)*100 - net.total_building_payment
 
         # Checksum disabled. - #TODO sort out battery capex for 'cp_only' ?????
 
         # NB checksum: These two total should be the same for all arrangements
-        if abs(net.total_building_payment - net.checksum_total_payments) > 0.005:
+        if abs(net.checksum_total_payments) > 0.005:
             print('**************CHECKSUM ERROR***See log ******* Study: ', study.name, ' Scenario: ', self.name)
             logging.info('**************CHECKSUM ERROR************************')
-            logging.info ('Study: %s  Scenario: %s ', study.name, self.name)
-            logging.info ('Tot Building Load %f Checksum %f', net.total_building_payment, net.checksum_total_payments)
+            logging.info('Study: %s  Scenario: %s ', study.name, self.name)
+            logging.info('Tot Building Load %f Checksum %f', net.total_building_payment, net.checksum_total_payments)
 
         # ---------------------------------------------------------------
         # Collate all results for network / eno  in one row of results df
@@ -1396,8 +1483,15 @@ class Scenario():
                        net.total_import,
                        net.cp_ratio,
                        net.pv_ratio,
-                       net.self_consumption,
-                       net.self_sufficiency] + \
+                       net.self_consumption1,
+                       net.self_consumption2,
+                       net.self_consumption3,
+                       net.self_sufficiency_old,
+                       net.self_sufficiency1,
+                       net.self_sufficiency2,
+                       net.total_battery_losses,
+                       net.battery_cycles,
+                       net.battery_SOH] + \
                       [net.resident['cp'].energy_bill / 100] + \
                       [net.resident[c].energy_bill / 100 for c in net.resident_list if c != 'cp'] + \
                       [net.resident['cp'].local_solar_bill / 100] + \
@@ -1420,8 +1514,15 @@ class Scenario():
                          'import_kWh',
                          'cp_ratio',
                          'pv_ratio',
-                         'self-consumption',
-                         'self-sufficiency'] + \
+                         'self-consumption1',
+                         'self-consumption2',
+                         'self-consumption3',
+                         'self-sufficiency_old',
+                         'self-sufficiency1',
+                         'self-sufficiency2',
+                         'total_battery_losses',
+                         'central_battery_cycles',
+                         'central_battery_SOH'] + \
                         ['cust_bill_cp'] + \
                         ['cust_bill_' + '%03d' % int(r) for r in net.resident_list if r != 'cp'] + \
                         ['cust_solar_bill_cp'] + \
@@ -1826,8 +1927,8 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 'EN1a_pv_bat2'
-    default_study = 'siteJ_bat2_3'
-    #use_threading= False
+    default_study = 'siteJ_bat2_test2'
+    use_threading = False
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
     opts = {}  # Empty dictionary to store key-value pairs.
