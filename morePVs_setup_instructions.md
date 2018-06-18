@@ -175,7 +175,7 @@ N.B. (all `_id`s require `_strategy` too.)
 __Battery Characteristics__
 All battery technical data is kept in `reference\battery_lookup.csv`
 `battery_scenario`  - identifier unique to battery characteristics and control strategy
-`capacity_kWh`      - Single capacity figure
+`capacity_kWh`      - Single capacity figure: Useful discharge energy
 `efficiency_cycle`  - for charge and discharge (default `0.95`)
 `charge_kW` - for charge and discharge. constrained by inverter power and/or max ~0.8C for charging. Defaults to `0.5C`
 `maxDOD` (default `0.8`

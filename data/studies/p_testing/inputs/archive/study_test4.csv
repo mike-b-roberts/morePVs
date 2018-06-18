@@ -1,0 +1,3 @@
+scenario,pv_filename,load_folder,arrangement,site,pv_cap_id,capex_id,cp,all_residents,parent,network_tariff,a_term,a_rate,bat_file,output_types
+1,,h_some,bau,G,,capex_null,EASO_TOU_15pc,EASO_TOU_15pc,TIDNULL,EA305,,,,total_vs_type_csv
+2,site_G_maxflush_shared.csv,h_some,en_strata,G,G_maxflush,capex_null,TIDNULL,EASO_TOU_15pc,EA305_9.5c,EA305,8.0,0.06,,total_vs_type_bar

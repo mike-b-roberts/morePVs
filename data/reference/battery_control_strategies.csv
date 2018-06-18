@@ -1,0 +1,6 @@
+battery_strategy,discharge_start1,discharge_end1,discharge_day1,charge_start,charge_end,charge_day,discharge_start2,discharge_end2,discharge_day2,notes
+no_time_constraints,,,,,,,,,,
+evening_discharge_1,18:00,20:00,both,,,both,,,,
+single_cycle_1,18:00,20:00,both,22:00,7:00,both,,,,
+double_cycle_1,18:00,20:00,both,22:00,7:00,both,7:00,14:00,both,
+test_cycle,18:00,20:00,both,22:00,7:00,both,7:00,14:00,both,

@@ -1,0 +1,5 @@
+scenario,pv_filename,load_folder,arrangement,site,pv_cap_id,cp,all_residents,parent,network_tariff,capex_id,bat_file,a_term,a_rate
+1,,h_all_site_G,bau,G,,EASO_TOU_15pc,EASO_TOU_15pc,TIDNULL,EA305,capex_null,,6,0.06
+2,,h_all_site_G,en_strata,G,,TIDNULL,EASO_TOU_15pc,EA305_9.5c,EA305,capex_null,,6,0.06
+3,,h_all_site_G,en_strata,G,,TIDNULL,EASO_TOU_20pc,EA305_9.5c,EA305,capex_null,,6,0.06
+4,,h_all_site_G,en_strata,G,,TIDNULL,STS_30,EA305_9.5c,EA305,capex_null,,6,0.06

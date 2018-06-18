@@ -1,0 +1,13 @@
+scenario,pv_filename,load_folder,arrangement,pv_cap_id,cp,all_residents,parent,network_tariff,capex_id,a_term,a_rate,output_types,notes
+1,,h_few_site_A,bau,,EASO_TOU_15pc,EASO_TOU_15pc,TIDNULL,EA310,capex_1,12,0.06,csv_total_vs_type,
+2,site_A_maxflush_shared.csv,h_few_site_A,cp_only,A_maxflush_2,EASO_TOU_15pc,EASO_TOU_15pc,TIDNULL,EA310,capex_1,12,0.06,bar_total_vs_site_arrangement,
+3,site_A_maxflush_shared.csv,h_few_site_A,btm_i,A_maxflush_2,EASO_TOU_15pc,EASO_TOU_15pc,TIDNULL,EA310,capex_1,12,0.06,,
+4,site_A_maxflush_shared.csv,h_few_site_A,btm_icp,A_maxflush_2,EASO_TOU_15pc,EASO_TOU_15pc,TIDNULL,EA310,capex_1,12,0.06,,
+5,site_A_maxflush_shared.csv,h_few_site_A,btm_s_c,A_maxflush_2,EASO_TOU_15pc,EASO_TOU_15pc,TIDNULL,EA310,capex_1,12,0.06,,
+6,site_A_maxflush_shared.csv,h_few_site_A,btm_s_u,A_maxflush_2,EASO_TOU_15pc,EASO_TOU_15pc,TIDNULL,EA310,capex_1,12,0.06,,
+7,site_A_maxflush_shared.csv,h_few_site_A,en_pv,A_maxflush_2,TIDNULL,STC_20,EA310_9.5c,EA310,capex_1,12,0.06,,
+8,site_A_maxflush_shared.csv,h_few_site_A,en_pv,A_maxflush_2,TIDNULL,EASO_TOU_15pc,EA310_9.5c,EA310,capex_1,12,0.06,,
+9,site_A_maxflush_shared.csv,h_few_site_A,en_pv,A_maxflush_2,TIDNULL,EASO_TOU_25pc,EA310_9.5c,EA310,capex_1,12,0.06,,
+10,,h_few_site_A,en,,TIDNULL,STC_20,EA310_9.5c,EA310,capex_1,12,0.06,,
+11,,h_few_site_A,en,,TIDNULL,EASO_TOU_15pc,EA310_9.5c,EA310,capex_1,12,0.06,,
+12,,h_few_site_A,en,,TIDNULL,EASO_TOU_25pc,EA310_9.5c,EA310,capex_1,12,0.06,,
