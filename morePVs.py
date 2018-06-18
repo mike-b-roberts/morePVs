@@ -1914,7 +1914,7 @@ def main(base_path,project,study_name, use_threading = False):
 
     # set up script logging
     pyname = os.path.basename(__file__)
-    um.setup_logging(pyname, label=study_name)
+    um.setup_local_logging(root_path, pyname, label=study_name)
     start_time = dt.datetime.now()
     global study
 
@@ -1960,7 +1960,7 @@ def main(base_path,project,study_name, use_threading = False):
 
 if __name__ == "__main__":
     # Set up relative paths for data files:
-    rootpath= os.path.dirname(sys.argv[0])
+    root_path = os.path.dirname(sys.argv[0])
     num_threads = 6
     default_project = 'p_testing'
     default_study = 'scss_test'
@@ -1989,7 +1989,7 @@ if __name__ == "__main__":
         base_path = opts['-b']
     else:
         # base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3'
-        base_path = os.path.join(rootpath,'data')
+        base_path = os.path.join(root_path, 'data')
 
 
     # main(project=project,
