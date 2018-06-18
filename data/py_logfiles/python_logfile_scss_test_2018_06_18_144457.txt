@@ -1,0 +1,25 @@
+18/06/2018 02:44:57 PM Python Script is: morePVs.py
+18/06/2018 02:44:57 PM study_name = scss_test
+18/06/2018 02:45:07 PM Running Scenario number 0 
+18/06/2018 02:45:08 PM Completed Scenario 0
+18/06/2018 02:45:08 PM Running Scenario number 1 
+18/06/2018 02:45:08 PM Completed Scenario 1
+18/06/2018 02:45:08 PM Running Scenario number 2 
+18/06/2018 02:45:08 PM Completed Scenario 2
+18/06/2018 02:45:08 PM Running Scenario number 3 
+18/06/2018 02:45:09 PM Completed Scenario 3
+18/06/2018 02:45:09 PM Running Scenario number 4 
+18/06/2018 02:45:10 PM Completed Scenario 4
+18/06/2018 02:45:10 PM Running Scenario number 5 
+18/06/2018 02:45:11 PM Completed Scenario 5
+18/06/2018 02:45:11 PM Running Scenario number 6 
+18/06/2018 02:45:12 PM Completed Scenario 6
+18/06/2018 02:45:12 PM Running Scenario number 7 
+18/06/2018 02:45:12 PM Completed Scenario 7
+18/06/2018 02:45:12 PM Running Scenario number 8 
+18/06/2018 02:45:13 PM Completed Scenario 8
+18/06/2018 02:45:13 PM Running Scenario number 9 
+18/06/2018 02:45:13 PM Completed Scenario 9
+18/06/2018 02:45:13 PM ***COMPLETED STUDY scss_test ***
+18/06/2018 02:45:13 PM  ********* Completed 10 scenarios in 16.000000 **************
+18/06/2018 02:45:13 PM  ********* Time per Scenario is  1.600000 **************

@@ -21,6 +21,7 @@ import en_utilities as um
 import threading
 import concurrent.futures
 import datetime as dt
+import pathlib
 
 #from en import morePVs_output as opm
 
@@ -1960,7 +1961,8 @@ def main(base_path,project,study_name, use_threading = False):
 
 if __name__ == "__main__":
     # Set up relative paths for data files:
-    root_path = os.path.dirname(sys.argv[0])
+    root_path = pathlib.Path.cwd()
+    print ('root_path', root_path)
     num_threads = 6
     default_project = 'p_testing'
     default_study = 'scss_test'
