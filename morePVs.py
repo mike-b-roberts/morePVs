@@ -249,11 +249,15 @@ class Battery():
             self.efficiency_cycle = study.battery_lookup.loc[battery_id, 'efficiency_cycle']
             self.maxDOD = study.battery_lookup.loc[battery_id, 'maxDOD']
             self.maxSOC = study.battery_lookup.loc[battery_id, 'maxSOC']
-            self.max_cycles = study.battery_lookup.loc[battery_id,'max_cycles']
+
             self.battery_cost = study.battery_lookup.loc[battery_id, 'battery_cost']
             self.battery_inv_cost = study.battery_lookup.loc[battery_id, 'battery_inv_cost']
-            self.life_bat_inv = scenario.a_term if np.isnan(study.battery_lookup.loc[battery_id, 'life_bat_inv'])\
-                                             else study.battery_lookup.loc[battery_id, 'life_bat_inv']
+            if np.isnan(study.battery_lookup.loc[battery_id, 'life_bat_inv']):
+                self.life_bat_inv = scenario.a_term
+            else:
+                self.life_bat_inv = study.battery_lookup.loc[battery_id, 'life_bat_inv']
+            self.battery_life_years = study.battery_lookup.loc[battery_id,'battery_life_years']
+            self.max_cycles = study.battery_lookup.loc[battery_id, 'max_cycles']
 
             # Use default values if missing:
             # ------------------------------
@@ -381,10 +385,17 @@ class Battery():
 
     def calcBatCapex(self):
         """Calculates capex for battery"""
-        # -------------------
+
+        # ---------------------------------------
+        # 1) Use 'battery_capex_per_kW' and scale
+        # ---------------------------------------
         # If 'battery_capex_per_kW' is in the parameter file, it overrides capex info in battery_lookup
-        if self.scenario.battery_capex_per_kW > 0 :
-            tot_capex = self.scenario.battery_capex_per_kW * self.capacity_kWh
+        if self.scenario.battery_capex_per_kW > 0:
+            self.battery_cost = self.scenario.battery_capex_per_kW * self.capacity_kWh
+            bat_inv_capex = 0
+            # --------------------------------------------
+        # 2) Use 'battery_cost' and 'battery_inv_cost'
+        # --------------------------------------------
         else:
             # Use capex parameters in battery_lookup.csv :
             # Battery capex includes inverter replacement if amortization period > inverter lifetime
@@ -392,13 +403,29 @@ class Battery():
                 bat_inv_capex = (int((self.scenario.a_term / self.life_bat_inv))+1) * self.battery_inv_cost
             else:
                 bat_inv_capex = self.battery_inv_cost
-            # Battery capex includes battery replacement if it exceeds max_cycle
-            # in amortization period
-            if self.number_cycles > self.max_cycles:
-                bat_capex = (int(self.number_cycles / self.max_cycles)+1) * self.battery_cost
-            else:
-                bat_capex = self.battery_cost
-            tot_capex = bat_inv_capex + bat_capex
+        # ---------------------------------------------------------------------
+        # For 1) or 2) replace battery (or combined battery-inverter) as needed:
+        # ----------------------------------------------------------------------
+        # Battery capex includes battery replacement if it exceeds max_cycles
+        # or battery_life_years (whichever is sooner) within amortization period
+
+        if np.isnan(self.max_cycles):
+            self.max_cycles = 0
+        if np.isnan(self.battery_life_years):
+            self.battery_life_years = 1000
+        if self.battery_life_years == 0:
+            self.battery_life_years = 1000
+
+        if self.number_cycles > 0:
+            cycle_life = self.max_cycles / self.number_cycles
+        else:
+            cycle_life = 1000
+        actual_lifetime = np.min([cycle_life, self.battery_life_years])
+        if float(self.scenario.a_term) > actual_lifetime:
+            bat_capex = (int(float(self.scenario.a_term)/actual_lifetime)+1) * self.battery_cost
+        else:
+            bat_capex = self.battery_cost
+        tot_capex = bat_inv_capex + bat_capex
         return tot_capex
 
     def dispatch(self, available_kWh, step):
@@ -1887,7 +1914,7 @@ def main(base_path,project,study_name, use_threading = False):
 
     # set up script logging
     pyname = os.path.basename(__file__)
-    um.setup_logging(pyname, label = study_name)
+    um.setup_logging(pyname, label=study_name)
     start_time = dt.datetime.now()
     global study
 
@@ -1932,11 +1959,12 @@ def main(base_path,project,study_name, use_threading = False):
         pdb.post_mortem(tb)
 
 if __name__ == "__main__":
-
+    # Set up relative paths for data files:
+    rootpath= os.path.dirname(sys.argv[0])
     num_threads = 6
-    default_project = 'EN1_value_of_pv2'
-    default_study = 'siteD_value9'
-    use_threading = True
+    default_project = 'p_testing'
+    default_study = 'scss_test'
+    use_threading = False
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
     opts = {}  # Empty dictionary to store key-value pairs.
@@ -1960,7 +1988,8 @@ if __name__ == "__main__":
     if '-b' in opts:
         base_path = opts['-b']
     else:
-        base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3'
+        # base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3'
+        base_path = os.path.join(rootpath,'data')
 
 
     # main(project=project,
