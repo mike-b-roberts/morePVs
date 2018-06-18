@@ -1962,12 +1962,6 @@ def main(base_path,project,study_name, use_threading = False):
 
 if __name__ == "__main__":
     # Set up relative paths for data files:
-    script_path = pathlib.Path.cwd()
-    print('script path found at', script_path)
-
-    full_path = os.path.join(script_path, 'data_location.csv')
-    base_path = pd.read_csv(full_path, header=None).loc[0][0]
-    print('data path at', base_path)
 
     num_threads = 6
     default_project = 'p_testing'
@@ -1996,8 +1990,8 @@ if __name__ == "__main__":
     if '-b' in opts:
         base_path = opts['-b']
     else:
-        # base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3'
-        base_path = base_path
+        base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3'
+
 
 
     # main(project=project,
@@ -2009,8 +2003,6 @@ if __name__ == "__main__":
          study_name=study,
          base_path=base_path,
          use_threading=use_threading)
-
-
 
 
 # TODO - FUTURE - Variable allocation of pv between cp and residents
