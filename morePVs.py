@@ -1245,6 +1245,7 @@ class Scenario():
                                   self.parameters['pv_filename'])
             if not os.path.exists(self.pvFile):
                 logging.info('***************Exception!!! PV file %s NOT FOUND', self.pvFile)
+                print('***************Exception!!! PV file %s NOT FOUND: ', self.pvFile)
                 sys.exit("PV file missing")
             else:
                 # Load pv generation data:
