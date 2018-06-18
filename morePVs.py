@@ -1963,7 +1963,9 @@ def main(base_path,project,study_name, use_threading = False):
 if __name__ == "__main__":
     # Set up relative paths for data files:
     script_path = pathlib.Path.cwd()
+    print('script path found at', script_path)
     base_path = pd.read_csv(os.path.join(script_path, 'data_location.csv'), header=None).loc[0][0]
+    print('data path at', base_path)
 
     num_threads = 6
     default_project = 'p_testing'
