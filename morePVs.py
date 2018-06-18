@@ -779,7 +779,7 @@ class Network(Customer):
             self.pv_customers = [c for c in self.pv.columns if self.pv[c].sum() >0]
             # Add blank columns for all residents with no pv
             blank_columns = [x for x in self.resident_list if x not in self.pv.columns]
-            self.pv = pd.concat([self.pv, pd.DataFrame(columns=blank_columns)]).fillna(0)
+            self.pv = pd.concat([self.pv, pd.DataFrame(columns=blank_columns)],sort=False).fillna(0)
 
         # Initialise all residents with their allocated PV generation
         # -----------------------------------------------------------
@@ -1964,7 +1964,9 @@ if __name__ == "__main__":
     # Set up relative paths for data files:
     script_path = pathlib.Path.cwd()
     print('script path found at', script_path)
-    base_path = pd.read_csv(os.path.join(script_path, 'data_location.csv'), header=None).loc[0][0]
+
+    full_path = os.path.join(script_path, 'data_location.csv')
+    base_path = pd.read_csv(full_path, header=None).loc[0][0]
     print('data path at', base_path)
 
     num_threads = 6
