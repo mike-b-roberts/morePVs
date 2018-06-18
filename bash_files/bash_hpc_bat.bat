@@ -1,15 +1,9 @@
+#!/bin/bash
+#SBATCH --mail-user=m.roberts@unsw.edu.au
+#SBATCH --mail-type=FAIL
+#SBATCH --time=12:00:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
 module load python/3.6
-cd /home/z5044992/en/morePVs
 source /home/z5044992/python_venv/bin/activate
-
-
-python morePVs.py -p EN1_value_of_pv2 -s siteA_value6 -t True && python morePVs.py -p EN1_value_of_pv2 -s siteB_value6 -t True && python morePVs.py -p EN1_value_of_pv2 -s siteC_value6 -t True && python morePVs.py -p EN1_value_of_pv2 -s siteD_value6 -t True &
-sleep 60
-python morePVs.py -p EN1_value_of_pv2 -s siteE_value6 -t True && python morePVs.py -p EN1_value_of_pv2 -s siteF_value6 -t True && python morePVs.py -p EN1_value_of_pv2 -s siteG_value6 -t True && python morePVs.py -p EN1_value_of_pv2 -s siteH_value6 -t True &
-sleep 60
-python morePVs.py -p EN1_value_of_pv2 -s siteI_value6 -t True && python morePVs.py -p EN1_value_of_pv2 -s siteJ_value6 -t True && python morePVs.py -p EN1_value_of_pv2 -s siteA_value5 -t True && python morePVs.py -p EN1_value_of_pv2 -s siteB_value5 -t True &
-sleep 60
-python morePVs.py -p EN1_value_of_pv2 -s siteC_value5 -t True && python morePVs.py -p EN1_value_of_pv2 -s siteD_value5 -t True && python morePVs.py -p EN1_value_of_pv2 -s siteE_value5 -t True && python morePVs.py -p EN1_value_of_pv2 -s siteF_value5 -t True &
-sleep 60
-python morePVs.py -p EN1_value_of_pv2 -s siteG_value5 -t True && python morePVs.py -p EN1_value_of_pv2 -s siteH_value5 -t True && python morePVs.py -p EN1_value_of_pv2 -s siteI_value5 -t True && python morePVs.py -p EN1_value_of_pv2 -s siteJ_value5 -t True &
-
+python morePVs.py -b home/z5044992/InputOutput/DATA_EN_3 -p EN1a_pv_bat4 -s siteJ_bat4_1 -t False
