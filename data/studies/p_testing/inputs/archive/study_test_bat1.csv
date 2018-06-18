@@ -1,7 +1,0 @@
-scenario,pv_filename,load_folder,arrangement,pv_cap_id,cp,all_residents,parent,network_tariff,capex_id,a_term,a_rate,battery_id,battery_strategy,output_types,notes
-6,pv_2days.csv,2day_loads,en_pv,A_maxflush,EASO_TOU_15pc,EASO_TOU_15pc,EA305_9.5c,EA305,capex_1,12,0.06,bat002,test_cycle,log_timeseries_csv,
-1,,2day_loads,bau,,EASO_TOU_15pc,EASO_TOU_15pc,TIDNULL,EA305,capex_1,12,0.06,,,,
-2,pv_2days.csv,2day_loads,en_pv,A_maxflush,EASO_TOU_15pc,EASO_TOU_15pc,EA305_9.5c,EA305,capex_1,12,0.06,bat002,no_time_constraints,,
-3,pv_2days.csv,2day_loads,en_pv,A_maxflush,EASO_TOU_15pc,EASO_TOU_15pc,EA305_9.5c,EA305,capex_1,12,0.06,bat002,evening_discharge_1,,
-4,pv_2days.csv,2day_loads,en_pv,A_maxflush,EASO_TOU_15pc,EASO_TOU_15pc,EA305_9.5c,EA305,capex_1,12,0.06,bat002,single_cycle_1,,
-5,pv_2days.csv,2day_loads,en_pv,A_maxflush,EASO_TOU_15pc,EASO_TOU_15pc,EA305_9.5c,EA305,capex_1,12,0.06,bat002,double_cycle_1,,

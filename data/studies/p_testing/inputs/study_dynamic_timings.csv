@@ -1,8 +1,0 @@
-scenario,pv_filename,load_folder,arrangement,pv_cap_id,cp,all_residents,parent,network_tariff,en_capex_id,a_term,a_rate,central_battery_id,central_battery_strategy,battery_capex_per_kW
-0,,h_all_site_J,en,,TIDNULL,TIDNULL,EA310_10c,EA310,capex_med,10,0.06,bat_pw_26,evening_discharge_1,1000
-1,vb_pv\site_J_max.csv,h_all_site_J,en_pv,site_J_max,TIDNULL,TIDNULL,EA310_10c,EA310,capex_med,10,0.06,bat_pw_26,evening_discharge_1,1000
-2,vb_pv\site_J_2_5kw.csv,h_all_site_J,en_pv,site_J_2_5kw,TIDNULL,TIDNULL,EA310_10c,EA310,capex_med,10,0.06,bat_pw_26,evening_discharge_1,1000
-3,vb_pv\site_J_2_0kw.csv,h_all_site_J,en_pv,site_J_2_0kw,TIDNULL,TIDNULL,EA310_10c,EA310,capex_med,10,0.06,bat_pw_26,evening_discharge_1,1000
-4,vb_pv\site_J_1_5kw.csv,h_all_site_J,en_pv,site_J_1_5kw,TIDNULL,TIDNULL,EA310_10c,EA310,capex_med,10,0.06,bat_pw_26,evening_discharge_1,1000
-5,vb_pv\site_J_1_0kw.csv,h_all_site_J,en_pv,site_J_1_0kw,TIDNULL,TIDNULL,EA310_10c,EA310,capex_med,10,0.06,bat_pw_26,evening_discharge_1,1000
-6,vb_pv\site_J_0_5kw.csv,h_all_site_J,en_pv,site_J_0_5kw,TIDNULL,TIDNULL,EA310_10c,EA310,capex_med,10,0.06,bat_pw_26,evening_discharge_1,1000

@@ -1,4 +1,0 @@
-scenario,pv_filename,load_folder,arrangement,pv_cap_id,cp,all_residents,parent,network_tariff,en_capex_id,a_term,a_rate,battery_id,battery_strategy,1_battery_id,2_battery_id,1_battery_strategy,2_battery_strategy,output_types,notes
-4,pv_2days.csv,2day_loads,en_pv,A_maxflush,EASO_TOU_15pc,EASO_TOU_15pc,EA305_9.5c,EA305,capex_1,12,0.06,bat003,single_cycle_1,bat_i1,bat_i1,single_cycle_1,single_cycle_1,log_timeseries_csv,Adding individual batteries
-5,pv_2days.csv,2day_loads,en_pv,A_maxflush,EASO_TOU_15pc,EASO_TOU_15pc,EA305_9.5c,EA305,capex_1,12,0.06,bat003,double_cycle_1,bat_i1,bat_i1,double_cycle_1,double_cycle_1,,
-6,pv_2days.csv,2day_loads,en_pv,A_maxflush,EASO_TOU_15pc,EASO_TOU_15pc,EA305_9.5c,EA305,capex_1,12,0.06,bat003,test_cycle,bat_i1,bat_i1,test_cycle,test_cycle,,

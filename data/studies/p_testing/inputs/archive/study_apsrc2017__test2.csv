@@ -1,3 +1,0 @@
-scenario,pv_filename,load_folder,arrangement,pv_cap_id,cp,all_residents,parent,network_tariff,capex_id,a_term,a_rate,output_types,notes
-61,,h_all_site_F,bau,,EASO_TOU_15pc,EASO_TOU_15pc,TIDNULL,EA305,capex_med,12,0.06,csv_total_vs_type,was previously study_scall3
-62,site_F_maxflush_shared.csv,h_all_site_F,cp_only,F_maxflush_2,EASO_TOU_15pc,EASO_TOU_15pc,TIDNULL,EA305,capex_med,12,0.06,bar_total_vs_site_arrangement,

@@ -1,9 +1,0 @@
-scenario,pv_filename,load_folder,arrangement,site,pv_cap_id,capex_id,cp,all_residents,parent,network_tariff,a_term,a_rate,bat_file,output_types
-1,,h_all_site_G,bau,G,,capex_null,EASO_TOU_15pc,EASO_TOU_15pc,TIDNULL,EA305,,,,total_vs_type_csv
-2,site_G_maxflush_shared.csv,h_all_site_G,en_strata,G,G_maxflush,capex_null,TIDNULL,EASO_TOU_15pc,EA305_9.5c,EA305,8.0,0.06,,total_vs_type_bar
-3,site_G_maxflush_shared.csv,h_all_site_G,en_strata,G,G_maxflush,capex_null,TIDNULL,EASO_TOU_20pc,EA305_9.5c,EA305,8.0,0.06,,
-4,site_G_maxflush_shared.csv,h_all_site_G,en_strata,G,G_maxflush,capex_null,TIDNULL,EASO_TOU_25pc,EA305_9.5c,EA305,8.0,0.06,,
-5,site_G_maxflush_shared.csv,h_all_site_G,en_strata,G,G_maxflush,capex_null,TIDNULL,STS_35,EA305_9.5c,EA305,8.0,0.06,,
-6,site_G_maxflush_shared.csv,h_all_site_G,en_strata,G,G_maxflush,capex_null,TIDNULL,STS_40,EA305_9.5c,EA305,8.0,0.06,,
-7,site_G_maxflush_shared.csv,h_all_site_G,en_strata,G,G_maxflush,capex_null,TIDNULL,STC_15,EA305_9.5c,EA305,8.0,0.06,,
-8,site_G_maxflush_shared.csv,h_all_site_G,en_strata,G,G_maxflush,capex_null,TIDNULL,STC_20,EA305_9.5c,EA305,8.0,0.06,,

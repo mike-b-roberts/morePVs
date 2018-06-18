@@ -1,4 +1,0 @@
-scenario,pv_filename,load_folder,arrangement,site,pv_cap_id,capex_id,cp,all_residents,parent,network_tariff,bat_file,a_term,a_rate,output_types,notes,Unnamed: 16,Unnamed: 17,Unnamed: 18,Unnamed: 19,Unnamed: 20
-1,,h_few_site_G,bau,G,,capex_null,EASO_TOU_15pc,EASO_TOU_15pc,TIDNULL,EA305,,8,0.06,csv_total_vs_tariff,was previously study_envb_6r and envb_6s,,,,,
-2,site_G_maxflush_shared.csv,h_few_site_G,cp_only,G,G_maxflush,capex_null,EASO_TOU_15pc,EASO_TOU_15pc,TIDNULL,EA305,,8,0.06,bar_total_vs_tarrif_pv_yrs,,,,,,
-3,site_G_maxflush_shared.csv,h_few_site_G,en_pv,G,G_maxflush,capex_null,TIDNULL,EASO_TOU_15pc,EA305_9.5c,EA305,,8,0.06,scat_cust_sav_vs_sc_per_tariff,,,,,,

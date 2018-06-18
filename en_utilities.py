@@ -47,7 +47,7 @@ def setup_local_logging(root_path, pyname,label=''):
 
     pyroot = os.path.splitext(pyname)[0]
     runtime = dt.datetime.now()
-    log_dir = os.path.join(root_path,'data/py_logfiles')
+    log_dir = os.path.join(root_path,'py_logfiles')
     print('log path', log_dir)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
