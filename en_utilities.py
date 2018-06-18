@@ -22,6 +22,7 @@ import matplotlib.dates as md
 # import calendar
 # import pytz
 # import seaborn as sns
+import sys
 
 def setup_logging(pyname,label=''):
     # Set up logfile
@@ -29,6 +30,24 @@ def setup_logging(pyname,label=''):
     pyroot =  os.path.splitext(pyname)[0]
     runtime = dt.datetime.now()
     log_dir = os.path.join(log_folder, pyroot)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    logname = "python_logfile_" + label + "_" + str(runtime.year) + "_" + str(runtime.month).zfill(2) + "_" + str(runtime.day).zfill(
+        2) + "_" + str(runtime.hour).zfill(2) + str(runtime.minute).zfill(2) + str(runtime.second).zfill(2)+ ".txt"
+    logpath = os.path.join(log_dir, logname)
+
+    logging.basicConfig(level=logging.DEBUG, filename=logpath, filemode='w', format='%(asctime)s %(message)s',
+                        datefmt='%d/%m/%Y %I:%M:%S %p')
+    logging.info('Python Script is: %s',pyname )
+
+###############################################################
+
+def setup_local_logging(root_path, pyname,label=''):
+    # Set up logfile adjacent to script directory
+
+    pyroot = os.path.splitext(pyname)[0]
+    runtime = dt.datetime.now()
+    log_dir = os.path.join(root_path,'data//py_logfiles')
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
     logname = "python_logfile_" + label + "_" + str(runtime.year) + "_" + str(runtime.month).zfill(2) + "_" + str(runtime.day).zfill(
