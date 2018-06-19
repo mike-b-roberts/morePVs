@@ -1001,6 +1001,7 @@ class Network(Customer):
             coincidence = np.minimum(self.network_load.sum(axis=1)[step], self.pv.sum(axis=1)[step] + total_discharge)
             self.total_aggregated_coincidence[step] += coincidence
         pass
+
     def calcDynamicTariffs(self,step):
         """Dynamic calcs of (eg block) tariffs by timestep for ENO and for all residents."""
         for c in self.resident_list:
@@ -1965,7 +1966,7 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 'p_testing'
-    default_study = 'scss_test'
+    default_study = 'hpc_test'
     use_threading = False
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
