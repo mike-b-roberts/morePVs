@@ -338,7 +338,7 @@ class Battery():
             self.max_timestep_delivered = self.charge_kW * ts.interval / 3600
             self.max_timestep_accepted = self.charge_kW * ts.interval / 3600
             self.cumulative_losses = 0
-            self.net_discharge_for_ts = 0  # For timestep, this is +ve for discharge, -ve for charge. Used for SC and SS calcs
+            self.net_discharge = np.zeros(ts.num_steps) #  this is +ve for discharge, -ve for charge. Used for SC and SS calcs
 
             # Assume losses are all in charging cycle:
             # This works if energy capacity is actually "useful discharge capacity"
@@ -356,7 +356,7 @@ class Battery():
         self.SOH = 100
         self.SOC_log = np.zeros(ts.num_steps)
         self.cumulative_losses = 0
-        self.net_discharge_for_ts = 0
+        self.net_discharge = np.zeros(ts.num_steps)
 
     def charge(self, desired_charge):
         amount_to_charge = min((self.capacity_kWh * self.maxSOC - self.charge_level_kWh),
@@ -451,13 +451,15 @@ class Battery():
             available_kWh -= (self.max_timestep_accepted -
                               self.charge(self.max_timestep_accepted))
 
-
-        # TODO 4) Dispatch battery to address peak demand ....(later)
-
         # For monitoring purposes, log battery SOC:
         # -----------------------------------------
         self.SOC_log[step] = self.charge_level_kWh / self.capacity_kWh * 100
         self.SOH = 100 - (self.number_cycles / self.max_cycles) * 100
+
+        # For SS and SC calcs, log net discharge:
+        # ---------------------------------------
+        self.net_discharge[step] = self.net_discharge_for_ts
+
         return available_kWh
 
 
@@ -522,7 +524,7 @@ class Customer():
             self.flows[step] = self.battery.dispatch(available_kWh=self.flows[step], step=step)
         self.exports[step] = self.flows[step].clip(0)
         self.imports[step] = (-1 * self.flows[step]).clip(0)
-        #TODO: @@@ Check this local quota - should be OK
+        #TODO: Check this local quota - should be OK
         # Calculate local quota here??
         self.local_imports[step] = min(self.imports[step], self.local_quota[step])  # for use of local generation
         self.local_consumption[step] = np.minimum(self.generation[step], self.load[step])
@@ -645,6 +647,7 @@ class Network(Customer):
     def __init__(self, scenario):
         self.resident_list = scenario.resident_list.copy() # all residents plus cp
         self.households = scenario.households.copy()  # just residents, not cp
+        self.battery_list = [] # Households with batteries - initial state
         # (these may change later if different_loads)
         #initialise characteristics of the network as a customer:
         super().__init__('network')
@@ -673,6 +676,7 @@ class Network(Customer):
         self.cum_local_imports = np.zeros(ts.num_steps)
         self.total_aggregated_coincidence = np.zeros(ts.num_steps)
         self.sum_of_coincidences = np.zeros(ts.num_steps)
+        self.total_discharge = np.zeros(ts.num_steps)
 
 
 
@@ -871,6 +875,7 @@ class Network(Customer):
             not pd.isnull(scenario.parameters[bat_name]) and \
             not pd.isnull(scenario.parameters[bat_strategy]):
                 self.any_resident_has_battery = True
+                self.battery_list = self.households
                 scenario.has_ind_batteries = 'True'
                 for c in self.households:
                     self.resident[c].battery = Battery(scenario=scenario,
@@ -880,7 +885,7 @@ class Network(Customer):
                     self.tot_ind_bat_capacity += self.resident[c].battery.capacity_kWh
 
 
-        # Household batteries - seperately defined
+        # Household batteries - separately defined
         # ----------------------------------------
         elif scenario.has_ind_batteries != 'none':
             for c in self.households:
@@ -894,6 +899,7 @@ class Network(Customer):
                                                            battery_strategy=scenario.parameters[bat_strategy])
                         self.resident[c].has_battery = True
                         self.any_resident_has_battery = True
+                        self.battery_list.append(c)
                         scenario.has_ind_batteries = 'True'
                         self.tot_ind_bat_capacity += self.resident[c].battery.capacity_kWh
                     else:
@@ -919,8 +925,7 @@ class Network(Customer):
         #self.tot_ind_bat_capacity = 0
         #self.any_resident_has_battery = False
         if self.any_resident_has_battery:
-            for c in self.resident_list:
-                if self.resident[c].has_battery:
+            for c in self.battery_list:
                     self.resident[c].battery.reset()
         self.total_battery_losses = 0
 
@@ -935,19 +940,12 @@ class Network(Customer):
             self.cum_resident_exports += self.resident[c].exports
             # Cumulative local imports are load presented to solar_retailer (in btm_s PPA scenario)
             self.cum_local_imports += self.resident[c].local_imports
-            # Calculate coincidence for individual or btm PV:
-            self.resident[c].coincidence = np.minimum(self.resident[c].generation,  self.resident[c].load)
-            self.sum_of_coincidences += self.resident[c].coincidence
+
         # Calculate aggregate flows for ENO
         self.flows = self.cum_resident_exports - self.cum_resident_imports
         self.exports = self.flows.clip(0)
         self.imports = (-1 * self.flows).clip(0)
-        # For calculation of Self-Consumption and Self-Sufficiency
-        # --------------------------------------------------------
-        # Co-incidence = min (load, generation)
-        if self.pv_exists:
-            self.total_aggregated_coincidence = np.sum(np.minimum(self.network_load.sum(axis=1),
-                                                                  self.pv.sum(axis=1))) # No battery, so don't add total_discharge)
+
 
     def calcAllDemandCharges(self):
         """Calculates demand charges for ENO and for all residents."""
@@ -959,7 +957,7 @@ class Network(Customer):
     def calcBuildingDynamicEnergyFlows(self, step):
         """Calculate all internal energy flows for SINGLE timesteps (with storage)."""
 
-        total_discharge = 0.0  # (for this period)
+
         # ---------------------------------------------------------------
         # Calculate flows for each resident and cumulative values for ENO
         # ---------------------------------------------------------------
@@ -973,12 +971,6 @@ class Network(Customer):
             # Log cumulative charge state and amount of discharge (charge)
             if self.resident[c].has_battery:
                 self.cum_ind_bat_charge[step] += self.resident[c].battery.charge_level_kWh
-                total_discharge += self.resident[c].battery.net_discharge_for_ts
-            # Calculate coincidence for individual or btm PV:
-                self.resident[c].coincidence[step] = np.minimum(self.resident[c].load[step],
-                                                          self.resident[c].generation[step] + self.resident[c].battery.net_discharge_for_ts)
-                self.sum_of_coincidences[step] += self.resident[c].coincidence[step]
-
 
         # ----------------------------------------------------------------------------------------
         # Calculate energy flow without central  battery, then modify by calling battery.dispatch:
@@ -986,21 +978,13 @@ class Network(Customer):
         self.flows[step] = self.cum_resident_exports[step] - self.cum_resident_imports[step]
         if self.has_central_battery:
             self.flows[step] = self.battery.dispatch(available_kWh=self.flows[step], step=step)
-            total_discharge += self.battery.net_discharge_for_ts
-            self.battery.net_discharge_for_ts = 0
 
         # Calc imports and exports
         # ------------------------
         self.exports[step] = self.flows[step].clip(0)
         self.imports[step] = (-1 * self.flows[step]).clip(0)
 
-        # For calculation of Self-Consumption and Self-Sufficiency
-        # --------------------------------------------------------
-        # Co-incidence = min (load, generation + net discharge)
-        if self.pv_exists:
-            coincidence = np.minimum(self.network_load.sum(axis=1)[step], self.pv.sum(axis=1)[step] + total_discharge)
-            self.total_aggregated_coincidence[step] += coincidence
-        pass
+
 
     def calcDynamicTariffs(self,step):
         """Dynamic calcs of (eg block) tariffs by timestep for ENO and for all residents."""
@@ -1092,22 +1076,7 @@ class Network(Customer):
             self.solar_retailer.en_opex = scenario.en_opex
 
     def calcEnergyMetrics(self, scenario):
-        # ----------------------------------------------------------
-        # Calc sum of battery losses across all batteries in network
-        # ----------------------------------------------------------
-        if self.has_central_battery:
-            self.total_battery_losses += self.battery.cumulative_losses
-            self.battery_cycles = self.battery.number_cycles
-            self.battery_SOH = self.battery.SOH
-        else:
-            self.battery_cycles = 0
-            self.battery_SOH = 0
 
-
-        if scenario.has_ind_batteries:
-            for c in self.resident_list:
-                if self.resident[c].has_battery:
-                    self.total_battery_losses += self.resident[c].battery.cumulative_losses
 
         # -----------------------------------------------
         # calculate total exports / imports & pvr, cpr
@@ -1128,11 +1097,61 @@ class Network(Customer):
         self.pv_ratio = self.pv.sum().sum() / self.total_building_load * 100
         self.cp_ratio = self.resident['cp'].load.sum() / self.total_building_load * 100
 
+        # ----------------------------------------------------------------------
+        # Calc sum of battery losses & discharge across all batteries in network
+        # ----------------------------------------------------------------------
+        if self.has_central_battery:
+            self.total_battery_losses += self.battery.cumulative_losses
+            self.battery_cycles = self.battery.number_cycles
+            self.battery_SOH = self.battery.SOH
+            self.total_discharge = self.battery.net_discharge
+        else:
+            self.battery_cycles = 0
+            self.battery_SOH = 0
+            self.total_discharge = np.zeros(ts.num_steps)
+
+        if scenario.has_ind_batteries:
+            for c in self.battery_list:
+                self.total_battery_losses += self.resident[c].battery.cumulative_losses
+                self.total_discharge += self.resident[c].battery.net_discharge
         # ----------------------------------------------
         # Calculate Self-Consumption & Self-Sufficiency
         # ----------------------------------------------
         # 1) Luthander method: accounts correctly for battery losses
         # ----------------------------------------------------------
+        # @@@initialise coincidence
+        # Calculate coincidence (ie overlap of load and generation profiles accounting for battery losses)
+        # ...for individual or btm PV:
+        for c in self.resident_list:
+            if self.resident[c].has_battery:
+                self.resident[c].coincidence = np.minimum(self.resident[c].load,
+                                                          self.resident[c].generation +
+                                                          self.resident[c].battery.net_discharge)
+            else:
+                self.resident[c].coincidence = np.minimum(self.resident[c].load,
+                                                          self.resident[c].generation)
+            self.sum_of_coincidences += self.resident[c].coincidence
+        # ... for central PV:
+        if self.pv_exists:  # can move this condition further up @@@@@
+            coincidence = np.minimum(self.network_load.sum(axis=1),
+                                     self.pv.sum(axis=1) + self.total_discharge)
+            self.total_aggregated_coincidence += coincidence
+        else:
+            self.total_aggregated_coincidence = np.sum(np.minimum(self.network_load.sum(axis=1),
+                                                                  self.pv.sum(
+                                                                axis=1)))  # No battery, so don't add total_discharge)
+
+
+
+            # From Dynamic
+
+            ### - WRONG: @@@@@
+            ####NEED TO LOOK AGAIN AT OLD VERSION AND SORT THIS OUT
+            # Clarify aggregated vs summed
+            # Also, go back to calcStatic
+            # Where is the sum????
+
+
         if self.pv_exists:
             if scenario.arrangement == 'en_pv':
                 self.self_consumption = np.sum(self.total_aggregated_coincidence) / self.pv.sum().sum() * 100
