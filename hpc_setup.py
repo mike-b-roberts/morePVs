@@ -60,7 +60,7 @@ for csv_name in csv_list:
     '#SBATCH --output "/home/z5044992/InputOutput/DATA_EN_3/slurm/slurm-%j.out"',
     'module load python/3.6',
     'source /home/z5044992/python_venv/bin/activate',
-    'python /home/z5044992/InputOutput/en/morePVs/morePVs.py -b /home/z5044992/InputOutput/DATA_EN_3 -p '+ 'for_hpc_'+study+' -s '+ study + ' -t False',
+    'python /home/z5044992/InputOutput/en/morePVs/morePVs.py -b /home/z5044992/InputOutput/DATA_EN_3 -p '+ 'for_hpc_' + um.find_between(csv_name,'study_','.csv') +' -s '+ study + ' -t False',
     'deactivate',
     'module unload python/3.6'
     ]).apply(lambda x: x.replace('\r\n', '\n'))
