@@ -1,0 +1,24 @@
+19/06/2018 09:10:15 AM Python Script is: morePVs.py
+19/06/2018 09:10:15 AM study_name = siteJ_bat4_1
+19/06/2018 09:10:15 AM 
+
+
+ Exception !!!!!!
+Traceback (most recent call last):
+  File "morePVs.py", line 1930, in main
+    study_name=study_name)
+  File "morePVs.py", line 1672, in __init__
+    self.study_parameters = pd.read_csv(study_file)
+  File "/home/z5044992/python_venv/lib/python3.6/site-packages/pandas/io/parsers.py", line 678, in parser_f
+    return _read(filepath_or_buffer, kwds)
+  File "/home/z5044992/python_venv/lib/python3.6/site-packages/pandas/io/parsers.py", line 440, in _read
+    parser = TextFileReader(filepath_or_buffer, **kwds)
+  File "/home/z5044992/python_venv/lib/python3.6/site-packages/pandas/io/parsers.py", line 787, in __init__
+    self._make_engine(self.engine)
+  File "/home/z5044992/python_venv/lib/python3.6/site-packages/pandas/io/parsers.py", line 1014, in _make_engine
+    self._engine = CParserWrapper(self.f, **self.options)
+  File "/home/z5044992/python_venv/lib/python3.6/site-packages/pandas/io/parsers.py", line 1708, in __init__
+    self._reader = parsers.TextReader(src, **kwds)
+  File "pandas/_libs/parsers.pyx", line 384, in pandas._libs.parsers.TextReader.__cinit__
+  File "pandas/_libs/parsers.pyx", line 695, in pandas._libs.parsers.TextReader._setup_parser_source
+FileNotFoundError: File b'home/z5044992/InputOutput/DATA_EN_3/studies/EN1a_pv_bat4/inputs/study_siteJ_bat4_1.csv' does not exist

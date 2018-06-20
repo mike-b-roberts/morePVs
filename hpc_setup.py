@@ -7,13 +7,16 @@ import csv
 
 project='EN1a_pv_bat4'
 study = 'example2'
-base_path='/home/DATA_EN_3/studies'
+base_path='/home/z5044992/InputOutput/DATA_EN_3/studies'
 i_path =os.path.join(base_path,project,'inputs')
 i_name='study_'+study+'.csv'
 i_file = os.path.join(i_path,i_name)
 o_path = os.path.join(i_path,'for_hpc_'+study)
 if not os.path.exists (o_path):
     os.makedirs(o_path)
+for f in os.listdir(o_path):
+    xfile = os.path.join(o_path,f)
+    os.remove(xfile)
 df= pd.read_csv(i_file)
 df = df.set_index('scenario')
 
@@ -41,6 +44,9 @@ for job in np.arange (num_jobs):
 bash_path = os.path.join(i_path,'bash_'+study)
 if not os.path.exists (bash_path):
     os.makedirs(bash_path)
+for f in os.listdir(bash_path):
+    xfile = os.path.join(bash_path,f)
+    os.remove(xfile)
 for csv_name in csv_list:
     #
     bash_content = pd.Series([
@@ -54,7 +60,7 @@ for csv_name in csv_list:
     '#SBATCH --output "/home/z5044992/InputOutput/DATA_EN_3/slurm/slurm-%j.out"',
     'module load python/3.6',
     'source /home/z5044992/python_venv/bin/activate',
-    'python morePVs.py -b /home/z5044992/InputOutput/DATA_EN_3 -p '+ 'for_hpc_'+study+' -s '+ csv_name + ' -t False',
+    'python /home/z5044992/InputOutput/en/morePVs/morePVs.py -b /home/z5044992/InputOutput/DATA_EN_3 -p '+ 'for_hpc_'+study+' -s '+ study + ' -t False',
     'deactivate',
     'module unload python/3.6'
     ]).apply(lambda x: x.replace('\r\n', '\n'))
