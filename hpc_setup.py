@@ -7,20 +7,23 @@ import csv
 
 project='EN1a_pv_bat4'
 study = 'example2'
+new_project = project+'_hpc'
 base_path='/home/z5044992/InputOutput/DATA_EN_3/studies'
-i_path =os.path.join(base_path,project,'inputs')
-i_name='study_'+study+'.csv'
+i_path = os.path.join(base_path,project,'inputs')
+i_name ='study_'+study+'.csv'
 i_file = os.path.join(i_path,i_name)
-hpc_path = os.path.join(base_path,'for_hpc_'+study)
-if not os.path.exists (hpc_path):
-    os.makedirs(hpc_path)
-o_path = os.path.join(hpc_path,'inputs')
+
+np_path =os.path.join(base_path,new_project)
+if not os.path.exists (np_path):
+    os.makedirs(np_path)
+o_path =os.path.join(np_path,'inputs')
 if not os.path.exists (o_path):
     os.makedirs(o_path)
+
 for f in os.listdir(o_path):
     xfile = os.path.join(o_path,f)
     os.remove(xfile)
-df= pd.read_csv(i_file)
+df = pd.read_csv(i_file)
 df = df.set_index('scenario')
 
 # Split csvs
@@ -40,7 +43,7 @@ for job in np.arange (num_jobs):
     df1 = df1.iloc[joblength[job]:]
     o_name = 'study_'+study+'_hpc'+ str(job)+'.csv'
     csv_list += [o_name]
-    o_file = os.path.join(o_path,o_name)
+    o_file = os.path.join(o_path ,o_name)
     dfn.to_csv(o_file)
 
 # Create bash files
@@ -63,7 +66,7 @@ for csv_name in csv_list:
     '#SBATCH --output "/home/z5044992/InputOutput/DATA_EN_3/slurm/slurm-%j.out"',
     'module load python/3.6',
     'source /home/z5044992/python_venv/bin/activate',
-    'python /home/z5044992/InputOutput/en/morePVs/morePVs.py -b /home/z5044992/InputOutput/DATA_EN_3 -p '+  '/for_hpc_' + study +' -s '+ um.find_between(csv_name,'study_','.csv') + ' -t False',
+    'python /home/z5044992/InputOutput/en/morePVs/morePVs.py -b /home/z5044992/InputOutput/DATA_EN_3 -p '+ new_project +' -s '+ um.find_between(csv_name,'study_','.csv') + ' -t False',
     'deactivate',
     'module unload python/3.6'
     ]).apply(lambda x: x.replace('\r\n', '\n'))
