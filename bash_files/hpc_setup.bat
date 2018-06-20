@@ -11,4 +11,3 @@ source /home/z5044992/python_venv/bin/activate
 python /home/z5044992/InputOutput/en/morePVs/hpc_setup.py
 deactivate
 module unload python/3.6
-

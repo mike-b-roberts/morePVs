@@ -5,10 +5,18 @@ import shutil
 import numpy as np
 import csv
 
+# Input parameters:
+# -----------------
 project='EN1a_pv_bat4'
-study = 'example2'
+study = 'siteJ_bat4_2'
+maxjobs = 120
+
+
+# Establish paths etc
+# -------------------
 new_project = project+'_hpc'
 base_path='/home/z5044992/InputOutput/DATA_EN_3/studies'
+
 i_path = os.path.join(base_path,project,'inputs')
 i_name ='study_'+study+'.csv'
 i_file = os.path.join(i_path,i_name)
@@ -26,8 +34,13 @@ for f in os.listdir(o_path):
 df = pd.read_csv(i_file)
 df = df.set_index('scenario')
 
-# Split csvs
-maxjobs = 100
+#PAth for bash script files
+# -------------------------
+bash_path='/home/z5044992/InputOutput/en/morePVs/bash_files/'+new_project+'/'+study
+
+# Split input (s'study_....csv') files 
+# ------------------------------------
+
 length = len(df)
 num_jobs = min(length, maxjobs)
 joblength = {}
@@ -46,8 +59,13 @@ for job in np.arange (num_jobs):
     o_file = os.path.join(o_path ,o_name)
     dfn.to_csv(o_file)
 
+# Initiate PuTTY Script
+# ---------------------
+putty_script = []
+
 # Create bash files
-bash_path = os.path.join(i_path,'bash_'+study)
+# -----------------
+
 if not os.path.exists (bash_path):
     os.makedirs(bash_path)
 for f in os.listdir(bash_path):
@@ -58,7 +76,7 @@ for csv_name in csv_list:
     bash_content = pd.Series([
     '#!/bin/bash',
     '#SBATCH --mail-user=m.roberts@unsw.edu.au',
-    '#SBATCH --mail-type=ALL',
+    '#SBATCH --mail-type=FAIL',
     '#SBATCH --time=12:00:00',
     '#SBATCH --ntasks=1',
     '#SBATCH --cpus-per-task=4',
@@ -75,3 +93,18 @@ for csv_name in csv_list:
     bash_file = os.path.join(bash_path, bash_name)
     pd.DataFrame(bash_content).to_csv(bash_file, index=False,header=False,
                                       quoting=csv.QUOTE_NONE, line_terminator='\n')
+
+
+    putty_script +=['sbatch '+ bash_file]
+
+# Create PuTTY Script:
+# --------------------    
+
+putty_file = os.path.join(bash_path, 'putty.txt')
+putty_out = pd.DataFrame (putty_script)
+putty_out.to_csv(putty_file, index=False,header=False,
+                                      quoting=csv.QUOTE_NONE, line_terminator='\n')
+
+
+	
+
