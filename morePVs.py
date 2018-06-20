@@ -489,8 +489,7 @@ class Customer():
                                customer_load):  # as 1-d np.array
         """Set customer load, energy flows and cashflows to zero."""
         self.load = customer_load
-        self.coincidence = np.zeros(ts.num_steps) # used for calculating self-consumption and self sufficiency
-
+        self.coincidence = np.zeros(ts.num_steps)  # used for calculating self-consumption and self sufficiency
 
     def initialiseCustomerTariff(self,
                                  customer_tariff_id,  # string
@@ -955,8 +954,7 @@ class Network(Customer):
         self.retailer.calcDemandCharge()
 
     def calcBuildingDynamicEnergyFlows(self, step):
-        """Calculate all internal energy flows for SINGLE timesteps (with storage)."""
-
+        """Calculate all internal energy flows for SINGLE timestep (with storage)."""
 
         # ---------------------------------------------------------------
         # Calculate flows for each resident and cumulative values for ENO
@@ -983,8 +981,6 @@ class Network(Customer):
         # ------------------------
         self.exports[step] = self.flows[step].clip(0)
         self.imports[step] = (-1 * self.flows[step]).clip(0)
-
-
 
     def calcDynamicTariffs(self,step):
         """Dynamic calcs of (eg block) tariffs by timestep for ENO and for all residents."""
@@ -1077,7 +1073,6 @@ class Network(Customer):
 
     def calcEnergyMetrics(self, scenario):
 
-
         # -----------------------------------------------
         # calculate total exports / imports & pvr, cpr
         # ----------------------------------------------
@@ -1110,49 +1105,30 @@ class Network(Customer):
             self.battery_SOH = 0
             self.total_discharge = np.zeros(ts.num_steps)
 
-        if scenario.has_ind_batteries:
-            for c in self.battery_list:
-                self.total_battery_losses += self.resident[c].battery.cumulative_losses
-                self.total_discharge += self.resident[c].battery.net_discharge
+        for c in self.battery_list:
+            self.total_battery_losses += self.resident[c].battery.cumulative_losses
+            self.total_discharge += self.resident[c].battery.net_discharge
         # ----------------------------------------------
         # Calculate Self-Consumption & Self-Sufficiency
         # ----------------------------------------------
         # 1) Luthander method: accounts correctly for battery losses
         # ----------------------------------------------------------
-        # @@@initialise coincidence
         # Calculate coincidence (ie overlap of load and generation profiles accounting for battery losses)
         # ...for individual or btm PV:
-        for c in self.resident_list:
-            if self.resident[c].has_battery:
-                self.resident[c].coincidence = np.minimum(self.resident[c].load,
-                                                          self.resident[c].generation +
-                                                          self.resident[c].battery.net_discharge)
-            else:
-                self.resident[c].coincidence = np.minimum(self.resident[c].load,
-                                                          self.resident[c].generation)
-            self.sum_of_coincidences += self.resident[c].coincidence
-        # ... for central PV:
-        if self.pv_exists:  # can move this condition further up @@@@@
-            coincidence = np.minimum(self.network_load.sum(axis=1),
-                                     self.pv.sum(axis=1) + self.total_discharge)
-            self.total_aggregated_coincidence += coincidence
-        else:
-            self.total_aggregated_coincidence = np.sum(np.minimum(self.network_load.sum(axis=1),
-                                                                  self.pv.sum(
-                                                                axis=1)))  # No battery, so don't add total_discharge)
-
-
-
-            # From Dynamic
-
-            ### - WRONG: @@@@@
-            ####NEED TO LOOK AGAIN AT OLD VERSION AND SORT THIS OUT
-            # Clarify aggregated vs summed
-            # Also, go back to calcStatic
-            # Where is the sum????
-
-
         if self.pv_exists:
+            for c in self.resident_list:
+                if self.resident[c].has_battery:
+                    self.resident[c].coincidence = np.minimum(self.resident[c].load,
+                                                              self.resident[c].generation +
+                                                              self.resident[c].battery.net_discharge)
+                else:
+                    self.resident[c].coincidence = np.minimum(self.resident[c].load,
+                                                              self.resident[c].generation)
+                self.sum_of_coincidences += self.resident[c].coincidence
+        # ... for central PV:
+            self.total_aggregated_coincidence = np.minimum(self.network_load.sum(axis=1),
+                                                               self.pv.sum(axis=1) + self.total_discharge)
+
             if scenario.arrangement == 'en_pv':
                 self.self_consumption = np.sum(self.total_aggregated_coincidence) / self.pv.sum().sum() * 100
                 self.self_sufficiency = np.sum(self.total_aggregated_coincidence) / self.total_building_load * 100
@@ -1985,7 +1961,7 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 'p_testing'
-    default_study = 'hpc_test'
+    default_study = 'test_bat_numpy'
     use_threading = False
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
@@ -2033,8 +2009,6 @@ if __name__ == "__main__":
 # TODO Add combined central and individual PV
 # TODO Battery: Go through all tech arrangements and allow central and ind batteries / PC
 # TODO Battery: Add capex calcs for individual batteries Need to update Network.allocateAllCapex
-# TODO Battery: add option of battery lifetime / warranty as years, not cycles (Peg W2)
-# TODO Test battery
 
 # TODO - Optimisation Separate financial settings from scenarios to reduce calculation
 # TODO - Optimisation: for loops -> i in np.arange rather than iter  thru' list
@@ -2042,4 +2016,4 @@ if __name__ == "__main__":
 # TODO - Optimisation: remove print, sort, etc.
 # TODO - Optimisation: time runs: i/o vs calcs
 # TODO - Exception handling
-# TODO - Python anywhere / HPC
+
