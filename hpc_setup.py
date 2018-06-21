@@ -28,9 +28,6 @@ o_path =os.path.join(np_path,'inputs')
 if not os.path.exists (o_path):
     os.makedirs(o_path)
 
-for f in os.listdir(o_path):
-    xfile = os.path.join(o_path,f)
-    os.remove(xfile)
 df = pd.read_csv(i_file)
 df = df.set_index('scenario')
 
@@ -54,7 +51,7 @@ csv_list=[]
 for job in np.arange (num_jobs):
     dfn = pd.DataFrame(df1.iloc[0:joblength[job]],columns=df1.columns)
     df1 = df1.iloc[joblength[job]:]
-    o_name = 'study_'+study+'_hpc'+ str(job)+'.csv'
+    o_name = 'study_'+study+'_hpc'+ str(job).zfill(3) +'.csv'
     csv_list += [o_name]
     o_file = os.path.join(o_path ,o_name)
     dfn.to_csv(o_file)
