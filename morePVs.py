@@ -786,6 +786,14 @@ class Network(Customer):
         for c in self.resident_list:
             self.resident[c].initialiseCustomerPV(np.array(self.pv[c]).astype(np.float64))
 
+        # For diagnostics only @@@@@
+        # @@@@@@@@@@@@@@@@@@@@@@@@@@
+        pvpath = os.path.join(self.output_path, 'pv')
+        if not os.path.exists(pvpath):
+            os.makedirs(pvpath)
+        pvFile = os.path.join(pvpath, self.name + '_py_' + scenario.arrangement + '.csv')
+        um.df_to_csv(self.pv, pvFile)
+
 
     def initialiseDailySolarBlockQuotas(self, scenario):
         """For Solar Block Daily tariff, allocate block limits for all residents."""
@@ -1647,7 +1655,7 @@ class Study():
         self.project_path = os.path.join(self.base_path,'studies',project)
         # reference files
         # ---------------
-        self.reference_path = os.path.join(self.base_path, 'reference')
+        self.reference_path = os.path.join(self.base_path, 'reference_TEST')
         self.input_path = os.path.join(self.project_path, 'inputs')
         tariff_name = 'tariff_lookup.csv'
         self.t_lookupFile = os.path.join(self.reference_path, tariff_name)
@@ -1963,7 +1971,7 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 's_testing'
-    default_study = 'test_energy1'
+    default_study = 'test_energy2'
     use_threading = False
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
