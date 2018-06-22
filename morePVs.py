@@ -248,9 +248,16 @@ class Battery():
             self.capacity_kWh = study.battery_lookup.loc[battery_id, 'capacity_kWh']
             self.charge_kW = study.battery_lookup.loc[battery_id, 'charge_kW']
             self.efficiency_cycle = study.battery_lookup.loc[battery_id, 'efficiency_cycle']
+            if self.efficiency_cycle > 1.0:
+                logging.info('***************Exception!!! Battery Efficiency must be < 1.0*******')
+                print('***************Exception!!! Battery Efficiency must be < 1.0*******')
+                sys.exit("Battery Efficiency > 1")
             self.maxDOD = study.battery_lookup.loc[battery_id, 'maxDOD']
             self.maxSOC = study.battery_lookup.loc[battery_id, 'maxSOC']
-
+            if self.maxDOD + self.maxSOC >= 1.0:
+                logging.info('***************Exception!!! Battery maxSOC + maxDOD >= 1.0 *******')
+                print('***************Exception!!! Battery maxSOC + maxDOD >= 1.0*******')
+                sys.exit("Battery DOD + SOC  > 1")
             self.battery_cost = study.battery_lookup.loc[battery_id, 'battery_cost']
             self.battery_inv_cost = study.battery_lookup.loc[battery_id, 'battery_inv_cost']
             if np.isnan(study.battery_lookup.loc[battery_id, 'life_bat_inv']):

@@ -193,19 +193,19 @@ def plot_battery(project,
         fig, ax = plt.subplots()
         ax = df[[c for c in df.columns if 'SOC' not in c]].plot()
 
-        ax.set_xlabel ("Time", fontsize=14)
-        ax.set_ylabel ("kWh", fontsize=14)
+        ax.set_xlabel("Time", fontsize=14)
+        ax.set_ylabel("kWh", fontsize=14)
         ax.grid(True)
         ax.set_ylim(0, max_kwh)
         if 'battery_SOC' in df.columns:
             ax2 = df['battery_SOC'].plot(secondary_y=True, ax=ax, style='--')
             ax2.set_ylabel("Battery SOC %")
-            ax2.set_ylim(0,100)
+            #ax2.set_ylim(0,100)
 
         if 'ind_battery_SOC' in df.columns:
             ax2 = df['ind_battery_SOC'].plot(secondary_y=True, ax=ax, style='--')
             ax2.set_ylabel("Battery SOC %")
-            ax2.set_ylim(0, 100)
+            #ax2.set_ylim(0, 100)
 
 
         leg = ax.legend(fancybox=True)
