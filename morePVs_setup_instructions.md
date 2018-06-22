@@ -160,6 +160,7 @@ N.B. (all `_id`s require `_strategy` too.)
 
 | Arrangement                               | Battery Set-up                                             |
 | ----------------------------------------- | ---------------------------------------------------------- |
+| `bau`                                     | No battery, by definition                                  |
 | `en` or `en_pv`  - with central battery   | `central_battery_id`                                       |
 | `en` or `en_pv` with individual batteries | `all_battery_id`  (or multiple `x_bat....`)                |
 |                                           | `cp_battery_id`                                            |
