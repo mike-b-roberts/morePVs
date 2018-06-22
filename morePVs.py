@@ -1284,7 +1284,6 @@ class Scenario():
         self.tariff_short_list = list(set(self.tariff_short_list))  # drop duplicates
         #  Slice tariff tariff_lookup table for this scenario
         self.tariff_lookup = study.tariff_data.lookup.loc[self.tariff_short_list]
-        print (self.name)
         self.dynamic_list = [t for t in self.tariff_short_list
                              if any(word in self.tariff_lookup.loc[t, 'tariff_type'] for word in ['Block', 'block', 'Dynamic', 'dynamic'])]
                 # Currently only includes block, could also add demand tariffs
@@ -1511,6 +1510,7 @@ class Scenario():
                        net.receipts_from_residents / 100,
                        net.energy_bill / 100,
                        net.total_payment / 100,
+                       net.demand_charge/100,
                        net.bat_capex_repayment,
                        (net.receipts_from_residents - net.total_payment) / 100,
                        net.retailer_receipt / 100,
@@ -1540,6 +1540,7 @@ class Scenario():
                          'eno$_receipts_from_residents',
                          'eno$_energy_bill',
                          'eno$_total_payment',
+                         'eno$_demand_charge',
                          'eno$_bat_capex_repay',
                          'eno_net$',
                          'retailer_receipt$',
