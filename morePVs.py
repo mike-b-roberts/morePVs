@@ -1684,7 +1684,7 @@ class Study():
         self.project_path = os.path.join(self.base_path,'studies',project)
         # reference files
         # ---------------
-        self.reference_path = os.path.join(self.base_path, 'reference_TEST')
+        self.reference_path = os.path.join(self.base_path, 'reference')
         self.input_path = os.path.join(self.project_path, 'inputs')
         tariff_name = 'tariff_lookup.csv'
         self.t_lookupFile = os.path.join(self.reference_path, tariff_name)
