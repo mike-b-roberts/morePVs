@@ -97,7 +97,7 @@ class TariffData():
                 self.lookup.loc[tid, discounted_rates] = self.lookup.loc[tid, discounted_rates] * (100 - discount) / 100
             # Allocate Flat rate and Zero Tariffs
             # -----------------------------------:
-            if self.lookup.loc[tid, 'tariff_type'] == 'Zero_Rate':
+            if 'Zero_Rate' in self.lookup.loc[tid, 'tariff_type']:
                 self.static_imports[tid] = 0
             elif 'Flat_Rate' in self.lookup.loc[tid, 'tariff_type']:
                 self.static_imports[tid] = self.lookup.loc[tid, 'flat_rate']
@@ -590,7 +590,7 @@ class Customer():
 
     def calcDemandCharge(self):
         if self.tariff.is_demand:
-            max_demand = np.multiply(self.imports,self.tariff.demand_period_array).max()/2 # in kW
+            max_demand = np.multiply(self.imports,self.tariff.demand_period_array).max() * 2  # convert kWh to kW
             self.demand_charge = max_demand * self.tariff.demand_tariff * ts.num_days
             # Use nominal pf to convert to kVA?
             if self.tariff.demand_type == 'kVA':
@@ -755,25 +755,22 @@ class Network(Customer):
         elif scenario.arrangement in ['btm_s_c', 'btm_p_c']:
             # For btm_s_c and btm_p_c, split pv between all residents INCLUDING CP according to INSTANTANEOUS load
             if len(self.pv.columns) != 1:
-                logging.info('***************Exception!!! PV %s has more than one column for shared btm arrangement ', scenario.pvFile)
-                sys.exit("PV file doesn't match btm_s_c arrangement")
-            else:
-                self.pv.columns = ['total']
-                self.pv = self.network_load.div(self.network_load.sum(axis=1), axis=0).multiply(
-                    self.pv.loc[:, 'total'], axis=0)
+                self.pv['total'] = self.pv.sum(axis=1)
+                self.pv = self.pv.loc[:, ['total']]
+            self.pv.columns = ['total']
+            self.pv = self.network_load.div(self.network_load.sum(axis=1), axis=0).multiply(
+                self.pv.loc[:, 'total'], axis=0).fillna(0)
 
         elif scenario.arrangement in ['btm_s_u', 'btm_p_u']:
             # For btm_s_u and btm_p_u, split pv between all residents EXCLUDING CP according to INSTANTANEOUS  load
             if len(self.pv.columns) != 1:
-                logging.info(
-                    '***************Exception!!! PV %s has more than one column for shared btm arrangement ',
-                    scenario.pvFile)
-                sys.exit("PV file doesn't match btm_s_u or btm_p_u arrangement")
-            else:
-                self.pv.columns = ['total']
-                load_units_only = self.network_load.copy().drop('cp', axis=1)
-                self.pv = load_units_only.div(load_units_only.sum(axis=1), axis=0).multiply(
-                    self.pv.loc[:, 'total'], axis=0)
+                self.pv['total'] = self.pv.sum(axis=1)
+                self.pv = self.pv.loc[:,['total']]
+            self.pv.columns = ['total']
+            load_units_only = self.network_load.copy().drop('cp', axis=1)
+            self.pv = load_units_only.div(load_units_only.sum(axis=1), axis=0).multiply(
+                self.pv.loc[:, 'total'], axis=0).fillna(0)
+            self.pv['cp'] = 0
 
         # Create list of customers with PV:
         if not self.pv_exists:
@@ -782,7 +779,7 @@ class Network(Customer):
             self.pv_customers = [c for c in self.pv.columns if self.pv[c].sum() >0]
             # Add blank columns for all residents with no pv
             blank_columns = [x for x in self.resident_list if x not in self.pv.columns]
-            self.pv = pd.concat([self.pv, pd.DataFrame(columns=blank_columns)],sort=False).fillna(0)
+            self.pv = pd.concat([self.pv, pd.DataFrame(columns=blank_columns)], sort=False).fillna(0)
 
         # Initialise all residents with their allocated PV generation
         # -----------------------------------------------------------
@@ -1257,6 +1254,9 @@ class Scenario():
                 if self.pv_scaleable:
                     self.pv_kW_peak = self.parameters['pv_kW_peak']
                     self.pv = self.pv * self.pv_kW_peak
+            if self.pv.sum().sum() == 0:
+                self.pv_exists = False
+                self.pv = pd.DataFrame(index=ts.timeseries, columns=self.resident_list).fillna(0)
 
         # ---------------------------------------
         # Set up tariffs for this scenario
@@ -1280,21 +1280,22 @@ class Scenario():
         self.customers_with_tariffs = self.resident_list + ['parent']
         self.dnsp_tariff = self.parameters['network_tariff']
         self.tariff_in_use = self.parameters[self.customers_with_tariffs] # tariff ids for each customer
-        self.tariff_short_list = self.tariff_in_use.tolist()  + [self.dnsp_tariff]  # list of tariffs in use
-        self.tariff_short_list = list(set(self.tariff_short_list)) # drop duplicates
+        self.tariff_short_list = self.tariff_in_use.tolist() + [self.dnsp_tariff]  # list of tariffs in use
+        self.tariff_short_list = list(set(self.tariff_short_list))  # drop duplicates
         #  Slice tariff tariff_lookup table for this scenario
         self.tariff_lookup = study.tariff_data.lookup.loc[self.tariff_short_list]
-        self.dynamic_list = [t for t in self.tariff_short_list \
+        print (self.name)
+        self.dynamic_list = [t for t in self.tariff_short_list
                              if any(word in self.tariff_lookup.loc[t, 'tariff_type'] for word in ['Block', 'block', 'Dynamic', 'dynamic'])]
                 # Currently only includes block, could also add demand tariffs
                 # if needed - i.e. for demand tariffs on < 12 month period
-        self.solar_list = [t for t in self.tariff_short_list \
+        self.solar_list = [t for t in self.tariff_short_list
                            if any(word in self.tariff_lookup.loc[t, 'tariff_type'] for word in ['Solar', 'solar'])]
-        solar_block_list = [t for t in self.solar_list \
+        solar_block_list = [t for t in self.solar_list
                             if any(word in self.tariff_lookup.loc[t, 'tariff_type'] for word in ['Block', 'block'])]
-        self.solar_inst_list = [t for t in self.solar_list \
+        self.solar_inst_list = [t for t in self.solar_list
                                 if any(word in self.tariff_lookup.loc[t, 'tariff_type'] for word in ['Inst', 'inst'])]
-        self.demand_list = [t for t in self.tariff_short_list \
+        self.demand_list = [t for t in self.tariff_short_list
                             if 'Demand' in self.tariff_lookup.loc[t, 'tariff_type']]
         self.has_demand_charges = len(self.demand_list) > 0
         self.has_dynamic_tariff = len(self.dynamic_list) > 0
@@ -1647,7 +1648,7 @@ class Study():
         # ---------------
         self.reference_path = os.path.join(self.base_path, 'reference')
         self.input_path = os.path.join(self.project_path, 'inputs')
-        tariff_name='tariff_lookup.csv'
+        tariff_name = 'tariff_lookup.csv'
         self.t_lookupFile = os.path.join(self.reference_path, tariff_name)
         capex_pv_name = 'capex_pv_lookup.csv'
         self.capexpv_file = os.path.join(self.reference_path, capex_pv_name)
@@ -1960,8 +1961,8 @@ if __name__ == "__main__":
     # Set up relative paths for data files:
 
     num_threads = 6
-    default_project = 'p_testing'
-    default_study = 'test_bat_numpy'
+    default_project = 's_testing'
+    default_study = 'test_energy1'
     use_threading = False
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
