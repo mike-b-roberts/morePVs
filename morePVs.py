@@ -707,7 +707,6 @@ class Network(Customer):
         self.cum_resident_total_payments = 0.0
         self.cum_local_solar_bill = 0.0
         self.energy_bill = 0.0
-        self.sum_of_npvs = 0
 
     def initialiseAllTariffs(self, scenario):
         # initialise parent meter tariff
@@ -804,7 +803,7 @@ class Network(Customer):
         pvpath = os.path.join(study.output_path, 'pv')
         if not os.path.exists(pvpath):
             os.makedirs(pvpath)
-        pvFile = os.path.join(pvpath, self.name + '_py_' + str(scenario.name) +'_'+ scenario.arrangement + '.csv')
+        pvFile = os.path.join(pvpath, self.name + '_py_' + str(scenario.name) +'_' + scenario.arrangement + '.csv')
         um.df_to_csv(self.pv, pvFile)
 
 
@@ -1487,9 +1486,6 @@ class Scenario():
             else:
                 self.pv_capex_repayment=0
 
-        # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ DIAGNOSTICS ONLY
-        print(self.name, self.arrangement)
-
     def calcFinancials(self, net):
         """ Calculates financial results for specific net within scenario.
 
@@ -1505,8 +1501,7 @@ class Scenario():
         # to calculate external cashflows.
         # NB if non-en scenario, tariffs are zero, so cashflows =0
         net.calcCashflow()
-        # Diagnostics: @@@ remove this calc and all refs to sum_of_npvs ?
-        net.sum_of_npvs += net.npv
+
         # ----------------------------------
         # Cashflows for individual residents
         # ----------------------------------
@@ -1515,8 +1510,7 @@ class Scenario():
             net.receipts_from_residents += net.resident[c].energy_bill
             net.cum_resident_total_payments += net.resident[c].total_payment
             net.cum_local_solar_bill += net.resident[c].local_solar_bill
-            # Diagnostics: @@@ remove this calc and all refs to sum_of_npvs
-            # net.sum_of_npvs += net.resident[c].npv
+
         # ----------------------------
         # External retailer cashflows:
         # ----------------------------
@@ -1569,8 +1563,6 @@ class Scenario():
         # ----------------------
         net.npv_whole_building = -sum(net.total_building_payment / (1 + self.a_rate / 12) ** t
                                       for t in np.arange(1, 12 * self.a_term))
-        # Diagnostics: @@@@@@@@@@@@@@@@@@@@@@
-        print(self.name, self.arrangement, net.sum_of_npvs, net.npv_whole_building)
 
 
     def collateNetworkResults(self,net):
@@ -1590,7 +1582,6 @@ class Scenario():
                        net.energy_bill / 100,
                        net.total_payment / 100,
                        net.npv_whole_building / 100,
-                       net.sum_of_npvs / 100,
                        net.demand_charge/100,
                        net.bat_capex_repayment,
                        (net.receipts_from_residents - net.total_payment) / 100,
@@ -1622,7 +1613,6 @@ class Scenario():
                          'eno$_energy_bill',
                          'eno$_total_payment',
                          'eno$_npv_building',
-                         'eno$_sum_of_npv',
                          'eno$_demand_charge',
                          'eno$_bat_capex_repay',
                          'eno_net$',
