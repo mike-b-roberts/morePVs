@@ -4,9 +4,9 @@
 
 # IMPORT Modules
 import pandas as pd
-#import win32api
-#import win32com.client
-#import pythoncom
+import win32api
+import win32com.client
+import pythoncom
 # import io
 # from pytz import UTC
 # from pytz import timezone
@@ -91,20 +91,20 @@ def df_to_csv(df,path):
     # Adapted from
     # http: // timgolden.me.uk / python / win32_how_do_i / see - if -an - excel - workbook - is -open.html
 
-    df.to_csv(path)
+    # df.to_csv(path)
 
-    # try:
-    #     df.to_csv(path)
-    #     logging.info('saved to %s', path)
-    #     pass
-    # except IOError:
-    #     context = pythoncom.CreateBindCtx(0)
-    #     for moniker in pythoncom.GetRunningObjectTable():
-    #         name = moniker.GetDisplayName(context, None)
-    #         if name == path:
-    #             obj = win32com.client.GetObject(path)
-    #             obj.Close(True)
-    #     df.to_csv(path)
+    try:
+        df.to_csv(path)
+        logging.info('saved to %s', path)
+        pass
+    except IOError:
+        context = pythoncom.CreateBindCtx(0)
+        for moniker in pythoncom.GetRunningObjectTable():
+            name = moniker.GetDisplayName(context, None)
+            if name == path:
+                obj = win32com.client.GetObject(path)
+                obj.Close(True)
+        df.to_csv(path)
 
 ###############################################################
 def find_between( s, first, last ):
@@ -176,19 +176,20 @@ def plot_battery(project,
     if not os.path.exists(plotpath):
         os.makedirs(plotpath)
     flist = [f for f in os.listdir(path) if '.csv' in f]
-    for name in flist:
+    for name in flist:  # [f for f in flist if f == 'test_energy3_119_btm_s_c_test_2night.csv']:
+        print(name)
         file = os.path.join(path, name)
         plotfile = os.path.join(plotpath, name[0:-3] + 'png')
         df = pd.read_csv(file)
         df = df.set_index('timestamp')
-        if 'battery_charge_kWh' in df.columns:
-            df = df.drop(['battery_charge_kWh'], axis=1)
 
         # remove irrelevant / unnecessary columns:
-        if 'en' in name:
-            df = df.drop(['total_grid_import','total_grid_export'], axis=1)
-        if 'btm' in name:
-            df = df.drop(['en_import', 'en_export'], axis=1)
+        if 'battery_charge_kWh' in df.columns:
+            df = df.drop(['battery_charge_kWh'], axis=1)
+        # if '_en_' in name:
+        #     df = df.drop(['sum_of_customer_imports','sum_of_customer_exports'], axis=1)
+        # if '_btm_' in name:
+        #     df = df.drop(['grid_import', 'grid_export'], axis=1)
         max_kwh = df[[c for c in df.columns if 'SOC' not in c]].max().max()
         fig, ax = plt.subplots()
         ax = df[[c for c in df.columns if 'SOC' not in c]].plot()
@@ -213,7 +214,7 @@ def plot_battery(project,
         ax.set_title(name[:-4], fontsize=14)
         # plt.show()
         plt.savefig(plotfile, dpi=1000)
-        plt.close(fig)
+        plt.close('all')
 
 
 #MAIN PROGRAM
@@ -222,8 +223,8 @@ def main():
 
     # plot_battery(project='p_testing', study_name='test_indbat1')
 
-    project = 'EN1a_pv_bat2'
-    study_name = 'siteJ_bat2_test1'
+    project = 's_testing'
+    study_name = 'test_energy5'
     plot_battery(project=project, study_name=study_name)
 
     pass
