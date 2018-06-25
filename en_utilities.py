@@ -4,9 +4,9 @@
 
 # IMPORT Modules
 import pandas as pd
-#import win32api
-#import win32com.client
-#import pythoncom
+import win32api
+import win32com.client
+import pythoncom
 # import io
 # from pytz import UTC
 # from pytz import timezone
@@ -186,10 +186,10 @@ def plot_battery(project,
         # remove irrelevant / unnecessary columns:
         if 'battery_charge_kWh' in df.columns:
             df = df.drop(['battery_charge_kWh'], axis=1)
-        if '_en_' in name:
-            df = df.drop(['sum_of_customer_imports','sum_of_customer_exports'], axis=1)
-        if '_btm_' in name:
-            df = df.drop(['en_import', 'en_export'], axis=1)
+        # if '_en_' in name:
+        #     df = df.drop(['sum_of_customer_imports','sum_of_customer_exports'], axis=1)
+        # if '_btm_' in name:
+        #     df = df.drop(['grid_import', 'grid_export'], axis=1)
         max_kwh = df[[c for c in df.columns if 'SOC' not in c]].max().max()
         fig, ax = plt.subplots()
         ax = df[[c for c in df.columns if 'SOC' not in c]].plot()
@@ -214,7 +214,7 @@ def plot_battery(project,
         ax.set_title(name[:-4], fontsize=14)
         # plt.show()
         plt.savefig(plotfile, dpi=1000)
-        plt.close(fig)
+        plt.close('all')
 
 
 #MAIN PROGRAM
@@ -224,7 +224,7 @@ def main():
     # plot_battery(project='p_testing', study_name='test_indbat1')
 
     project = 's_testing'
-    study_name = 'test_energy3'
+    study_name = 'test_energy5'
     plot_battery(project=project, study_name=study_name)
 
     pass

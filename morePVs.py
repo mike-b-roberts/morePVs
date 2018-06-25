@@ -337,7 +337,7 @@ class Battery():
                                            & (ts.days[charge_day].time <= pd.Timestamp(charge_end).time())]
             # Initialise battery variables
             # ----------------------------
-            self.initial_SOC = 0 # BATTERY STARTS AT 0% SOC
+            self.initial_SOC = 0.5  # BATTERY STARTS AT 50% SOC
             self.charge_level_kWh = self.capacity_kWh * self.initial_SOC
             self.number_cycles = 0
             self.SOH = 100  # State of health
@@ -391,6 +391,39 @@ class Battery():
         self.net_discharge_for_ts = energy_delivered
         return energy_delivered  # returns delivered energy
 
+    def dispatch(self, available_kWh, step):
+        """Determines charge and discharge of battery at timestep."""
+        self.net_discharge_for_ts = 0.0  # reset
+        # -------------------------------
+        # Make battery control decisions:
+        # -------------------------------
+        # 1) Use excess PV to charge
+        # --------------------------
+        if available_kWh > 0:
+            available_kWh = \
+            self.charge(available_kWh)
+        # 2) Discharge if needed to meet load, within discharge period
+        # ------------------------------------------------------------
+        elif available_kWh < 0 and ts.timeseries[step] in self.discharge_period:
+            available_kWh += \
+                self.discharge(-available_kWh)
+        # 3) Charge from grid in additional charge period:
+        # ------------------------------------------------
+        elif available_kWh <= 0 and ts.timeseries[step] in self.charge_period:
+            available_kWh -= (self.max_timestep_accepted -
+                              self.charge(self.max_timestep_accepted))
+
+        # For monitoring purposes, log battery SOC:
+        # -----------------------------------------
+        self.SOC_log[step] = self.charge_level_kWh / self.capacity_kWh * 100
+        self.SOH = 100 - (self.number_cycles / self.max_cycles) * 100
+
+        # For SS and SC calcs, log net discharge:
+        # ---------------------------------------
+        self.net_discharge[step] = self.net_discharge_for_ts
+
+        return available_kWh
+
     def calcBatCapex(self):
         """Calculates capex for battery"""
 
@@ -435,40 +468,6 @@ class Battery():
             bat_capex = self.battery_cost
         tot_capex = bat_inv_capex + bat_capex
         return tot_capex
-
-    def dispatch(self, available_kWh, step):
-        """Determines charge and discharge of battery at timestep."""
-        self.net_discharge_for_ts = 0.0  # reset
-        # -------------------------------
-        # Make battery control decisions:
-        # -------------------------------
-        # 1) Use excess PV to charge
-        # --------------------------
-        if available_kWh > 0:
-            available_kWh = \
-            self.charge(available_kWh)
-        # 2) Discharge if needed to meet load, within discharge period
-        # ------------------------------------------------------------
-        elif available_kWh < 0 and ts.timeseries[step] in self.discharge_period:
-            available_kWh += \
-                self.discharge(-available_kWh)
-        # 3) Charge from grid in additional charge period:
-        # ------------------------------------------------
-        elif available_kWh <= 0 and ts.timeseries[step] in self.charge_period:
-            available_kWh -= (self.max_timestep_accepted -
-                              self.charge(self.max_timestep_accepted))
-
-        # For monitoring purposes, log battery SOC:
-        # -----------------------------------------
-        self.SOC_log[step] = self.charge_level_kWh / self.capacity_kWh * 100
-        self.SOH = 100 - (self.number_cycles / self.max_cycles) * 100
-
-        # For SS and SC calcs, log net discharge:
-        # ---------------------------------------
-        self.net_discharge[step] = self.net_discharge_for_ts
-
-        return available_kWh
-
 
 
 class Customer():
@@ -683,7 +682,6 @@ class Network(Customer):
         self.total_aggregated_coincidence = np.zeros(ts.num_steps)
         self.sum_of_coincidences = np.zeros(ts.num_steps)
         self.total_discharge = np.zeros(ts.num_steps)
-
 
 
         # initialise residents' loads
@@ -1198,8 +1196,8 @@ class Network(Customer):
         timedata = pd.DataFrame(index=ts.timeseries)
         timedata['network_load'] = self.network_load.sum(axis=1)
         timedata['pv_generation'] = self.pv.sum(axis=1)
-        timedata['en_import'] = self.imports
-        timedata['en_export'] = self.exports
+        timedata['grid_import'] = self.imports
+        timedata['grid_export'] = self.exports
         timedata['sum_of_customer_imports'] = self.cum_resident_imports
         timedata['sum_of_customer_exports'] = self.cum_resident_exports
 
@@ -1484,12 +1482,11 @@ class Scenario():
         print(self.name, self.arrangement)
 
     def calcFinancials(self, net):
-        """ Calculates results for specific net within scenario.
+        """ Calculates financial results for specific net within scenario.
 
          Includes: cashflows for whole period  - for each resident
-                   cashflows for net and retailer
-                   total imports and exports,
-                   self consumption and pv_ratio."""
+                   cashflows for net and retailer."""
+
         # This function and Customer.calcCashflow() are the heart of the finances
         # -------------------------------
         # Calculate cashflows for net
@@ -1548,8 +1545,7 @@ class Scenario():
             + (self.en_opex + self.en_capex_repayment + self.pv_capex_repayment \
                + self.total_battery_capex_repayment)*100 - net.total_building_payment
 
-        # Checksum disabled. - #TODO sort out battery capex for 'cp_only' ?????
-
+        # #TODO sort out battery capex for 'cp_only' ?????
         # NB checksum: These two total should be the same for all arrangements
         if abs(net.checksum_total_payments) > 0.005:
             print('**************CHECKSUM ERROR***See log ******* Study: ', study.name, ' Scenario: ', self.name)
@@ -1557,6 +1553,19 @@ class Scenario():
             logging.info('Study: %s  Scenario: %s ', study.name, self.name)
             logging.info('Tot Building Cost %f Checksum %f', net.total_building_payment, net.checksum_total_payments)
 
+        # ----------------------
+        # NPV for whole building
+        # ----------------------
+
+
+
+    def collateNetworkResults(self,net):
+        """ Collates financial and energy results for specific net within scenario.
+
+                 Includes: cashflows for whole period  - for each resident
+                           cashflows for net and retailer
+                           total imports and exports,
+                           self consumption and pv_ratio."""
         # ---------------------------------------------------------------
         # Collate all results for network / eno  in one row of results df
         # ---------------------------------------------------------------
@@ -1952,6 +1961,7 @@ def runScenario(scenario_name):
         eno.calcAllDemandCharges()
         eno.allocateAllCapex(scenario)  # per load profile to allow for scenarios where capex allocation depends on load
         scenario.calcFinancials(eno)
+        scenario.collateNetworkResults(eno)
         if study.log_timeseries:
             eno.logTimeseries(scenario)
 
@@ -2019,7 +2029,7 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 's_testing'
-    default_study = 'test_energy3'
+    default_study = 'test_energy5'
     use_threading = False
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
