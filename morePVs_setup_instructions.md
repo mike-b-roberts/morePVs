@@ -160,7 +160,6 @@ N.B. (all `_id`s require `_strategy` too.)
 
 | Arrangement                               | Battery Set-up                                             |
 | ----------------------------------------- | ---------------------------------------------------------- |
-| `bau`                                     | No battery, by definition                                  |
 | `en` or `en_pv`  - with central battery   | `central_battery_id`                                       |
 | `en` or `en_pv` with individual batteries | `all_battery_id`  (or multiple `x_bat....`)                |
 |                                           | `cp_battery_id`                                            |
@@ -177,7 +176,7 @@ __Battery Characteristics__
 All battery technical data is kept in `reference\battery_lookup.csv`
 `battery_scenario`  - identifier unique to battery characteristics and control strategy
 `capacity_kWh`      - Single capacity figure: Useful discharge energy
-`efficiency_cycle`  - for charge and discharge (MAX = 1.0)  (default `0.95`)
+`efficiency_cycle`  - for charge and discharge (default `0.95`)
 `charge_kW` - for charge and discharge. constrained by inverter power and/or max ~0.8C for charging. Defaults to `0.5C`
 `maxDOD` (default `0.8`
 `maxSOC` (default `0.9`)
@@ -209,7 +208,7 @@ OUTPUT TYPES
 ------------
 Column `output_type` in `'study_...csv` *applies to all scenarios*
 
-| `output_types`       |                                                      | Fields                                                       |
+| `output_type`        |                                                      | Fields                                                       |
 | -------------------- | ---------------------------------------------------- | ------------------------------------------------------------ |
 | `log_timeseries_csv` | timeseries `.csv` for each scenario and load profile | ` total load  `,` total building import`, `total building export`,`total generation`,`battery saved charge` |
 | `csv_total_vs_type`  | Summary `.csv`                                       | `scenario_label`,`load_folder`, `arrangement`, `number_of_households`,`total$_building_costs_mean`,`cp_ratio_mean`,`pv_ratio_mean` |

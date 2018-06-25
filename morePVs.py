@@ -254,10 +254,10 @@ class Battery():
                 sys.exit("Battery Efficiency > 1")
             self.maxDOD = study.battery_lookup.loc[battery_id, 'maxDOD']
             self.maxSOC = study.battery_lookup.loc[battery_id, 'maxSOC']
-            if self.maxDOD + self.maxSOC >= 1.0:
+            if self.maxDOD + self.maxSOC <= 1.0:
                 logging.info('***************Exception!!! Battery maxSOC + maxDOD >= 1.0 *******')
-                print('***************Exception!!! Battery maxSOC + maxDOD >= 1.0*******')
-                sys.exit("Battery DOD + SOC  > 1")
+                print('***************Exception!!! Battery maxSOC + maxDOD <= 1.0*******')
+                sys.exit("Battery maxDOD + maxSOC  <= 1")
             self.battery_cost = study.battery_lookup.loc[battery_id, 'battery_cost']
             self.battery_inv_cost = study.battery_lookup.loc[battery_id, 'battery_inv_cost']
             if np.isnan(study.battery_lookup.loc[battery_id, 'life_bat_inv']):
@@ -880,6 +880,25 @@ class Network(Customer):
         else:
             self.resident['cp'].has_battery = False
 
+        # Flag battery arrangements that don't exist in the model:
+        # --------------------------------------------------------
+        if 'btm' in scenario.arrangement and self.has_central_battery:
+            logging.info('***************Warning!!! Scenario %s has btm arrangement with central battery \
+                - not included in this model', str(scenario.name))
+            print('***************Warning!!! Scenario %s has btm arrangement with central battery \
+                - not included in this model', str(scenario.name))
+        if scenario.arrangement == 'cp_only' and self.any_resident_has_battery:
+            logging.info('***************Warning!!! Scenario %s has cp_only arrangement with individual battery(s) \
+                            - not included in this model', str(scenario.name))
+            print('***************Warning!!! Scenario %s has cp_only arrangement with individual battery(s) \
+                            - not included in this model', str(scenario.name))
+        if scenario.arrangement == 'bau' and (self.any_resident_has_battery or self.has_central_battery):
+            logging.info('***************Warning!!! Scenario %s is bau with battery(s) \
+                            - not included in this model', str(scenario.name))
+            print('***************Warning!!! Scenario %s is bau with battery(s) \
+                            - not included in this model', str(scenario.name))
+
+
         # Household batteries - all the same
         # ----------------------------------
         bat_name = 'all_battery_id'
@@ -1181,8 +1200,8 @@ class Network(Customer):
         timedata['pv_generation'] = self.pv.sum(axis=1)
         timedata['en_import'] = self.imports
         timedata['en_export'] = self.exports
-        timedata['total_grid_import'] = self.cum_resident_imports
-        timedata['total_grid_export'] = self.cum_resident_exports
+        timedata['sum_of_customer_imports'] = self.cum_resident_imports
+        timedata['sum_of_customer_exports'] = self.cum_resident_exports
 
         if scenario.has_central_battery:
             timedata['battery_SOC'] = self.battery.SOC_log
