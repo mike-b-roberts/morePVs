@@ -737,8 +737,8 @@ class Network(Customer):
         if 'en' in scenario.arrangement:
             # rename single column in pv file if necessary
             # TODO Change PV allocation to allow individual distributed PV within EN
-            if 'cp' not in self.pv.columns:
-                self.pv.columns = ['cp']
+            if len(self.pv.columns) == 1:
+                self.pv.columns = ['central']
 
         elif scenario.arrangement == 'cp_only':
             # no action required
@@ -792,14 +792,15 @@ class Network(Customer):
             self.pv_customers = []
         else:
             self.pv_customers = [c for c in self.pv.columns if self.pv[c].sum() >0]
-            # Add blank columns for all residents with no pv
-            blank_columns = [x for x in self.resident_list if x not in self.pv.columns]
-            self.pv = pd.concat([self.pv, pd.DataFrame(columns=blank_columns)], sort=False).fillna(0)
+        # Add blank columns for all residents with no pv and for central
+        blank_columns = [x for x in(self.resident_list + ['central']) if x not in self.pv.columns]
+        self.pv = pd.concat([self.pv, pd.DataFrame(columns=blank_columns)], sort=False).fillna(0)
 
         # Initialise all residents with their allocated PV generation
         # -----------------------------------------------------------
         for c in self.resident_list:
             self.resident[c].initialiseCustomerPV(np.array(self.pv[c]).astype(np.float64))
+        self.initialiseCustomerPV(np.array(self.pv['central']).astype(np.float64))
 
         # For diagnostics only @@@@@
         # @@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -837,8 +838,8 @@ class Network(Customer):
         if 'en' in scenario.arrangement:
             for c in self.resident_list:
                 if self.resident[c].tariff.is_solar_inst:
-                    self.resident[c].local_quota = np.where((self.pv['cp'] > self.resident['cp'].load),\
-                                                            (self.pv['cp'] - self.resident['cp'].load) / len(
+                    self.resident[c].local_quota = np.where((self.pv['central'] > self.resident['cp'].load),\
+                                                            (self.pv['central'] - self.resident['cp'].load) / len(
                                                             self.households), 0)
                 else:
                     self.resident[c].local_quota = np.zeros(ts.num_steps)
@@ -980,7 +981,7 @@ class Network(Customer):
             self.cum_local_imports += self.resident[c].local_imports
 
         # Calculate aggregate flows for ENO
-        self.flows = self.cum_resident_exports - self.cum_resident_imports
+        self.flows = self.generation + self.cum_resident_exports - self.cum_resident_imports
         self.exports = self.flows.clip(0)
         self.imports = (-1 * self.flows).clip(0)
 
@@ -1012,7 +1013,9 @@ class Network(Customer):
         # ----------------------------------------------------------------------------------------
         # Calculate energy flow without central  battery, then modify by calling battery.dispatch:
         # ----------------------------------------------------------------------------------------
-        self.flows[step] = self.cum_resident_exports[step] - self.cum_resident_imports[step]
+        self.flows[step] = self.generation[step] \
+                         + self.cum_resident_exports[step] \
+                         - self.cum_resident_imports[step]
         if self.has_central_battery:
             self.flows[step] = self.battery.dispatch(available_kWh=self.flows[step], step=step)
 
@@ -1176,7 +1179,7 @@ class Network(Customer):
                 self.sum_of_coincidences += self.resident[c].coincidence
         # ... for central PV:
             self.total_aggregated_coincidence = np.minimum(self.network_load.sum(axis=1),
-                                                               self.pv.sum(axis=1) + self.total_discharge)
+                                                               self.pv['central'] + self.total_discharge)
 
             if scenario.arrangement == 'en_pv':
                 self.self_consumption = np.sum(self.total_aggregated_coincidence) / self.pv.sum().sum() * 100
@@ -1248,7 +1251,7 @@ class Scenario():
         else:
             self.pv_allocation = 'fixed'
 
-        # @@@@    IAGNOSTICS:
+        # @@@@    DIAGNOSTICS:
         #print(self.name, self.arrangement)
 
         # -----------------------------------------------------------------
@@ -2044,7 +2047,7 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 's_testing'
-    default_study = 'test_timestamps2'
+    default_study = 'test_finance1'
     use_threading = False
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
