@@ -371,7 +371,8 @@ class Battery():
                                desired_charge * self.efficiency_charge)
         self.charge_level_kWh += amount_to_charge
         energy_accepted = amount_to_charge / self.efficiency_charge
-        self.number_cycles += 0.5 * amount_to_charge / (self.capacity_kWh * (self.maxSOC - 1 + self.maxDOD))
+        if self.capacity_kWh> 0:
+            self.number_cycles += 0.5 * amount_to_charge / (self.capacity_kWh * (self.maxSOC - 1 + self.maxDOD))
         self.net_discharge_for_ts = - energy_accepted
         self.cumulative_losses += energy_accepted * (1 - self.efficiency_charge)
 
@@ -415,7 +416,9 @@ class Battery():
 
         # For monitoring purposes, log battery SOC:
         # -----------------------------------------
-        self.SOC_log[step] = self.charge_level_kWh / self.capacity_kWh * 100
+        if self.capacity_kWh > 0:
+            self.SOC_log[step] = self.charge_level_kWh / self.capacity_kWh * 100
+
         self.SOH = 100 - (self.number_cycles / self.max_cycles) * 100
 
         # For SS and SC calcs, log net discharge:
@@ -509,7 +512,7 @@ class Customer():
     def initialiseCustomerPV(self, pv_generation):  # 1-D array
         self.generation = pv_generation
 
-    def calcStaticEnergyFlows(self):
+    def calcStaticEnergy(self):
         """Calculate Customer imports and exports for whole time period"""
         self.flows = self.generation - self.load
         self.exports = self.flows.clip(0)
@@ -519,7 +522,7 @@ class Customer():
         # for btm_p arrangement:
         self.local_consumption = np.minimum(self.generation, self.load)
 
-    def calcDynamicEnergyFlows(self,step):
+    def calcDynamicEnergy(self, step):
         """Calculate Customer imports and exports for single timestep"""
         # -------------------------------------------------------------------------------
         # Calculate energy flow without battery, then modify by calling battery.dispatch:
@@ -969,7 +972,7 @@ class Network(Customer):
 
         # Calculate flows for each resident and cumulative values for ENO
         for c in self.resident_list:
-            self.resident[c].calcStaticEnergyFlows()
+            self.resident[c].calcStaticEnergy()
             # Cumulative load and generation are what the "ENO" presents to the retailer:
             self.cum_resident_imports += self.resident[c].imports
             self.cum_resident_exports += self.resident[c].exports
@@ -998,7 +1001,7 @@ class Network(Customer):
         for c in self.resident_list:
             # Calc flows (inc battery dispatch) for each resident
             # ---------------------------------------------------
-            self.resident[c].calcDynamicEnergyFlows(step)
+            self.resident[c].calcDynamicEnergy(step)
             # Cumulative load and generation are what the "ENO" presents to the retailer:
             self.cum_resident_imports[step] += self.resident[c].imports[step]
             self.cum_resident_exports[step] += self.resident[c].exports[step]
@@ -1225,6 +1228,7 @@ class Scenario():
         # ------------------------------
         self.name = scenario_name
         self.label = study.name + '_' + "{:03}".format(int(self.name))
+
         # Copy all scenario parameters to allow for threading:
         if use_threading:
             with lock:
@@ -1243,6 +1247,9 @@ class Scenario():
             self.pv_allocation = 'load_dependent'
         else:
             self.pv_allocation = 'fixed'
+
+        # @@@@    IAGNOSTICS:
+        #print(self.name, self.arrangement)
 
         # -----------------------------------------------------------------
         # Set up load profiles, resident list & results df for the scenario
@@ -1720,7 +1727,7 @@ class Study():
         self.project_path = os.path.join(self.base_path,'studies',project)
         # reference files
         # ---------------
-        self.reference_path = os.path.join(self.base_path, 'reference_TEST')
+        self.reference_path = os.path.join(self.base_path, 'reference')  # 'reference_TEST'
         self.input_path = os.path.join(self.project_path, 'inputs')
         tariff_name = 'tariff_lookup.csv'
         self.t_lookupFile = os.path.join(self.reference_path, tariff_name)
@@ -1958,7 +1965,7 @@ def runScenario(scenario_name):
         # These are the load and generation that it presents to DNSP
         eno.retailer.initialiseCustomerLoad(eno.imports)
         eno.retailer.initialiseCustomerPV(eno.exports)
-        eno.retailer.calcStaticEnergyFlows()
+        eno.retailer.calcStaticEnergy()
 
         # Summary energy metrics
         # ----------------------
@@ -2037,7 +2044,7 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 's_testing'
-    default_study = 'test_finance1'
+    default_study = 'test_timestamps2'
     use_threading = False
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------

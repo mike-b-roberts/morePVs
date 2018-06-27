@@ -224,7 +224,7 @@ def main():
     # plot_battery(project='p_testing', study_name='test_indbat1')
 
     project = 's_testing'
-    study_name = 'test_energy5'
+    study_name = 'test_finance1'
     plot_battery(project=project, study_name=study_name)
 
     pass
