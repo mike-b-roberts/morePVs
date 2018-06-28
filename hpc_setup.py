@@ -9,7 +9,7 @@ import csv
 # -----------------
 project='EN1a_pv_bat4'
 study = 'siteJ_bat4_2'
-maxjobs = 120
+maxjobs = 60
 
 
 # Establish paths etc
@@ -34,7 +34,7 @@ df = df.set_index('scenario')
 #PAth for bash script files
 # -------------------------
 bash_path='/home/z5044992/InputOutput/en/morePVs/bash_files/'+new_project+'/'+study
-
+morePVs_path = '/home/z5044992/InputOutput/en/morePVs/'
 # Split input (s'study_....csv') files 
 # ------------------------------------
 
@@ -93,11 +93,12 @@ for csv_name in csv_list:
 
 
     putty_script +=['sbatch '+ bash_file]
+    putty_script += ['sleep 2']
 
 # Create PuTTY Script:
 # --------------------    
 
-putty_file = os.path.join(bash_path, 'putty.txt')
+putty_file = os.path.join(morePVs_path, 'script')
 putty_out = pd.DataFrame (putty_script)
 putty_out.to_csv(putty_file, index=False,header=False,
                                       quoting=csv.QUOTE_NONE, line_terminator='\n')

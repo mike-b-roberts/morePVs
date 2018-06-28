@@ -1,0 +1,5 @@
+how to execute script:
+
+Press CTRL-X to save the file and exit the editor (follow the prompts), then:
+chmod a+x ./script1  # Make the script executable
+./script1            # Execute the script!  (Note the use of “./”)
