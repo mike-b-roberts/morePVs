@@ -31,10 +31,10 @@ if not os.path.exists (o_path):
 df = pd.read_csv(i_file)
 df = df.set_index('scenario')
 
-#PAth for bash script files
-# -------------------------
+#Path for bash script files and for script
+# ----------------------------------------
 bash_path='/home/z5044992/InputOutput/en/morePVs/bash_files/'+new_project+'/'+study
-morePVs_path = '/home/z5044992/InputOutput/en/morePVs/'
+script_path = '/home/z5044992/InputOutput/en/morePVs/'
 # Split input (s'study_....csv') files 
 # ------------------------------------
 
@@ -98,7 +98,7 @@ for csv_name in csv_list:
 # Create PuTTY Script:
 # --------------------    
 
-putty_file = os.path.join(morePVs_path, 'script')
+putty_file = os.path.join(script_path, 'script')
 putty_out = pd.DataFrame (putty_script)
 putty_out.to_csv(putty_file, index=False,header=False,
                                       quoting=csv.QUOTE_NONE, line_terminator='\n')

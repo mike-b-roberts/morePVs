@@ -17,6 +17,7 @@ import os
 import time
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import subprocess
 import matplotlib.dates as md
 # import pdb, traceback, sys
 # import calendar
@@ -215,6 +216,13 @@ def plot_battery(project,
         # plt.show()
         plt.savefig(plotfile, dpi=1000)
         plt.close('all')
+
+
+def getridof(target):
+    # delete file or folder that is read only
+    if os.path.exists(target):
+        subprocess.check_call(('attrib -R ' + target + '\\* /S').split())
+        shutil.rmtree(target)
 
 
 #MAIN PROGRAM
