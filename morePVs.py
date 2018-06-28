@@ -284,17 +284,21 @@ class Battery():
             if pd.isnull(self.battery_inv_cost):
                 self.battery_inv_cost =0.0
 
-            # Set up restricted discharge period and additional charge period
-            # ---------------------------------------------------------------
+            # Set up restricted discharge period(s) and additional charge period(s)
+            # ---------------------------------------------------------------------
             discharge_start1 = study.battery_strategies.loc[battery_strategy, 'discharge_start1']
             discharge_end1 = study.battery_strategies.loc[battery_strategy, 'discharge_end1']
             discharge_day1 = study.battery_strategies.loc[battery_strategy, 'discharge_day1']
             discharge_start2 = study.battery_strategies.loc[battery_strategy, 'discharge_start2']
             discharge_end2 = study.battery_strategies.loc[battery_strategy, 'discharge_end2']
             discharge_day2 = study.battery_strategies.loc[battery_strategy, 'discharge_day2']
-            charge_start = study.battery_strategies.loc[battery_strategy, 'charge_start']
-            charge_end = study.battery_strategies.loc[battery_strategy, 'charge_end']
-            charge_day = study.battery_strategies.loc[battery_strategy, 'charge_day']
+            charge_start1 = study.battery_strategies.loc[battery_strategy, 'charge_start1']
+            charge_end1 = study.battery_strategies.loc[battery_strategy, 'charge_end1']
+            charge_day1 = study.battery_strategies.loc[battery_strategy, 'charge_day1']
+            charge_start2 = study.battery_strategies.loc[battery_strategy, 'charge_start2']
+            charge_end2 = study.battery_strategies.loc[battery_strategy, 'charge_end2']
+            charge_day2 = study.battery_strategies.loc[battery_strategy, 'charge_day2']
+
             # Calculate discharge period(s):
             # -----------------------------
             if pd.isnull(discharge_start1):
@@ -322,19 +326,32 @@ class Battery():
                                             & (ts.days[discharge_day2].time <= pd.Timestamp(discharge_end2).time())]
             self.discharge_period = discharge_period1.join(discharge_period2, how='outer')
 
-            # Calculate additional charging period:
+            # Calculate additional charging period(s):
             # -------------------------------------
-            if pd.isnull(charge_start):
+            if pd.isnull(charge_start1):
                 self.charge_period = pd.DatetimeIndex([])
-            elif pd.Timestamp(charge_start) > pd.Timestamp(charge_end):
-                self.charge_period = (ts.days[charge_day][(ts.days[charge_day].time > pd.Timestamp(charge_start).time()) & (
-                            ts.days[charge_day].time <= pd.Timestamp('23:59').time())].append(
-                    ts.days[charge_day][(ts.days[charge_day].time >= pd.Timestamp('0:00').time()) & (
-                                ts.days[charge_day].time <= pd.Timestamp(charge_end).time())])).sort_values()
+            elif pd.Timestamp(charge_start1) > pd.Timestamp(charge_end1):
+                self.charge_period = (ts.days[charge_day1][(ts.days[charge_day1].time > pd.Timestamp(charge_start1).time()) & (
+                            ts.days[charge_day1].time <= pd.Timestamp('23:59').time())].append(
+                    ts.days[charge_day1][(ts.days[charge_day1].time >= pd.Timestamp('0:00').time()) & (
+                                ts.days[charge_day1].time <= pd.Timestamp(charge_end1).time())])).sort_values()
             else:
                 self.charge_period = \
-                    ts.days[charge_day][(ts.days[charge_day].time > pd.Timestamp(charge_start).time())
-                                           & (ts.days[charge_day].time <= pd.Timestamp(charge_end).time())]
+                    ts.days[charge_day1][(ts.days[charge_day1].time > pd.Timestamp(charge_start1).time())
+                                           & (ts.days[charge_day1].time <= pd.Timestamp(charge_end1).time())]
+                if pd.isnull(charge_start2):
+                    self.charge_period = pd.DatetimeIndex([])
+                elif pd.Timestamp(charge_start2) > pd.Timestamp(charge_end2):
+                    self.charge_period = (
+                    ts.days[charge_day2][(ts.days[charge_day2].time > pd.Timestamp(charge_start2).time()) & (
+                            ts.days[charge_day2].time <= pd.Timestamp('23:59').time())].append(
+                        ts.days[charge_day2][(ts.days[charge_day2].time >= pd.Timestamp('0:00').time()) & (
+                                ts.days[charge_day2].time <= pd.Timestamp(charge_end2).time())])).sort_values()
+                else:
+                    self.charge_period = \
+                        ts.days[charge_day2][(ts.days[charge_day2].time > pd.Timestamp(charge_start2).time())
+                                             & (ts.days[charge_day2].time <= pd.Timestamp(charge_end2).time())]
+
             # Initialise battery variables
             # ----------------------------
             self.initial_SOC = 0.5  # BATTERY STARTS AT 50% SOC
@@ -466,7 +483,7 @@ class Battery():
             cycle_life = 1000
         actual_lifetime = np.min([cycle_life, self.battery_life_years])
         if float(self.scenario.a_term) > actual_lifetime:
-            bat_capex = (int(float(self.scenario.a_term)/actual_lifetime)+1) * self.battery_cost
+            bat_capex = (int(float(self.scenario.a_term)/actual_lifetime - 0.01) + 1) * self.battery_cost
         else:
             bat_capex = self.battery_cost
         tot_capex = bat_inv_capex + bat_capex
@@ -984,6 +1001,7 @@ class Network(Customer):
         self.flows = self.generation + self.cum_resident_exports - self.cum_resident_imports
         self.exports = self.flows.clip(0)
         self.imports = (-1 * self.flows).clip(0)
+        pass
 
 
     def calcAllDemandCharges(self):
@@ -1298,6 +1316,8 @@ class Scenario():
         else:
             self.pvFile = os.path.join(study.pv_path,
                                   self.parameters['pv_filename'])
+            if not '.csv' in self.pvFile:
+                self.pvFile = self.pvFile + '.csv'
             if not os.path.exists(self.pvFile):
                 logging.info('***************Exception!!! PV file %s NOT FOUND', self.pvFile)
                 print('***************Exception!!! PV file %s NOT FOUND: ', self.pvFile)
@@ -1730,7 +1750,7 @@ class Study():
         self.project_path = os.path.join(self.base_path,'studies',project)
         # reference files
         # ---------------
-        self.reference_path = os.path.join(self.base_path, 'reference')  # 'reference_TEST'
+        self.reference_path = os.path.join(self.base_path, 'reference_TEST')  # 'reference_TEST'
         self.input_path = os.path.join(self.project_path, 'inputs')
         tariff_name = 'tariff_lookup.csv'
         self.t_lookupFile = os.path.join(self.reference_path, tariff_name)
@@ -2047,7 +2067,7 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 's_testing'
-    default_study = 'test_finance1'
+    default_study = 'test_lifecycles'
     use_threading = False
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
