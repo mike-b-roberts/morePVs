@@ -61,8 +61,7 @@ class TariffData():
         """Initialise tariff look-up table."""
         self.reference_path = reference_path
         self.saved_tariff_path = os.path.join(self.reference_path, 'saved_tariffs')
-        if not os.path.exists(self.saved_tariff_path):
-            os.makedirs(self.saved_tariff_path)
+        os.makedirs(self.saved_tariff_path, exist_ok=True)
         # read csv of tariff parameters
         self.lookup = pd.read_csv(tariff_lookup_path, index_col=[0])
         self.all_tariffs = [t for t in self.lookup.index if t in parameter_list] # list of all tariff ids
@@ -826,8 +825,7 @@ class Network(Customer):
         # For diagnostics only @@@@@
         # @@@@@@@@@@@@@@@@@@@@@@@@@@
         pvpath = os.path.join(study.output_path, 'pv')
-        if not os.path.exists(pvpath):
-            os.makedirs(pvpath)
+        os.makedirs(pvpath, exist_ok=True)
         pvFile = os.path.join(pvpath, self.name + '_py_' + str(scenario.name) +'_' + scenario.arrangement + '.csv')
         um.df_to_csv(self.pv, pvFile)
 
@@ -1786,19 +1784,15 @@ class Study():
         # Set up output paths
         # -------------------
         self.output_path = os.path.join(self.project_path, 'outputs')
-        if not os.path.exists(self.output_path):
-            os.makedirs(self.output_path)
+        os.makedirs(self.output_path, exist_ok=True)
         self.output_path = os.path.join(self.output_path, study_name)
-        if not os.path.exists(self.output_path):
-            os.makedirs(self.output_path)
+        os.makedirs(self.output_path, exist_ok=True)
         self.scenario_path = os.path.join(self.output_path,'scenarios')
-        if not os.path.exists(self.scenario_path):
-            os.makedirs(self.scenario_path)
+        os.makedirs(self.scenario_path, exist_ok=True)
         if 'log_timeseries_csv' in self.output_list:
             self.log_timeseries = True
             self.timeseries_path = os.path.join(self.output_path, 'timeseries')
-            if not os.path.exists(self.timeseries_path):
-                os.makedirs(self.timeseries_path)
+            os.makedirs(self.timeseries_path, exist_ok=True)
         else:
             self.log_timeseries = False
 
