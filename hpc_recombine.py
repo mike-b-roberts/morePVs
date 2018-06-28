@@ -82,7 +82,7 @@ for ff in folder_list:
             sf = os.path.join(spath, s)
             nf = os.path.join(so_path, s)
             shutil.move(sf, nf)
-        os.remove(spath)
+        os.rmdir(spath)
     pvpath = os.path.join(hpc_path, ff, 'pv')
     # -------------
     # copy PV files 
@@ -94,19 +94,19 @@ for ff in folder_list:
             nf = os.path.join(po_path, s)
             shutil.move(sf, nf)
 
-        os.remove(pvpath)
+        os.rmdir(pvpath)
     fff = os.path.join(hpc_path, ff)
-    os.remove(fff)
+    os.rmdir(fff)
 
 # Delete hpc input files and bash files
 # -------------------------------------
 in_list = os.listdir(i_path)
 for f in [f for f in i_path if 'hpc' in f and '.csv' in f]:
     fname = os.path.join(i_path, f)
-    getridof(fname)
+    os.remove(fname)
 
 bash_list = os.listdir(bash_path)
 for f in [f for f in bash_path]:
     fname = os.path.join(i_path, f)
-    getridof(fname)
-getridof(bash_path)
+    os.rmdir(fname)
+os.rmdir(bash_path)
