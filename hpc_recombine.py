@@ -82,7 +82,7 @@ for ff in folder_list:
             sf = os.path.join(spath, s)
             nf = os.path.join(so_path, s)
             shutil.move(sf, nf)
-        um.getridof(spath)
+        os.remove(spath)
     pvpath = os.path.join(hpc_path, ff, 'pv')
     # -------------
     # copy PV files 
@@ -94,9 +94,9 @@ for ff in folder_list:
             nf = os.path.join(po_path, s)
             shutil.move(sf, nf)
 
-        um.getridof(pvpath)
+        os.remove(pvpath)
     fff = os.path.join(hpc_path, ff)
-    um.getridof(fff)
+    os.remove(fff)
 
 # Delete hpc input files and bash files
 # -------------------------------------
