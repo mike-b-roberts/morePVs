@@ -10,21 +10,21 @@
 # Contact: m.roberts@unsw.edu.au
 
 # IMPORT Modules
-try:
-    import numpy as np
-    import sys
-    import logging
-    import sys
-    import os
-    import pdb, traceback
-    import pandas as pd
-    import en_utilities as um
-    import threading
-    import concurrent.futures
-    import datetime as dt
-    import pathlib
-    #from en import morePVs_output as opm
-except:
+
+import numpy as np
+import sys
+import logging
+import sys
+import os
+import pdb, traceback
+import pandas as pd
+import en_utilities as um
+import threading
+import concurrent.futures
+import datetime as dt
+import pathlib
+#from en import morePVs_output as opm
+
 
 
 
