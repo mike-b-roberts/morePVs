@@ -10,20 +10,24 @@
 # Contact: m.roberts@unsw.edu.au
 
 # IMPORT Modules
-import numpy as np
-import sys
-import logging
-import sys
-import os
-import pdb, traceback
-import pandas as pd
-import en_utilities as um
-import threading
-import concurrent.futures
-import datetime as dt
-import pathlib
+try:
+    import numpy as np
+    import sys
+    import logging
+    import sys
+    import os
+    import pdb, traceback
+    import pandas as pd
+    import en_utilities as um
+    import threading
+    import concurrent.futures
+    import datetime as dt
+    import pathlib
+    #from en import morePVs_output as opm
+except:
 
-#from en import morePVs_output as opm
+
+
 
 # Classes
 class Timeseries():

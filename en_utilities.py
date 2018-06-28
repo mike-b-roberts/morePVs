@@ -4,9 +4,9 @@
 
 # IMPORT Modules
 import pandas as pd
-import win32api
-import win32com.client
-import pythoncom
+# import win32api
+# import win32com.client
+# import pythoncom
 # import io
 # from pytz import UTC
 # from pytz import timezone
@@ -91,20 +91,20 @@ def df_to_csv(df,path):
     # Adapted from
     # http: // timgolden.me.uk / python / win32_how_do_i / see - if -an - excel - workbook - is -open.html
 
-    # df.to_csv(path)
+    df.to_csv(path)
 
-    try:
-        df.to_csv(path)
-        logging.info('saved to %s', path)
-        pass
-    except IOError:
-        context = pythoncom.CreateBindCtx(0)
-        for moniker in pythoncom.GetRunningObjectTable():
-            name = moniker.GetDisplayName(context, None)
-            if name == path:
-                obj = win32com.client.GetObject(path)
-                obj.Close(True)
-        df.to_csv(path)
+    # try:
+    #     df.to_csv(path)
+    #     logging.info('saved to %s', path)
+    #     pass
+    # except IOError:
+    #     context = pythoncom.CreateBindCtx(0)
+    #     for moniker in pythoncom.GetRunningObjectTable():
+    #         name = moniker.GetDisplayName(context, None)
+    #         if name == path:
+    #             obj = win32com.client.GetObject(path)
+    #             obj.Close(True)
+    #     df.to_csv(path)
 
 ###############################################################
 def find_between( s, first, last ):

@@ -199,8 +199,15 @@ kept in `reference/battery_control_strategies`
 or these hours: `discharge_start2` and `discharge_end2` 
 
 Optional additional grid-charging period
-`charge_start` and `charge_end` 
-`discharge_day1` , `discharge_day2`and `charge_day` (=`both`) `week`, `end` or `both` : days to discharge / charge
+`charge_start1` and `charge_end1`
+
+`charge_start2` and `charge_end2 `
+
+
+
+`discharge_day1` , `discharge_day2`and `charge_day1` and `charge_day2`
+
+​	= `week`, `end` or `both` : days to discharge / charge
 
 
 
