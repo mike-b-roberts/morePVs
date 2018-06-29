@@ -6,108 +6,134 @@ import numpy as np
 import stat
 import subprocess
 import en_utilities as um
+import sys
 
-# Input parameters:
-# -----------------
-project = 'EN1a_pv_bat4'
-study = 'siteJ_bat4_2'
+def main(project, study, delete_input):
 
+    # Establish paths etc
+    # -------------------
+    new_project = project+'_hpc'
+    bash_root = '/home/z5044992/InputOutput/en/morePVs/bash_files'
 
-# Establish paths etc
-# -------------------
-new_project = project+'_hpc'
-base_path = '/home/z5044992/InputOutput/DATA_EN_3/studies'
-bash_root = '/home/z5044992/InputOutput/en/morePVs/bash_files'
+    # Paths for hpc outputs
+    np_path =os.path.join(base_path, new_project)
+    if not os.path.exists(np_path):
+        os.makedirs(np_path)
+    i_path = os.path.join(np_path, 'inputs')
+    hpc_path = os.path.join(np_path, 'outputs')
 
+    # Path for combined output:
+    o_path = hpc_path
+    if not os.path.exists(o_path):
+        os.makedirs(o_path)
+    so_path = os.path.join(o_path,'scenarios')
+    if not os.path.exists(so_path):
+        os.makedirs(so_path)
+    po_path = os.path.join(o_path,'pv')
+    if not os.path.exists(po_path):
+        os.makedirs(po_path)
 
-# Paths for hpc outputs
-np_path =os.path.join(base_path, new_project)
-if not os.path.exists(np_path):
-    os.makedirs(np_path)
-i_path = os.path.join(np_path, 'inputs')
-hpc_path = os.path.join(np_path, 'outputs')
+    # Bash file path
+    bash_path = os.path.join(bash_root, new_project, study)
 
-# Path for combined output:
-o_path = hpc_path
-if not os.path.exists(o_path):
-    os.makedirs(o_path)
-so_path = os.path.join(o_path,'scenarios')
-if not os.path.exists(so_path):
-    os.makedirs(so_path)
-po_path = os.path.join(o_path,'pv')
-if not os.path.exists(po_path):
-    os.makedirs(po_path)
+    # ---------------------
+    # combine results files
+    # ---------------------
+    # Combine results, customer_results and results_std
+    types = ['customer_results.csv', 'results.csv', 'results_std_dev.csv']
 
-# Bash file path
-bash_path = os.path.join(bash_root, new_project, study)
+    folder_list = [f for f in os.listdir(hpc_path) if 'hpc' in f and not '.csv' in f]
+    df = dict(zip(types, [pd.DataFrame(), pd.DataFrame(), pd.DataFrame()]))
 
+    for ff in folder_list:
+        folder_path = os.path.join(hpc_path, ff)
 
+        for type in types:  # NB customer_results must come first
+            file_list = [f for f in os.listdir(folder_path) if 'hpc' in f and '.csv' in f and type in f]
+            for f in file_list:
+                small_file = os.path.join(folder_path, f)
+                df_s = pd.read_csv(small_file)
+                df_s = df_s.set_index('scenario')
+                df[type] = df[type].append(df_s)
+                os.remove(small_file)
 
+    for type in types:
+        df[type] = df[type].sort_index()
+        o_name = 'hpc_' + study + '_' + type
+        o_file = os.path.join(o_path, o_name)
+        df[type].to_csv(o_file)
 
-# ---------------------
-# combine results files
-# ---------------------
-# Combine results, customer_results and results_std
-types = ['customer_results.csv', 'results.csv', 'results_std_dev.csv']
+    # -------------------
+    # copy scenario files
+    # -------------------
+    for ff in folder_list:
+        spath = os.path.join(hpc_path, ff, 'scenarios')
+        if os.path.exists(spath):
+            slist = os.listdir(spath)
+            for s in slist:
+                sf = os.path.join(spath, s)
+                nf = os.path.join(so_path, s)
+                shutil.move(sf, nf)
+            os.rmdir(spath)
+        pvpath = os.path.join(hpc_path, ff, 'pv')
+        # -------------
+        # copy PV files
+        # -------------
+        if os.path.exists(pvpath):
+            slist = os.listdir(pvpath)
+            for s in slist:
+                sf = os.path.join(pvpath, s)
+                nf = os.path.join(po_path, s)
+                shutil.move(sf, nf)
 
-folder_list = [f for f in os.listdir(hpc_path) if 'hpc' in f and not '.csv' in f]
-df = dict(zip(types, [pd.DataFrame(), pd.DataFrame(), pd.DataFrame()]))
+            os.rmdir(pvpath)
+        fff = os.path.join(hpc_path, ff)
+        os.rmdir(fff)
 
-for ff in folder_list:
-    folder_path = os.path.join(hpc_path, ff)
+    # Delete hpc input files and bash files
+    # -------------------------------------
+    if delete_input:
+        in_list = os.listdir(i_path)
+        for f in [f for f in in_list if 'hpc' in f and '.csv' in f]:
+            fname = os.path.join(i_path, f)
+            os.remove(fname)
 
-    for type in types:  # NB customer_results must come first
-        file_list = [f for f in os.listdir(folder_path) if 'hpc' in f and '.csv' in f and type in f]
-        for f in file_list:
-            small_file = os.path.join(folder_path, f)
-            df_s = pd.read_csv(small_file)
-            df_s = df_s.set_index('scenario')
-            df[type] = df[type].append(df_s)
-            os.remove(small_file)
+        bash_list = os.listdir(bash_path)
+        for f in [f for f in bash_list]:
+            fname = os.path.join(i_path, f)
+            os.remove(fname)
+        os.rmdir(bash_path)
 
-for type in types:
-    df[type] = df[type].sort_index()
-    o_name = 'hpc_' + study + '_' + type
-    o_file = os.path.join(o_path, o_name)
-    df[type].to_csv(o_file)
+if __name__ == "__main__":
 
-# -------------------
-# copy scenario files
-# -------------------
-for ff in folder_list:
-    spath = os.path.join(hpc_path, ff, 'scenarios')
-    if os.path.exists(spath):
-        slist = os.listdir(spath)
-        for s in slist:
-            sf = os.path.join(spath, s)
-            nf = os.path.join(so_path, s)
-            shutil.move(sf, nf)
-        os.rmdir(spath)
-    pvpath = os.path.join(hpc_path, ff, 'pv')
-    # -------------
-    # copy PV files 
-    # -------------
-    if os.path.exists(pvpath):
-        slist = os.listdir(pvpath)
-        for s in slist:
-            sf = os.path.join(pvpath, s)
-            nf = os.path.join(po_path, s)
-            shutil.move(sf, nf)
+    # Input parameters:
+    # -----------------
+    default_project = ''
+    default_study = ''
+    default_delete_input = True
+    default_base_path = '/home/z5044992/InputOutput/DATA_EN_3/studies'
 
-        os.rmdir(pvpath)
-    fff = os.path.join(hpc_path, ff)
-    os.rmdir(fff)
-
-# Delete hpc input files and bash files
-# -------------------------------------
-in_list = os.listdir(i_path)
-for f in [f for f in i_path if 'hpc' in f and '.csv' in f]:
-    fname = os.path.join(i_path, f)
-    print(fname)
-    os.remove(fname)
-
-bash_list = os.listdir(bash_path)
-for f in [f for f in bash_path]:
-    fname = os.path.join(i_path, f)
-    os.remove(fname)
-os.rmdir(bash_path)
+    # Import arguments - allows multi-processing from command line
+    # ------------------------------------------------------------
+    opts = {}  # Empty dictionary to store key-value pairs.
+    while sys.argv:  # While there are arguments left to parse...
+        if sys.argv[0][0] == '-':  # Found a "-name value" pair.
+            opts[sys.argv[0]] = sys.argv[1]  # Add key and value to the dictionary.
+        sys.argv = sys.argv[1:]
+        # Reduce the argument list by copying it starting from index 1.
+    if '-p' in opts:
+        project = opts['-p']
+    else:
+        project = default_project
+    if '-s' in opts:
+        study = opts['-s']
+    else:
+        study = default_study
+    if '-i' in opts:
+        delete_input = opts['-i']
+    else:
+        delete_input = default_delete_input
+    if '-b' in opts:
+        base_path = opts['-b']
+    else:
+        base_path = default_base_path
