@@ -9,7 +9,7 @@ import en_utilities as um
 
 # Input parameters:
 # -----------------
-project='EN1a_pv_bat4'
+project = 'EN1a_pv_bat4'
 study = 'siteJ_bat4_2'
 
 
@@ -21,11 +21,11 @@ bash_root = '/home/z5044992/InputOutput/en/morePVs/bash_files'
 
 
 # Paths for hpc outputs
-np_path =os.path.join(base_path,new_project)
-if not os.path.exists (np_path):
+np_path =os.path.join(base_path, new_project)
+if not os.path.exists(np_path):
     os.makedirs(np_path)
-i_path =os.path.join(np_path,'inputs')
-hpc_path =os.path.join(np_path,'outputs')
+i_path = os.path.join(np_path, 'inputs')
+hpc_path = os.path.join(np_path, 'outputs')
 
 # Path for combined output:
 o_path = hpc_path
@@ -39,7 +39,7 @@ if not os.path.exists(po_path):
     os.makedirs(po_path)
 
 # Bash file path
-bash_path = os.path.join(bash_root,new_project)
+bash_path = os.path.join(bash_root, new_project, study)
 
 
 
@@ -103,6 +103,7 @@ for ff in folder_list:
 in_list = os.listdir(i_path)
 for f in [f for f in i_path if 'hpc' in f and '.csv' in f]:
     fname = os.path.join(i_path, f)
+    print(fname)
     os.remove(fname)
 
 bash_list = os.listdir(bash_path)
