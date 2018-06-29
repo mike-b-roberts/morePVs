@@ -8,7 +8,7 @@ import subprocess
 import en_utilities as um
 import sys
 
-def main(project, study, delete_input):
+def main(project, study, base_path, delete_input):
 
     # Establish paths etc
     # -------------------
@@ -121,6 +121,7 @@ if __name__ == "__main__":
             opts[sys.argv[0]] = sys.argv[1]  # Add key and value to the dictionary.
         sys.argv = sys.argv[1:]
         # Reduce the argument list by copying it starting from index 1.
+
     if '-p' in opts:
         project = opts['-p']
     else:
@@ -137,3 +138,8 @@ if __name__ == "__main__":
         base_path = opts['-b']
     else:
         base_path = default_base_path
+
+    main(project=project,
+         study=study,
+         base_path=base_path,
+         delete_inputs=delete_input)

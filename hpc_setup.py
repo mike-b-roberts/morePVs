@@ -8,7 +8,7 @@ import sys
 
 
 
-def main(project, study, maxjobs):
+def main(project, study, base_path, maxjobs):
 
     # Establish paths etc
     # -------------------
@@ -127,11 +127,15 @@ if __name__ == "__main__":
     else:
         study = default_study
     if '-m' in opts:
-        max_jobs = opts['-t']
+        maxjobs = opts['-t']
     else:
-        max_jobs = default_maxjobs
+        maxjobs = default_maxjobs
     if '-b' in opts:
         base_path = opts['-b']
     else:
         base_path = default_base_path
 
+main(project=project,
+     study=study,
+     base_path=base_path,
+     maxjobs=maxjobs)
