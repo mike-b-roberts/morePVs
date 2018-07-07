@@ -34,7 +34,9 @@ class Timeseries():
     """DateTimeIndex & related parameters used throughout."""
 
     def __init__(self,
-                 load
+                 load,
+                 dst_lookup,
+                 dst_region
                  ):
         self.timeseries = load.index
         self.num_steps = len(self.timeseries)
@@ -50,17 +52,51 @@ class Timeseries():
             'end': self.timeseries[self.timeseries.weekday.isin([5, 6])],
             'both': self.timeseries}
 
+
+        # Set up summer and winter periods for daylight savings:
+        self.dst_shift = pd.DateOffset(hours=1)
+        self.seasonal_time = {'winter': self.timeseries[0:0],
+                              'summer': self.timeseries[0:0]}
+        start_label = dst_region + '_start'
+        end_label = dst_region + '_end'
+
+        for year in self.timeseries.year.drop_duplicates().tolist():
+            dst_start = pd.Timestamp(dst_lookup.loc[year, start_label])
+            dst_end = pd.Timestamp(dst_lookup.loc[year, end_label])
+            tsy = self.timeseries[self.timeseries.year == year]
+            if dst_start < dst_end:
+                self.seasonal_time['winter'] = \
+                    self.seasonal_time['winter'].join(tsy[(tsy >= pd.Timestamp('1/01/'+str(year) + ' 00:00:00'))
+                    & (tsy < dst_start)], 'outer').join(
+                        tsy[(tsy >= dst_end)
+                    & (tsy < pd.Timestamp('31/12/'+str(year) + ' 23:59:59'))], 'outer')
+                self.seasonal_time['summer'] = \
+                    self.seasonal_time['summer'].join(tsy[(tsy >= dst_start)
+                    & (tsy < dst_end)], 'outer')
+            else:
+                self.seasonal_time['summer'] = \
+                    self.seasonal_time['summer'].join(tsy[(tsy >= pd.Timestamp('1/01/'+str(year) + ' 00:00:00'))
+                    & (tsy < dst_end)], 'outer').join(
+                        tsy[(tsy >= dst_start)
+                    & (tsy < pd.Timestamp('31/12/'+str(year) + ' 23:59:59'))], 'outer')
+                self.seasonal_time['winter'] = \
+                    self.seasonal_time['winter'].join(tsy[(tsy >= dst_end)
+                    & (tsy < dst_start)], 'outer')
+        pass
+
+
+
 class TariffData():
     """Reference resource with time-specific price data for multiple tariffs"""
 
     def __init__(
             self,
             tariff_lookup_path,
-            reference_path,
+            output_path,
             parameter_list):
         """Initialise tariff look-up table."""
-        self.reference_path = reference_path
-        self.saved_tariff_path = os.path.join(self.reference_path, 'saved_tariffs')
+
+        self.saved_tariff_path = os.path.join(output_path, 'saved_tariffs')
         os.makedirs(self.saved_tariff_path, exist_ok=True)
         # read csv of tariff parameters
         self.lookup = pd.read_csv(tariff_lookup_path, index_col=[0])
@@ -81,6 +117,7 @@ class TariffData():
                               'name_8': ['rate_8', 'start_8', 'end_8', 'week_8'],
                               }
 
+
     def generateStaticTariffs(self):
         """ Creates time-based rates for all load-independent tariffs."""
         for tid in self.all_tariffs:
@@ -100,9 +137,11 @@ class TariffData():
                 self.lookup.loc[tid, discounted_rates] = self.lookup.loc[tid, discounted_rates] * (100 - discount) / 100
             # Allocate Flat rate and Zero Tariffs
             # -----------------------------------:
-            if 'Zero_Rate' in self.lookup.loc[tid, 'tariff_type']:
-                self.static_imports[tid] = 0
-            elif 'Flat_Rate' in self.lookup.loc[tid, 'tariff_type']:
+
+            self.static_imports[tid] = 0 # for zero rate tariff and as initialisation
+            self.static_solar_imports[tid] = 0 # for zero rate tariff and as initialisation
+
+            if 'Flat_Rate' in self.lookup.loc[tid, 'tariff_type']:
                 self.static_imports[tid] = self.lookup.loc[tid, 'flat_rate']
             # Allocate TOU tariffs:
             # --------------------
@@ -116,22 +155,45 @@ class TariffData():
                 # NB times stored in csv in form 'h:mm'. Midnight saved as 23:59
                 for name, parameter in self.tou_rate_list.items():
                     if not pd.isnull(self.lookup.loc[tid, parameter[1]]):  # parameter[1] is rate_
-                        if self.lookup.loc[tid, parameter[1]] == '0:00':  # start_
-                            period = \
-                                    ts.days[self.lookup.loc[tid, parameter[3]]][  # week_
-                                    (ts.days[self.lookup.loc[tid, parameter[3]]].time >= pd.Timestamp(  # week_
-                                        self.lookup.loc[tid,  parameter[1]]).time())  # start_
-                                    & (ts.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp(  # week_
-                                        self.lookup.loc[tid, parameter[2]]).time())  # end_
-                                    ]
+                        winter_days_affected = ts.days[self.lookup.loc[tid, parameter[3]]].join(ts.seasonal_time['winter'],'inner')
+                        summer_days_affected = ts.days[self.lookup.loc[tid, parameter[3]]].join(ts.seasonal_time['summer'],'inner')
+                        
+                        if pd.Timestamp(self.lookup.loc[tid, parameter[1]]).time() >  pd.Timestamp(self.lookup.loc[tid, parameter[2]]).time():
+                            # tariff period crosses midnight:
+                            winter_period = \
+                                (winter_days_affected[
+                                    (winter_days_affected.time >=pd.Timestamp(  
+                                    self.lookup.loc[tid,  parameter[1]]).time())  # [1] is start_)
+                                    & (winter_days_affected.time <= pd.Timestamp('23:59').time())]).append(
+                                winter_days_affected[  
+                                    (winter_days_affected.time>=pd.Timestamp('0:00').time()) 
+                                    &  (winter_days_affected.time <  pd.Timestamp( 
+                                        self.lookup.loc[tid, parameter[2]]).time())]) # [2] is end_
+                            summer_period = \
+                                (summer_days_affected[
+                                    (summer_days_affected.time >= (pd.Timestamp(
+                                        self.lookup.loc[tid, parameter[1]]) + ts.dst_shift).time())  # [1] is start_)
+                                    & (summer_days_affected.time <= pd.Timestamp('23:59').time())]).append(
+                                    summer_days_affected[
+                                        (summer_days_affected.time >= pd.Timestamp('0:00').time())
+                                        & (summer_days_affected.time < (pd.Timestamp(
+                                            self.lookup.loc[tid, parameter[2]])+ ts.dst_shift).time())])  # [2] is end_
+
                         else:
-                            period = \
-                                    ts.days[self.lookup.loc[tid, parameter[3]]][  # week_
-                                    (ts.days[self.lookup.loc[tid, parameter[3]]].time > pd.Timestamp(  # week_
-                                        self.lookup.loc[tid, parameter[1]]).time())  # start_
-                                    & (ts.days[self.lookup.loc[tid, parameter[3]]].time <= pd.Timestamp(  # week_
-                                        self.lookup.loc[tid, parameter[2]]).time())  # end_
-                                    ]
+                            # tariff period doesn't cross midnight:
+                            winter_period = \
+                                winter_days_affected[ 
+                                    (winter_days_affected.time >= pd.Timestamp(  
+                                    self.lookup.loc[tid, parameter[1]]).time())  # start_)
+                                    & (winter_days_affected.time < pd.Timestamp(  
+                                    self.lookup.loc[tid, parameter[2]]).time())]  # end_
+                            summer_period = \
+                                summer_days_affected[
+                                    (summer_days_affected.time >= (pd.Timestamp(
+                                        self.lookup.loc[tid, parameter[1]])+ ts.dst_shift).time())  # start_)
+                                    & (summer_days_affected.time <(pd.Timestamp(
+                                        self.lookup.loc[tid, parameter[2]])+ ts.dst_shift).time())]  # end_
+                        period = winter_period.join(summer_period,'outer').sort_values()
                         if not any(s in self.lookup.loc[tid, name] for s in ['solar', 'Solar']):
                             # Store solar rate and period separately
                             # For non-solar periods and rates only:
@@ -140,10 +202,8 @@ class TariffData():
                             self.static_solar_imports.loc[period, tid] = self.lookup.loc[tid, parameter[0]]  # rate_
                     pass
 
-            # TODO: rejig this section to allow tariff periods bridging midnight \
-            # (use method used for battery charge & discharge tariffs) and also change tariff_lookup.csv
             # todo: create timeseries for TOU  FiT Tariffs in the same way
-            # currently only zero or flat rate FiTs)
+            # (currently only zero or flat rate FiTs)
             if self.lookup.loc[tid, 'fit_type'] == 'Zero_Rate':
                 self.static_exports[tid] = 0
             elif self.lookup.loc[tid, 'fit_type'] == 'Flat_Rate':
@@ -181,16 +241,26 @@ class Tariff():
         if tariff_id in scenario.demand_list:
             self.is_demand = True
             self.demand_type = scenario.tariff_lookup.loc[tariff_id, 'demand_type']
-            # Demand period is weekday or weekend between demand_start and demand_end:
-            self.demand_period = ts.days[
-                scenario.tariff_lookup.loc[tariff_id, 'demand_week']][
-                (ts.days[scenario.tariff_lookup.loc[tariff_id, 'demand_week']
-                 ].time > pd.Timestamp(
+            # Demand period is weekday or weekend between demand_start and demand_end
+            # with dst applied to start and end times during summer
+            # Assume that demand_end > demand_start
+            # (ie period does not cross midnight but can be 00:00 to 23:59)
+            winter_days_affected = ts.days[scenario.tariff_lookup.loc[tariff_id, 'demand_week']].join(ts.seasonal_time['winter'], 'inner')
+            summer_days_affected = ts.days[scenario.tariff_lookup.loc[tariff_id, 'demand_week']].join(ts.seasonal_time['summer'], 'inner')
+            winter_period = \
+                winter_days_affected[
+                    (winter_days_affected.time >= pd.Timestamp(
                     scenario.tariff_lookup.loc[tariff_id, 'demand_start']).time())
-                & (ts.days[scenario.tariff_lookup.loc[tariff_id, 'demand_week']
-                   ].time <= pd.Timestamp(
-                    study.tariff_data.lookup.loc[tariff_id, 'demand_end']).time())
-                ]
+                    & (winter_days_affected.time < pd.Timestamp(
+                    study.tariff_data.lookup.loc[tariff_id, 'demand_end']).time())]
+            summer_period = \
+                summer_days_affected[
+                    (summer_days_affected.time >= (pd.Timestamp(
+                        scenario.tariff_lookup.loc[tariff_id, 'demand_start']) + ts.dst_shift).time())
+                    & (summer_days_affected.time < (pd.Timestamp(
+                        study.tariff_data.lookup.loc[tariff_id, 'demand_end']) + ts.dst_shift).time())]
+            self.demand_period = winter_period.join(summer_period, 'outer').sort_values()
+
             s = pd.Series(0, index=ts.timeseries)
             s[self.demand_period] = 1
             self.demand_period_array = np.array(s)
@@ -212,16 +282,27 @@ class Tariff():
                 if not pd.isnull(study.tariff_data.lookup.loc[tariff_id, name]):
                     if any(s in study.tariff_data.lookup.loc[tariff_id, name] for s in ['solar','Solar']):
                         self.solar_rate_name = study.tariff_data.lookup.loc[tariff_id, name]
-                        self.solar_period = \
-                            ts.days[scenario.tariff_lookup.loc[tariff_id, parameter[3]]][  # week_
-                                (ts.days[scenario.tariff_lookup.loc[tariff_id, parameter[3]]].time > pd.Timestamp(  # week_
-                                    scenario.tariff_lookup.loc[tariff_id, parameter[1]]).time())  # start_
-                                & (ts.days[scenario.tariff_lookup.loc[tariff_id, parameter[3]]].time <= pd.Timestamp(  # week_
-                                    scenario.tariff_lookup.loc[tariff_id, parameter[2]]).time())  # end_
-                                ]
+                        winter_days_affected = ts.days[scenario.tariff_lookup.loc[tariff_id, parameter[3]]].join(  # [3] is week_
+                            ts.seasonal_time['winter'], 'inner')
+                        summer_days_affected = ts.days[scenario.tariff_lookup.loc[tariff_id, parameter[3]]].join(  # [3] is week_
+                            ts.seasonal_time['summer'], 'inner')
+                        winter_period = \
+                            winter_days_affected[
+                                (winter_days_affected.time >= pd.Timestamp(
+                                    scenario.tariff_lookup.loc[tariff_id, parameter[1]]).time())  # [1] is start
+                                & (winter_days_affected.time < pd.Timestamp(
+                                    scenario.tariff_lookup.loc[tariff_id, parameter[2]]).time())]  # [2] is end_
+                        summer_period = \
+                        summer_days_affected[
+                            (summer_days_affected.time >= (pd.Timestamp(
+                                scenario.tariff_lookup.loc[tariff_id, parameter[1]]) + ts.dst_shift).time())  # [1] is start
+                            & (summer_days_affected.time < (pd.Timestamp(
+                                scenario.tariff_lookup.loc[tariff_id, parameter[2]]) + ts.dst_shift).time())]  # [2] is end_
+                        self.solar_period = winter_period.join(summer_period, 'outer').sort_values()
                         self.solar_rate = scenario.tariff_lookup.loc[tariff_id, parameter[0]]  # rate_
                         self.solar_cp_allocation = scenario.tariff_lookup['solar_cp_allocation'].fillna(0).loc[tariff_id] # % of total solar generation allocated to cp
             self.solar_import_tariff = (scenario.static_solar_imports[tariff_id]).values
+            pass
         else:
             self.solar_import_tariff = np.zeros(ts.num_steps)
             self.solar_rate_name = ''
@@ -234,7 +315,6 @@ class Tariff():
             self.import_tariff = (scenario.static_imports[tariff_id]).values
         else:
             self.import_tariff = np.zeros(ts.num_steps)
-
 
 class Battery():
     # adapted from script by Luke Marshall
@@ -464,7 +544,7 @@ class Battery():
             # Use capex parameters in battery_lookup.csv :
             # Battery capex includes inverter replacement if amortization period > inverter lifetime
             if self.life_bat_inv < self.scenario.a_term:
-                bat_inv_capex = (int((self.scenario.a_term / self.life_bat_inv))+1) * self.battery_inv_cost
+                bat_inv_capex = int((float(self.scenario.a_term) / self.life_bat_inv)-0.001) * self.battery_inv_cost
             else:
                 bat_inv_capex = self.battery_inv_cost
         # ---------------------------------------------------------------------
@@ -474,7 +554,7 @@ class Battery():
         # or battery_life_years (whichever is sooner) within amortization period
 
         if np.isnan(self.max_cycles):
-            self.max_cycles = 0
+            self.max_cycles = 100000
         if np.isnan(self.battery_life_years):
             self.battery_life_years = 1000
         if self.battery_life_years == 0:
@@ -483,10 +563,11 @@ class Battery():
         if self.number_cycles > 0:
             cycle_life = self.max_cycles / self.number_cycles
         else:
-            cycle_life = 1000
+            cycle_life = 1000 # years to reach cycle lifetime
         actual_lifetime = np.min([cycle_life, self.battery_life_years])
         if float(self.scenario.a_term) > actual_lifetime:
-            bat_capex = (int(float(self.scenario.a_term)/actual_lifetime - 0.01) + 1) * self.battery_cost
+            number_batteries = int(float(self.scenario.a_term)/actual_lifetime - 0.01) + 1
+            bat_capex = number_batteries * self.battery_cost
         else:
             bat_capex = self.battery_cost
         tot_capex = bat_inv_capex + bat_capex
@@ -1142,6 +1223,7 @@ class Network(Customer):
             self.solar_retailer.en_capex_repayment = scenario.en_capex_repayment
             self.solar_retailer.en_opex = scenario.en_opex
             self.solar_retailer.bat_capex_repayment = central_bat_capex_repayment
+        pass
 
     def calcEnergyMetrics(self, scenario):
 
@@ -1237,6 +1319,13 @@ class Network(Customer):
             timedata['battery_charge_kWh'] = self.battery.SOC_log * self.battery.capacity_kWh / 100
         if scenario.has_ind_batteries == 'True':
             timedata['ind_battery_SOC'] = self.cum_ind_bat_charge / self.tot_ind_bat_capacity *100
+            for c in self.resident_list:
+                bc1 = 'battery_'+c+'cycles'
+                bc2 = 'SOH_battery_'+c
+                if self.resident[c].has_battery:
+                    timedata[bc1] = self.resident[c].battery.number_cycles
+                    timedata[bc2] = self.resident[c].battery.SOH
+
         time_file = os.path.join(study.timeseries_path,
                                  self.scenario.label + '_' +
                                  scenario.arrangement + '_' +
@@ -1741,7 +1830,8 @@ class Study():
     def __init__(self,
                  base_path,
                  project,
-                 study_name
+                 study_name,
+                 dst_region
                  ):
         # --------------------------------
         # Set up paths and files for Study
@@ -1764,6 +1854,9 @@ class Study():
         self.battery_file = os.path.join(self.reference_path, battery_lookup_name)
         battery_strategies_name= 'battery_control_strategies.csv'
         self.battery_strategies_file = os.path.join(self.reference_path, battery_strategies_name)
+        dst_lookup_name = 'dst_lookup.csv'
+        self.dst_file = os.path.join(self.reference_path, dst_lookup_name)
+
         # study file contains all scenarios
         # ---------------------------------
         study_filename = 'study_' + study_name + '.csv'
@@ -1780,6 +1873,22 @@ class Study():
             self.output_list = self.study_parameters['output_types'].dropna().tolist()
         else:
             self.output_list = []
+
+        # --------------------------
+        #  read Daylight Savings Time
+        # --------------------------
+        if 'dst' in self.study_parameters.columns:
+            if self.study_parameters.isnull()['dst'].all():
+                self.dst = 'nsw'
+            else:
+                self.dst = self.study_parameters['dst'].drop_duplicates().tolist()[0]
+        else:
+            self.dst = 'nsw'
+        temp_df = pd.read_csv(self.dst_file, index_col =[0])
+        cols = temp_df.columns.tolist()
+        self.dst_lookup = pd.read_csv(self.dst_file, index_col=[0], parse_dates=cols, dayfirst=True)
+        pass
+
         # -------------------
         # Set up output paths
         # -------------------
@@ -1886,7 +1995,9 @@ class Study():
         # Initialise timeseries
         # ---------------------
         global ts  # (assume timeseries are all the same for all load profiles)
-        ts = Timeseries(self.dict_load_profiles[self.load_list[0]])
+        ts = Timeseries(load=self.dict_load_profiles[self.load_list[0]],
+                        dst_lookup=self.dst_lookup,
+                        dst_region = dst_region)
 
         # Lists of meters / residents (includes cp)
         # -----------------------------------------
@@ -1898,7 +2009,7 @@ class Study():
         # ---------------------------------------------------------------
         parameter_list = self.study_parameters.values.flatten().tolist()
         self.tariff_data = TariffData(tariff_lookup_path=self.t_lookupFile,
-                                     reference_path=self.reference_path,
+                                     output_path=self.output_path,
                                      parameter_list=parameter_list)
 
         self.tariff_data.generateStaticTariffs()
@@ -2027,7 +2138,8 @@ def main(base_path,project,study_name, use_threading = False):
         logging.info("study_name = %s", study_name)
         study = Study(base_path=base_path,
                     project=project,
-                    study_name=study_name)
+                    study_name=study_name,
+                    dst_region=dst_region)
 
         if use_threading:
             # -------------
@@ -2065,7 +2177,7 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 's_testing'
-    default_study = 'test_lifecycles'
+    default_study = 'test_tariff_solar'
     use_threading = False
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
@@ -2091,6 +2203,10 @@ if __name__ == "__main__":
         base_path = opts['-b']
     else:
         base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3'
+    if '-dst' in opts:
+        dst_region = opts['-dst']
+    else:
+        dst_region = 'nsw'
 
 
 

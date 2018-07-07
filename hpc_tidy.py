@@ -100,7 +100,7 @@ def main(project, study, base_path, delete_input):
 
         bash_list = os.listdir(bash_path)
         for f in [f for f in bash_list]:
-            fname = os.path.join(i_path, f)
+            fname = os.path.join(bash_path, f)
             os.remove(fname)
         os.rmdir(bash_path)
 
@@ -142,4 +142,4 @@ if __name__ == "__main__":
     main(project=project,
          study=study,
          base_path=base_path,
-         delete_inputs=delete_input)
+         delete_input=delete_input)

@@ -18,12 +18,13 @@ import time
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import subprocess
-import matplotlib.dates as md
+import matplotlib.dates as mdates
 # import pdb, traceback, sys
 # import calendar
 # import pytz
 # import seaborn as sns
 import sys
+import shutil
 
 def setup_logging(pyname,label=''):
     # Set up logfile
@@ -169,7 +170,8 @@ def plot_tariffs(path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3\\re
 ##############################################################
 def plot_battery(project,
                  study_name,
-                 base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3\\studies'):
+                 base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3\\studies',
+                 start_day=0):
     """Plots timeseries data of pv, load, import, export and SOC."""
 
     path = os.path.join(base_path,project,'outputs',study_name,'timeseries')
@@ -183,7 +185,9 @@ def plot_battery(project,
         plotfile = os.path.join(plotpath, name[0:-3] + 'png')
         df = pd.read_csv(file)
         df = df.set_index('timestamp')
-
+        # Slice for 2 days starting at start_day"
+        period = df.index[start_day*48:(start_day+2)*48]
+        df = df.loc[period]
         # remove irrelevant / unnecessary columns:
         if 'battery_charge_kWh' in df.columns:
             df = df.drop(['battery_charge_kWh'], axis=1)
@@ -193,22 +197,36 @@ def plot_battery(project,
         #     df = df.drop(['grid_import', 'grid_export'], axis=1)
         max_kwh = df[[c for c in df.columns if 'SOC' not in c]].max().max()
         fig, ax = plt.subplots()
-        ax = df[[c for c in df.columns if 'SOC' not in c]].plot()
+        df.index = pd.to_datetime(df.index)
+        for c in  [c for c in df.columns if 'SOC' not in c]:
+            ax.plot(df.index, df[c], label = c)
+        if 'battery_SOC' in df.columns:
+            ax2 = ax.twinx()
+            ax2.plot(df.index, df['battery_SOC'], linestyle='--')
+            ax2.set_ylabel("Battery SOC %")
+            ax2.set_ylim(0, 110)
+
+        if 'ind_battery_SOC' in df.columns:
+            ax2 = ax.twinx()
+            ax2.plot(df.index, df['ind_battery_SOC'], linestyle='--')
+            ax2.set_ylabel("Battery SOC %")
+            ax2.set_ylim(0, 110)
 
         ax.set_xlabel("Time", fontsize=14)
         ax.set_ylabel("kWh", fontsize=14)
         ax.grid(True)
         ax.set_ylim(0, max_kwh)
-        if 'battery_SOC' in df.columns:
-            ax2 = df['battery_SOC'].plot(secondary_y=True, ax=ax, style='--')
-            ax2.set_ylabel("Battery SOC %")
-            #ax2.set_ylim(0,100)
 
-        if 'ind_battery_SOC' in df.columns:
-            ax2 = df['ind_battery_SOC'].plot(secondary_y=True, ax=ax, style='--')
-            ax2.set_ylabel("Battery SOC %")
-            #ax2.set_ylim(0, 100)
+        ax.xaxis.set_major_locator(mdates.HourLocator(interval=2))
+        # set formatter
+        h_fmt = mdates.DateFormatter('%H')
+        ax.xaxis.set_major_formatter(h_fmt)
+        # set font and rotation for date tick labels
+        fig.autofmt_xdate(rotation = 90)
 
+
+        # legend
+        # -------
 
         leg = ax.legend(fancybox=True)
         leg.get_frame().set_alpha(0.5)
@@ -232,8 +250,8 @@ def main():
     # plot_battery(project='p_testing', study_name='test_indbat1')
 
     project = 's_testing'
-    study_name = 'test_finance1'
-    plot_battery(project=project, study_name=study_name)
+    study_name = 'test_lifecycles'
+    plot_battery(project=project, study_name=study_name, start_day=9)
 
     pass
 

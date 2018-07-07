@@ -90,7 +90,24 @@ If all_residents tariff is not given, each houshold can have its own tariff code
 -----------
 In `en` scenarios, If ENO  is the  strata body, `cp tariff = TIDNULL`,
 		If ENO is not the strata  cp tariff is what strata pays ENO for cp load
-		
+
+## Daylight Savings
+
+All load and generation profiles are given in local standard time (no DST)
+
+If the tariff is adjusted for DST (i.e. periods applied to DST-shifted times) then in `study_.....csv` file :
+
+Set `dst = NSW`  (e.g.)
+
+ __NB__ Default is `nsw`
+
+__NB__ `dst` must be the same for the whole study
+
+Then `dst_lookup.csv` has start and end timestamps (`nsw_start` and `nsw_end` ) for  each year.
+NB Timestamps given as local standard time (e.g 2am for start and end)
+
+
+
 Discount
 --------
 % discount applied to fixed and volumetric charges
@@ -101,16 +118,15 @@ Solar Tariffs
 `STC_xx`  Solar TOU Combined tariff based on EASO TOU periods, with additional off-peak solar period and xx% off EASO TOU rates
 
 `SBTd_xx_yy` Solar block TOU tariff (daily):
-                Based on TOU with `xx%` discount 
-                and each customer having a fixed daily quota of solar energy, based on total annual generation during solar period
+                Based on TOU with `xx%` discount and each customer having a fixed daily quota of solar energy, based on total annual generation during solar period (single solar period is defined in `tariff_lookup.csv` as constant all year, and the script handles DST shift)
                 cp allocated a fixed % (`cp_solar_allocation` given as decimal (`0.yy`)in `tariff_lookup.csv`) and 
                 the remainder shared equally between units.
                 
 `SIT_xx` Solar Instantaneous TOU tariff : 
-                Based on TOU with `xx%` discount
-                and each customer having a quota of solar energy, based on % of instantaneous generation at that timestamp 
-                after cp load has been satisfied.
-                This is *not* a block tariff. `local_import` is calculated statically
+                Based on TOU with `xx%` discount and each customer having a quota of solar energy, based on % of instantaneous generation at that timestamp after cp load has been satisfied. 
+                This is *not* a block tariff. `local_import` is calculated statically.
+
+
 
 `CostPlus_xx`   Based on bills paid at parent tariff + xx%. Fixed costs (and CP?) shared evenly; Volumetric costs shared by usage; 
                 How best to deal with demand charges? 
@@ -146,9 +162,9 @@ For Non EN scenarios (bau, btm, cp_only, etc.), parent tariff must be `TIDNULL`,
 BATTERY
 -------
 __For central Battery__
-In `study_xxxxxxx.csv` file, battery is identified by `battery_id` and battery control strategy by `battery_strategy` 
-If `battery_id` and `battery_strategy` are in the headers, then both must be supplied; 
-If `battery_id` and `battery_strategy` are NOT BOTH in the headers, then battery is not included.
+In `study_xxxxxxx.csv` file, battery is identified by `central_battery_id` and battery control strategy by `central_battery_strategy` 
+If `central_battery_id` and `central_battery_strategy` are in the headers, then both must be supplied; 
+If `central_battery_id` and `central_battery_strategy` are NOT BOTH in the headers, then battery is not included.
 
 __For Individual Batteries__
 Batteries are identified by `x_battery_id` and battery control strategy by `x_battery_strategy` 
@@ -175,7 +191,7 @@ N.B. (all `_id`s require `_strategy` too.)
 
 __Battery Characteristics__
 All battery technical data is kept in `reference\battery_lookup.csv`
-`battery_scenario`  - identifier unique to battery characteristics and control strategy
+`battery_id  - identifier unique to battery characteristics 
 `capacity_kWh`      - Single capacity figure: Useful discharge energy
 `efficiency_cycle`  - for charge and discharge (MAX = 1.0)  (default `0.95`)
 `charge_kW` - for charge and discharge. constrained by inverter power and/or max ~0.8C for charging. Defaults to `0.5C`
