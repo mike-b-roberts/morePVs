@@ -487,7 +487,10 @@ class Battery():
             amount_to_discharge = 0
         self.charge_level_kWh -= amount_to_discharge
         energy_delivered = amount_to_discharge * self.efficiency_discharge  # Unneccessary step if losses are all in charge cycle
-        self.number_cycles += 0.5 * amount_to_discharge / (self.capacity_kWh * (self.maxSOC - 1 + self.maxDOD))
+        if self.capacity_kWh ==0:
+            self.number_cycles +=999
+        else:
+            self.number_cycles += 0.5 * amount_to_discharge / (self.capacity_kWh * (self.maxSOC - 1 + self.maxDOD))
         self.cumulative_losses += amount_to_discharge * (1 - self.efficiency_discharge)
         self.net_discharge_for_ts = energy_delivered
         return energy_delivered  # returns delivered energy
@@ -1181,7 +1184,7 @@ class Network(Customer):
         # Allocate network, pv and battery capex & opex payments depending on network arrangements
         # ----------------------------------------------------------------------------------------
         # TODO Allocation of capex needs refining. e.g in some `btm_s` arrangements, capex payable by owners, not residents
-        if scenario.arrangement in ['en_strata', 'en', 'en_pv']:
+        if 'en' in scenario.arrangement:
             # For en, all capex & opex are borne by the ENO
             self.en_opex = scenario.en_opex
             self.pv_capex_repayment = scenario.pv_capex_repayment
@@ -1842,7 +1845,7 @@ class Study():
         self.project_path = os.path.join(self.base_path,'studies',project)
         # reference files
         # ---------------
-        self.reference_path = os.path.join(self.base_path, 'reference')  # 'reference_TEST'
+        self.reference_path = os.path.join(self.base_path, 'reference_TEST')  # 'reference_TEST'
         self.input_path = os.path.join(self.project_path, 'inputs')
         tariff_name = 'tariff_lookup.csv'
         self.t_lookupFile = os.path.join(self.reference_path, tariff_name)
@@ -2177,7 +2180,7 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 's_testing'
-    default_study = 'test_tariff_solar'
+    default_study = 'zero_battery'
     use_threading = False
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
@@ -2225,7 +2228,7 @@ if __name__ == "__main__":
 # TODO - en_external scenario: cp tariff != TIDNULL
 
 # TODO Add import-export plot to output module
-# TODO test solar tariffs
+# TODO test solar block and inst tariffs
 # TODO Add combined central and individual PV
 # TODO Battery: Go through all tech arrangements and allow central and ind batteries / PC (e.g. add `bau_bat`)
 # TODO Battery: Add capex calcs for individual batteries Need to update Network.allocateAllCapex

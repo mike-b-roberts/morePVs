@@ -57,12 +57,16 @@ Can be a single file or multiple files for multiple iterations
 Load files contain: 
     `timestamp` (first column) in format `d/mm/yyyy h:mm`
     30 minute timestamps assumed. Up to 1 year (17520) but can be less.
-    customer load columns (in kW)
-    `'cp'` (optional) common property load (kW)
-    
+    customer load columns (in kWh)
+    `'cp'` (optional) common property load (kWh)
+    __NB: timestamp refers to *start* of time period__
 
-If multiple loads for each scenario, they must all have the same list of customers within the folder,
-BUT each scenario can have different number of residents, etc.
+i.e `1/01/2013 00:00`  timestamp is attached to the period 00:00 - 00:30.
+
+this is to align with the PV output files produced by NREL SAM. It is likkely that interval data will need adjusting to align with this.
+
+If there are multiple loads for each scenario, they must all have the same list of customers within the folder,
+BUT each scenario *can* have different number of residents, etc.
 
 -----
 CAPEX
