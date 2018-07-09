@@ -29,7 +29,7 @@ For `en` or `cp` arrangement, pv file has single column, must be 'cp'
 
 For `btm_i` : btm individual:  en has column for each unit, or if not, single 'cp' or 'total' column that is split equally
 
-For `btm_icp` : en has column for each unit and cp. Or, single column: cp gets share according to load share; units get equal share of remainder
+For `btm_i_c` : en has column for each unit and cp. Or, single column: cp gets share according to load share; units get equal share of remainder
 
 For Shared btm inc cp:  `btm_s_c` A single `total` or 'cp' column that is split according to instantaneous load between all units AND cp
 
@@ -79,7 +79,7 @@ NB if `capex_en_lookup` has duplicate `capex id`s, it all goes to cock. (read_cs
 `pv_capex` is full system cost (*including inverter cost * ), after rebates and including GST
 `inverter_cost` is only required if `inverter_life` > amortization period
 
-N.B. Different `pv_capex_id` ids required for individual systems (`btm_i` and `btm_icp`)
+N.B. Different `pv_capex_id` ids required for individual systems (`btm_i_u` and `btm_i_c`)
 to allow for higher $/W costs for smaller systems:
 
 -------
@@ -186,7 +186,7 @@ N.B. (all `_id`s require `_strategy` too.)
 |                                           | `cp_battery_id`                                            |
 | `en...` with central *and* individual ??  | `central_` and `all_` and `cp_` ??                         |
 | `cp_only` - central bat only              | `central_battery_id`                                       |
-| `btm_icp`  `btm_i`- only ind batteries    | `all_battery_id`  (or multiple `x_bat....`)`cp_battery_id` |
+| `btm_i_c`  `btm_i_u`- only ind batteries  | `all_battery_id`  (or multiple `x_bat....`)`cp_battery_id` |
 | `btm_s_c`  `btm_s_u` - only ind batteries | `all_battery_id`  (or multiple `x_bat....`)`cp_battery_id` |
 |                                           |                                                            |
 

@@ -844,13 +844,13 @@ class Network(Customer):
             if len(self.pv.columns) == 1:
                 self.pv.columns = ['central']
 
-        elif scenario.arrangement == 'cp_only':
+        elif 'cp_only' in scenario.arrangement:
             # no action required
             # rename single column in pv file if necessary
             if 'cp' not in self.pv.columns:
                 self.pv.columns = ['cp']
 
-        elif scenario.arrangement == 'btm_i':
+        elif 'btm_i_u' in scenario.arrangement:
             # For btm_i, if only single pv column, split equally between all units (NOT CP)
             # If more than 1 column, leave as allocated
             if len(self.pv.columns) == 1:
@@ -859,7 +859,7 @@ class Network(Customer):
                     self.pv[r] = self.pv['total']/len(scenario.households)
                 self.pv = self.pv.drop('total', axis=1)
 
-        elif scenario.arrangement == 'btm_icp':
+        elif 'btm_i_c' in scenario.arrangement:
             # For btm_icp, if only single pv column, split % to cp according tp cp_ratio and split remainder equally between all units
             # If more than 1 column, leave as allocated
             if len(self.pv.columns) == 1:
@@ -997,12 +997,12 @@ class Network(Customer):
                 - not included in this model', str(scenario.name))
             print('***************Warning!!! Scenario %s has btm arrangement with central battery \
                 - not included in this model', str(scenario.name))
-        if scenario.arrangement == 'cp_only' and self.any_resident_has_battery:
+        if 'cp_only' in scenario.arrangement and self.any_resident_has_battery:
             logging.info('***************Warning!!! Scenario %s has cp_only arrangement with individual battery(s) \
                             - not included in this model', str(scenario.name))
             print('***************Warning!!! Scenario %s has cp_only arrangement with individual battery(s) \
                             - not included in this model', str(scenario.name))
-        if scenario.arrangement == 'bau' and (self.any_resident_has_battery or self.has_central_battery):
+        if 'bau' in scenario.arrangement and (self.any_resident_has_battery or self.has_central_battery):
             logging.info('***************Warning!!! Scenario %s is bau with battery(s) \
                             - not included in this model', str(scenario.name))
             print('***************Warning!!! Scenario %s is bau with battery(s) \
@@ -1191,7 +1191,7 @@ class Network(Customer):
             self.en_capex_repayment = scenario.en_capex_repayment
             self.bat_capex_repayment = central_bat_capex_repayment
 
-        elif scenario.arrangement =='cp_only':
+        elif 'cp_only' in scenario.arrangement:
             # pv and central battery capex allocated to customer 'cp' (ie strata)
             self.resident['cp'].pv_capex_repayment = scenario.pv_capex_repayment
             self.resident['cp'].bat_capex_repayment += central_bat_capex_repayment
@@ -1202,7 +1202,7 @@ class Network(Customer):
                 self.resident[c].pv_capex_repayment = self.pv[c].sum() / self.pv.sum().sum() * scenario.pv_capex_repayment
                 self.resident[c].bat_capex_repayment += self.pv[c].sum() / self.pv.sum().sum() * central_bat_capex_repayment
 
-        elif scenario.arrangement == 'btm_s_c':
+        elif 'btm_s_c' in scenario.arrangement:
             # For btm_s_c, apportion capex costs equally between units and cp.
             # (Not ideal - needs more sophisticated analysis of practical btm_s arrangements)
             for c in self.resident_list:
@@ -1211,7 +1211,7 @@ class Network(Customer):
                 self.resident[c].en_opex = scenario.en_opex / len(self.resident_list)
                 self.resident[c].bat_capex_repayment += central_bat_capex_repayment / len(self.resident_list)
 
-        elif scenario.arrangement == 'btm_s_u':
+        elif 'btm_s_u' in scenario.arrangement:
             # For btm_s_u, apportion capex costs equally between units only
             # (Not ideal - needs more sophisticated analysis of practical btm_s arrangements)
             for c in self.households:
@@ -1233,7 +1233,7 @@ class Network(Customer):
         # -----------------------------------------------
         # calculate total exports / imports & pvr, cpr
         # ----------------------------------------------
-        if scenario.arrangement == 'bau' or scenario.arrangement == 'cp_only' or 'btm' in scenario.arrangement:
+        if 'bau' in scenario.arrangement or 'cp_only' in scenario.arrangement or 'btm' in scenario.arrangement:
             # Building export is sum of customer exports
             # Building import is sum of customer imports
             self.total_building_export = 0
@@ -1286,7 +1286,7 @@ class Network(Customer):
             self.total_aggregated_coincidence = np.minimum(self.network_load.sum(axis=1),
                                                                self.pv['central'] + self.total_discharge)
 
-            if scenario.arrangement == 'en_pv':
+            if 'en_pv' in scenario.arrangement:
                 self.self_consumption = np.sum(self.total_aggregated_coincidence) / self.pv.sum().sum() * 100
                 self.self_sufficiency = np.sum(self.total_aggregated_coincidence) / self.total_building_load * 100
             else:
@@ -1355,10 +1355,10 @@ class Scenario():
         # --------------------------------------------
         self.arrangement = self.parameters['arrangement']
         self.pv_exists = not (self.parameters.isnull()['pv_filename']
-                              or self.arrangement == 'bau'
+                              or 'bau' in self.arrangement
                               or self.arrangement == 'en') \
                          and study.pv_exists
-        if self.arrangement in ['btm_s_c', 'btm_s_u', 'btm_p_c', 'btm_p_u', 'btm_icp']:
+        if any(word in self.arrangement for word in ['btm_s_c', 'btm_s_u', 'btm_p_c', 'btm_p_u', 'btm_i_c']):
             self.pv_allocation = 'load_dependent'
         else:
             self.pv_allocation = 'fixed'
@@ -1642,7 +1642,7 @@ class Scenario():
         # -----------------
         # Retailer receipts
         # -----------------
-        if self.arrangement == 'bau' or self.arrangement == 'cp_only' or 'btm' in self.arrangement:
+        if 'bau' in self.arrangement or 'cp_only' in self.arrangement or 'btm' in self.arrangement:
             net.energy_bill = 0
             net.total_payment = 0
             net.retailer_receipt = net.receipts_from_residents.copy()
