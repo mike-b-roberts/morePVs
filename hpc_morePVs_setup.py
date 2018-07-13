@@ -75,7 +75,7 @@ def main(project, study, base_path, maxjobs):
         xfile = os.path.join(bash_path,f)
         os.remove(xfile)
     for csv_name in csv_list:
-        execution_line = 'python /home/z5044992/InputOutput/en/morePVs/morePVs.py -b /home/z5044992/InputOutput/DATA_EN_3 -p '+ new_project +' -s '+ um.find_between(csv_name,'study_','.csv') + ' -t False'
+        execution_line = 'python /home/z5044992/InputOutput/en/morePVs/morePVs.py -b /home/z5044992/InputOutput/DATA_EN_4 -p '+ new_project +' -s '+ um.find_between(csv_name,'study_','.csv') + ' -t False'
 
         bash_content = pd.Series([
             '#!/bin/bash',
