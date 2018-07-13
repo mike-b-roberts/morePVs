@@ -38,8 +38,7 @@ def main(project, study, base_path, maxjobs):
     # Path for bash script files and for script
     # ----------------------------------------
     bash_path = '/home/z5044992/InputOutput/en/morePVs/bash_files/'+project+'/'+study
-    if not os.path.exists (bash_path):
-        os.makedirs(bash_path)
+
     script_path = '/home/z5044992/InputOutput/en/morePVs/'
 
     # Split input (s'study_....csv') files
@@ -79,20 +78,20 @@ def main(project, study, base_path, maxjobs):
         execution_line = 'python /home/z5044992/InputOutput/en/morePVs/morePVs.py -b /home/z5044992/InputOutput/DATA_EN_3 -p '+ new_project +' -s '+ um.find_between(csv_name,'study_','.csv') + ' -t False',
 
         bash_content = pd.Series([
-        '#!/bin/bash',
-        '#SBATCH --mail-user=m.roberts@unsw.edu.au',
-        '#SBATCH --mail-type=FAIL',
-        '#SBATCH --time=96:00:00',
-        '#SBATCH --ntasks=1',
-        '#SBATCH --cpus-per-task=1',
-        '#SBATCH --mem=8192',
-        '#SBATCH --output "/home/z5044992/InputOutput/DATA_EN_4/slurm/slurm-%j.out"',
-        'module load python/3.6',
-        'source /home/z5044992/python_venv/bin/activate',
-        execution_line,
-        'deactivate',
-        'module unload python/3.6'
-        ]).apply(lambda x: x.replace('\r\n', '\n'))
+            '#!/bin/bash',
+            '#SBATCH --mail-user=m.roberts@unsw.edu.au',
+            '#SBATCH --mail-type=FAIL',
+            '#SBATCH --time=96:00:00',
+            '#SBATCH --ntasks=1',
+            '#SBATCH --cpus-per-task=1',
+            '#SBATCH --mem=8192',
+            '#SBATCH --output "/home/z5044992/InputOutput/DATA_EN_4/slurm/slurm-%j.out"',
+            'module load python/3.6',
+            'source /home/z5044992/python_venv/bin/activate',
+            execution_line,
+            'deactivate',
+            'module unload python/3.6'
+            ]).apply(lambda x: x.replace('\r\n', '\n'))
         # nb replace unix line ending
         bash_name = 'f'+ um.find_between(csv_name,'hpc','.csv') + '.bat'
         bash_file = os.path.join(bash_path, bash_name)
