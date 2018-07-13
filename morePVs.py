@@ -471,7 +471,7 @@ class Battery():
                                desired_charge * self.efficiency_charge)
         self.charge_level_kWh += amount_to_charge
         energy_accepted = amount_to_charge / self.efficiency_charge
-        if self.capacity_kWh> 0:
+        if amount_to_charge > 0:
             self.number_cycles += 0.5 * amount_to_charge / (self.capacity_kWh * (self.maxSOC - 1 + self.maxDOD))
         self.net_discharge_for_ts = - energy_accepted
         self.cumulative_losses += energy_accepted * (1 - self.efficiency_charge)
@@ -483,14 +483,12 @@ class Battery():
             amount_to_discharge = min(desired_discharge / self.efficiency_discharge,
                                       (self.charge_level_kWh - self.capacity_kWh * (1 - self.maxDOD)),
                                       self.max_timestep_delivered / self.efficiency_discharge)
+            self.charge_level_kWh -= amount_to_discharge
+            self.number_cycles += 0.5 * amount_to_discharge / (self.capacity_kWh * (self.maxSOC - 1 + self.maxDOD))
         else:
             amount_to_discharge = 0
-        self.charge_level_kWh -= amount_to_discharge
+
         energy_delivered = amount_to_discharge * self.efficiency_discharge  # Unneccessary step if losses are all in charge cycle
-        if self.capacity_kWh ==0:
-            self.number_cycles +=999
-        else:
-            self.number_cycles += 0.5 * amount_to_discharge / (self.capacity_kWh * (self.maxSOC - 1 + self.maxDOD))
         self.cumulative_losses += amount_to_discharge * (1 - self.efficiency_discharge)
         self.net_discharge_for_ts = energy_delivered
         return energy_delivered  # returns delivered energy
@@ -860,7 +858,7 @@ class Network(Customer):
                 self.pv = self.pv.drop('total', axis=1)
 
         elif 'btm_i_c' in scenario.arrangement:
-            # For btm_icp, if only single pv column, split % to cp according tp cp_ratio and split remainder equally between all units
+            # For btm_i_c, if only single pv column, split % to cp according tp cp_ratio and split remainder equally between all units
             # If more than 1 column, leave as allocated
             if len(self.pv.columns) == 1:
                 self.pv.columns = ['total']
@@ -869,7 +867,7 @@ class Network(Customer):
                     self.pv[r] = (self.pv['total'] - self.pv['cp']) / len(scenario.households)
                 self.pv = self.pv.drop('total', axis=1)
 
-        elif scenario.arrangement in ['btm_s_c', 'btm_p_c']:
+        elif any(word in scenario.arrangement for word in ['btm_s_c', 'btm_p_c']):
             # For btm_s_c and btm_p_c, split pv between all residents INCLUDING CP according to INSTANTANEOUS load
             if len(self.pv.columns) != 1:
                 self.pv['total'] = self.pv.sum(axis=1)
@@ -879,7 +877,7 @@ class Network(Customer):
                 .fillna(1 / len(self.resident_list)) \
                 .multiply(self.pv.loc[:, 'total'], axis=0)
 
-        elif scenario.arrangement in ['btm_s_u', 'btm_p_u']:
+        elif any(word in scenario.arrangement for word in ['btm_s_u', 'btm_p_u']):
             # For btm_s_u and btm_p_u, split pv between all residents EXCLUDING CP according to INSTANTANEOUS  load
             if len(self.pv.columns) != 1:
                 self.pv['total'] = self.pv.sum(axis=1)
@@ -890,6 +888,11 @@ class Network(Customer):
                 .fillna(1/len(self.households))\
                 .multiply(self.pv.loc[:, 'total'], axis=0)
             self.pv['cp'] = 0
+
+        elif 'bau' not in scenario.arrangement:
+            logging.info('*********** Exception!!! Invalid technical arrangement %s for scenario %s', scenario.arrangement, scenario.name)
+            print('***************Exception!!! Invalid technical arrangement ',scenario.arrangement, ' for scenario ', scenario.name)
+            sys.exit("Invalid technical Arrangement")
 
         # Create list of customers with PV:
         if not self.pv_exists:
@@ -910,7 +913,7 @@ class Network(Customer):
         # @@@@@@@@@@@@@@@@@@@@@@@@@@
         pvpath = os.path.join(study.output_path, 'pv')
         os.makedirs(pvpath, exist_ok=True)
-        pvFile = os.path.join(pvpath, self.name + '_py_' + str(scenario.name) +'_' + scenario.arrangement + '.csv')
+        pvFile = os.path.join(pvpath, self.name + '_pv_' + str(scenario.name) +'_' + scenario.arrangement + '.csv')
         um.df_to_csv(self.pv, pvFile)
 
 
@@ -1363,8 +1366,6 @@ class Scenario():
         else:
             self.pv_allocation = 'fixed'
 
-        # @@@@    DIAGNOSTICS:
-        #print(self.name, self.arrangement)
 
         # -----------------------------------------------------------------
         # Set up load profiles, resident list & results df for the scenario
@@ -2073,7 +2074,7 @@ def runScenario(scenario_name):
     # Iterate through all load profiles for this scenario:
     for load_name in scenario.load_list:
         eno.initialiseBuildingLoads(load_name, scenario)
-        if scenario.pv_allocation == 'load_dependent':  # ie. for btm_icp, btm_s and btm_p arrangements
+        if scenario.pv_allocation == 'load_dependent':  # ie. for btm_i_c, btm_s and btm_p arrangements
             eno.allocatePV(scenario, scenario.pv)
         eno.initialiseSolarInstQuotas(scenario)  # depends on load and pv
 
