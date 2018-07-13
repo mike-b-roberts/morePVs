@@ -122,7 +122,7 @@ if __name__ == "__main__":
     default_project = ''
     default_study = ''
     default_maxjobs = 60
-    default_base_path = '/home/z5044992/InputOutput/DATA_EN_3/studies'
+    default_base_path = '/home/z5044992/InputOutput/DATA_EN_4/studies'
 
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
