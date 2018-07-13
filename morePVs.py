@@ -2140,6 +2140,7 @@ def main(base_path,project,study_name, use_threading = False):
         # Initialise and load data for the study
         # --------------------------------------
         logging.info("study_name = %s", study_name)
+
         study = Study(base_path=base_path,
                     project=project,
                     study_name=study_name,
@@ -2149,6 +2150,7 @@ def main(base_path,project,study_name, use_threading = False):
             # -------------
             # Use Threading
             # -------------
+            logging.info("THREDING")
             global lock
             num_worker_threads = num_threads
             lock = threading.Lock()
@@ -2157,6 +2159,7 @@ def main(base_path,project,study_name, use_threading = False):
         else:
             # WITHOUT Threads (simpler to debug):
             # ----------------------------------
+            logging.info("NOT THREDING")
             for s in study.scenario_list:
                 runScenario(s)
 
