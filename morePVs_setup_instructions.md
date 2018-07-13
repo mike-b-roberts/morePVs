@@ -29,7 +29,7 @@ For `en` or `cp` arrangement, pv file has single column, must be 'cp'
 
 For `btm_i` : btm individual:  en has column for each unit, or if not, single 'cp' or 'total' column that is split equally
 
-For `btm_icp` : en has column for each unit and cp. Or, single column: cp gets share according to load share; units get equal share of remainder
+For `btm_i_c` : en has column for each unit and cp. Or, single column: cp gets share according to load share; units get equal share of remainder
 
 For Shared btm inc cp:  `btm_s_c` A single `total` or 'cp' column that is split according to instantaneous load between all units AND cp
 
@@ -57,12 +57,16 @@ Can be a single file or multiple files for multiple iterations
 Load files contain: 
     `timestamp` (first column) in format `d/mm/yyyy h:mm`
     30 minute timestamps assumed. Up to 1 year (17520) but can be less.
-    customer load columns (in kW)
-    `'cp'` (optional) common property load (kW)
-    
+    customer load columns (in kWh)
+    `'cp'` (optional) common property load (kWh)
+    __NB: timestamp refers to *start* of time period__
 
-If multiple loads for each scenario, they must all have the same list of customers within the folder,
-BUT each scenario can have different number of residents, etc.
+i.e `1/01/2013 00:00`  timestamp is attached to the period 00:00 - 00:30.
+
+this is to align with the PV output files produced by NREL SAM. It is likkely that interval data will need adjusting to align with this.
+
+If there are multiple loads for each scenario, they must all have the same list of customers within the folder,
+BUT each scenario *can* have different number of residents, etc.
 
 -----
 CAPEX
@@ -75,7 +79,7 @@ NB if `capex_en_lookup` has duplicate `capex id`s, it all goes to cock. (read_cs
 `pv_capex` is full system cost (*including inverter cost * ), after rebates and including GST
 `inverter_cost` is only required if `inverter_life` > amortization period
 
-N.B. Different `pv_capex_id` ids required for individual systems (`btm_i` and `btm_icp`)
+N.B. Different `pv_capex_id` ids required for individual systems (`btm_i_u` and `btm_i_c`)
 to allow for higher $/W costs for smaller systems:
 
 -------
@@ -90,7 +94,24 @@ If all_residents tariff is not given, each houshold can have its own tariff code
 -----------
 In `en` scenarios, If ENO  is the  strata body, `cp tariff = TIDNULL`,
 		If ENO is not the strata  cp tariff is what strata pays ENO for cp load
-		
+
+## Daylight Savings
+
+All load and generation profiles are given in local standard time (no DST)
+
+If the tariff is adjusted for DST (i.e. periods applied to DST-shifted times) then in `study_.....csv` file :
+
+Set `dst = NSW`  (e.g.)
+
+ __NB__ Default is `nsw`
+
+__NB__ `dst` must be the same for the whole study
+
+Then `dst_lookup.csv` has start and end timestamps (`nsw_start` and `nsw_end` ) for  each year.
+NB Timestamps given as local standard time (e.g 2am for start and end)
+
+
+
 Discount
 --------
 % discount applied to fixed and volumetric charges
@@ -101,16 +122,15 @@ Solar Tariffs
 `STC_xx`  Solar TOU Combined tariff based on EASO TOU periods, with additional off-peak solar period and xx% off EASO TOU rates
 
 `SBTd_xx_yy` Solar block TOU tariff (daily):
-                Based on TOU with `xx%` discount 
-                and each customer having a fixed daily quota of solar energy, based on total annual generation during solar period
+                Based on TOU with `xx%` discount and each customer having a fixed daily quota of solar energy, based on total annual generation during solar period (single solar period is defined in `tariff_lookup.csv` as constant all year, and the script handles DST shift)
                 cp allocated a fixed % (`cp_solar_allocation` given as decimal (`0.yy`)in `tariff_lookup.csv`) and 
                 the remainder shared equally between units.
                 
 `SIT_xx` Solar Instantaneous TOU tariff : 
-                Based on TOU with `xx%` discount
-                and each customer having a quota of solar energy, based on % of instantaneous generation at that timestamp 
-                after cp load has been satisfied.
-                This is *not* a block tariff. `local_import` is calculated statically
+                Based on TOU with `xx%` discount and each customer having a quota of solar energy, based on % of instantaneous generation at that timestamp after cp load has been satisfied. 
+                This is *not* a block tariff. `local_import` is calculated statically.
+
+
 
 `CostPlus_xx`   Based on bills paid at parent tariff + xx%. Fixed costs (and CP?) shared evenly; Volumetric costs shared by usage; 
                 How best to deal with demand charges? 
@@ -146,9 +166,9 @@ For Non EN scenarios (bau, btm, cp_only, etc.), parent tariff must be `TIDNULL`,
 BATTERY
 -------
 __For central Battery__
-In `study_xxxxxxx.csv` file, battery is identified by `battery_id` and battery control strategy by `battery_strategy` 
-If `battery_id` and `battery_strategy` are in the headers, then both must be supplied; 
-If `battery_id` and `battery_strategy` are NOT BOTH in the headers, then battery is not included.
+In `study_xxxxxxx.csv` file, battery is identified by `central_battery_id` and battery control strategy by `central_battery_strategy` 
+If `central_battery_id` and `central_battery_strategy` are in the headers, then both must be supplied; 
+If `central_battery_id` and `central_battery_strategy` are NOT BOTH in the headers, then battery is not included.
 
 __For Individual Batteries__
 Batteries are identified by `x_battery_id` and battery control strategy by `x_battery_strategy` 
@@ -166,7 +186,7 @@ N.B. (all `_id`s require `_strategy` too.)
 |                                           | `cp_battery_id`                                            |
 | `en...` with central *and* individual ??  | `central_` and `all_` and `cp_` ??                         |
 | `cp_only` - central bat only              | `central_battery_id`                                       |
-| `btm_icp`  `btm_i`- only ind batteries    | `all_battery_id`  (or multiple `x_bat....`)`cp_battery_id` |
+| `btm_i_c`  `btm_i_u`- only ind batteries  | `all_battery_id`  (or multiple `x_bat....`)`cp_battery_id` |
 | `btm_s_c`  `btm_s_u` - only ind batteries | `all_battery_id`  (or multiple `x_bat....`)`cp_battery_id` |
 |                                           |                                                            |
 
@@ -175,7 +195,7 @@ N.B. (all `_id`s require `_strategy` too.)
 
 __Battery Characteristics__
 All battery technical data is kept in `reference\battery_lookup.csv`
-`battery_scenario`  - identifier unique to battery characteristics and control strategy
+`battery_id  - identifier unique to battery characteristics 
 `capacity_kWh`      - Single capacity figure: Useful discharge energy
 `efficiency_cycle`  - for charge and discharge (MAX = 1.0)  (default `0.95`)
 `charge_kW` - for charge and discharge. constrained by inverter power and/or max ~0.8C for charging. Defaults to `0.5C`

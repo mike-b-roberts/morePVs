@@ -1,13 +1,11 @@
-import os
+mport os
 import en_utilities as um
 import pandas as pd
 import shutil
 import numpy as np
 import csv
 import sys
-import stat
-
-
+import stat 
 
 def main(project, study, base_path, maxjobs):
 
@@ -96,9 +94,14 @@ def main(project, study, base_path, maxjobs):
     # --------------------
 
     putty_file = os.path.join(script_path, 'script')
-    putty_out = pd.DataFrame (putty_script)
-    putty_out.to_csv(putty_file, index=False,header=False,
-                                          quoting=csv.QUOTE_NONE, line_terminator='\n')
+    putty_out = pd.DataFrame(putty_script)
+    putty_out.to_csv(putty_file, index=False,
+                                 header=False,
+                                 quoting=csv.QUOTE_NONE,
+                                 line_terminator='\n')
+    # Make script file executable:
+    st = os.stat(putty_file)
+    os.chmod(putty_file, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     # Make script file executable:
     st = os.stat(putty_file)
