@@ -141,7 +141,7 @@ if __name__ == "__main__":
     else:
         study = default_study
     if '-m' in opts:
-        maxjobs = opts['-t']
+        maxjobs = opts['-m']
     else:
         maxjobs = default_maxjobs
     if '-b' in opts:
