@@ -37,7 +37,9 @@ def main(project, study, base_path, maxjobs):
 
     # Path for bash script files and for script
     # ----------------------------------------
-    bash_path = '/home/z5044992/InputOutput/en/morePVs/bash_files/'+new_project+'/'+study
+    bash_path = '/home/z5044992/InputOutput/en/morePVs/bash_files/'+project+'/'+study
+    if not os.path.exists (bash_path):
+        os.makedirs(bash_path)
     script_path = '/home/z5044992/InputOutput/en/morePVs/'
 
     # Split input (s'study_....csv') files
@@ -84,7 +86,7 @@ def main(project, study, base_path, maxjobs):
         '#SBATCH --ntasks=1',
         '#SBATCH --cpus-per-task=1',
         '#SBATCH --mem=8192',
-        '#SBATCH --output "/home/z5044992/InputOutput/DATA_EN_3/slurm/slurm-%j.out"',
+        '#SBATCH --output "/home/z5044992/InputOutput/DATA_EN_4/slurm/slurm-%j.out"',
         'module load python/3.6',
         'source /home/z5044992/python_venv/bin/activate',
         execution_line,
