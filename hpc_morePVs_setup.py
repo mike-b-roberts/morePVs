@@ -135,7 +135,7 @@ if __name__ == "__main__":
         # Reduce the argument list by copying it starting from index 1.
     if '-p' in opts:
         project = opts['-p']
-    else:
+    else: 
         project = default_project
     if '-s' in opts:
         study = opts['-s']

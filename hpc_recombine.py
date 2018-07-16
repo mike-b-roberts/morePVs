@@ -9,26 +9,26 @@ import en_utilities as um
 
 # Input parameters:
 # -----------------
-project='EN1a_pv_bat4'
-study = 'siteJ_bat4_2'
+project = 'EN1_rerun'
+study = 'value11'
 
 
 # Establish paths etc
 # -------------------
 new_project = project+'_hpc'
-base_path = '/home/z5044992/InputOutput/DATA_EN_3/studies'
-bash_root = '/home/z5044992/InputOutput/en/morePVs/bash_files'
+base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_4\\studies'
+
 
 
 # Paths for hpc outputs
-np_path =os.path.join(base_path,new_project)
+np_path = os.path.join(base_path,new_project)
 if not os.path.exists (np_path):
     os.makedirs(np_path)
 i_path =os.path.join(np_path,'inputs')
 hpc_path =os.path.join(np_path,'outputs')
 
 # Path for combined output:
-o_path = hpc_path
+o_path = os.path.join(base_pathproject)
 if not os.path.exists(o_path):
     os.makedirs(o_path)
 so_path = os.path.join(o_path,'scenarios')
@@ -97,16 +97,3 @@ for ff in folder_list:
         os.rmdir(pvpath)
     fff = os.path.join(hpc_path, ff)
     os.rmdir(fff)
-
-# Delete hpc input files and bash files
-# -------------------------------------
-in_list = os.listdir(i_path)
-for f in [f for f in i_path if 'hpc' in f and '.csv' in f]:
-    fname = os.path.join(i_path, f)
-    os.remove(fname)
-
-bash_list = os.listdir(bash_path)
-for f in [f for f in bash_path]:
-    fname = os.path.join(i_path, f)
-    os.rmdir(fname)
-os.rmdir(bash_path)

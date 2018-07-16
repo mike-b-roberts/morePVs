@@ -909,12 +909,12 @@ class Network(Customer):
             self.resident[c].initialiseCustomerPV(np.array(self.pv[c]).astype(np.float64))
         self.initialiseCustomerPV(np.array(self.pv['central']).astype(np.float64))
 
-        # For diagnostics only @@@@@
-        # @@@@@@@@@@@@@@@@@@@@@@@@@@
-        pvpath = os.path.join(study.output_path, 'pv')
-        os.makedirs(pvpath, exist_ok=True)
-        pvFile = os.path.join(pvpath, self.name + '_pv_' + str(scenario.name) +'_' + scenario.arrangement + '.csv')
-        um.df_to_csv(self.pv, pvFile)
+        # # For diagnostics only @@@@@
+        # # @@@@@@@@@@@@@@@@@@@@@@@@@@
+        # pvpath = os.path.join(study.output_path, 'pv')
+        # os.makedirs(pvpath, exist_ok=True)
+        # pvFile = os.path.join(pvpath, self.name + '_pv_' + str(scenario.name) +'_' + scenario.arrangement + '.csv')
+        # um.df_to_csv(self.pv, pvFile)
 
 
     def initialiseDailySolarBlockQuotas(self, scenario):
