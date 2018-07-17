@@ -1348,7 +1348,7 @@ class Scenario():
         self.label = study.name + '_' + "{:03}".format(int(self.name))
 
         # Copy all scenario parameters to allow for threading:
-        if use_threading:
+        if use_threading == 'True':
             with lock:
                 self.parameters = study.study_parameters.loc[self.name].copy()
         else:
@@ -1446,7 +1446,7 @@ class Scenario():
                 logging.info('Missing tariff data for all_residents in study csv')
             else:  # read tariff for each customer
                 for c in self.households:
-                    if use_threading:
+                    if use_threading == 'True':
                         with lock:
                             self.parameters[c] = self.parameters['all_residents']
                     else:
@@ -2118,7 +2118,7 @@ def runScenario(scenario_name):
             eno.logTimeseries(scenario)
 
     # collate / log data for all loads in scenario
-    if use_threading:
+    if use_threading == 'True':
         with lock:
             scenario.logScenarioData()
     else:
@@ -2128,7 +2128,7 @@ def runScenario(scenario_name):
 # ------------
 # MAIN PROGRAM
 # ------------
-def main(base_path,project,study_name, use_threading = False):
+def main(base_path,project,study_name, use_threading = 'False'):
 
     # set up script logging
     pyname = os.path.basename(__file__)
@@ -2141,7 +2141,7 @@ def main(base_path,project,study_name, use_threading = False):
         # Initialise and load data for the study
         # --------------------------------------
         logging.info("study_name = %s", study_name)
-        logging.info("Thread variable is %s", str(use_threading))
+        logging.info("Thread variable is %s", use_threading)
         study = Study(base_path=base_path,
                     project=project,
                     study_name=study_name,
