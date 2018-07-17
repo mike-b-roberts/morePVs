@@ -8,7 +8,7 @@ import subprocess
 import en_utilities as um
 import sys
 
-def main(project, study, base_path, delete_input):
+def main(project, study, base_path, delete_input, delete_output):
 
     # Establish paths etc
     # -------------------
@@ -55,7 +55,8 @@ def main(project, study, base_path, delete_input):
                 df_s = pd.read_csv(small_file)
                 df_s = df_s.set_index('scenario')
                 df[type] = df[type].append(df_s)
-                os.remove(small_file)
+                if delete_output:
+                    os.remove(small_file)
 
     for type in types:
         df[type] = df[type].sort_index()
@@ -74,7 +75,6 @@ def main(project, study, base_path, delete_input):
                 sf = os.path.join(spath, s)
                 nf = os.path.join(so_path, s)
                 shutil.move(sf, nf)
-            os.rmdir(spath)
         pvpath = os.path.join(hpc_path, ff, 'pv')
         # -------------
         # copy PV files
@@ -85,10 +85,10 @@ def main(project, study, base_path, delete_input):
                 sf = os.path.join(pvpath, s)
                 nf = os.path.join(po_path, s)
                 shutil.move(sf, nf)
-
             os.rmdir(pvpath)
         fff = os.path.join(hpc_path, ff)
-        os.rmdir(fff)
+        if delete_output:
+            os.rmdir(fff)
 
     # Delete hpc input files and bash files
     # -------------------------------------
@@ -110,8 +110,9 @@ if __name__ == "__main__":
     # -----------------
     default_project = ''
     default_study = ''
-    default_delete_input = True
-    default_base_path = '/home/z5044992/InputOutput/DATA_EN_3/studies'
+    default_delete_input = False
+    default_delete_output = False
+    default_base_path = '/home/z5044992/InputOutput/DATA_EN_4/studies'
 
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
@@ -134,6 +135,10 @@ if __name__ == "__main__":
         delete_input = opts['-i']
     else:
         delete_input = default_delete_input
+    if '-o' in opts:
+        delete_output = opts['-o']
+    else:
+        delete_output = default_delete_output
     if '-b' in opts:
         base_path = opts['-b']
     else:
@@ -142,4 +147,6 @@ if __name__ == "__main__":
     main(project=project,
          study=study,
          base_path=base_path,
-         delete_input=delete_input)
+         delete_input=delete_input,
+         delete_output=delete_output
+         )
