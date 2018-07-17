@@ -69,13 +69,17 @@ def main(project, study, base_path, maxjobs):
     # Create bash files
     # -----------------
 
-    if not os.path.exists (bash_path):
+    if not os.path.exists(bash_path):
         os.makedirs(bash_path)
     for f in os.listdir(bash_path):
         xfile = os.path.join(bash_path,f)
         os.remove(xfile)
     for csv_name in csv_list:
-        execution_line = 'python /home/z5044992/InputOutput/en/morePVs/morePVs.py -b /home/z5044992/InputOutput/DATA_EN_4 -p '+ new_project +' -s '+ um.find_between(csv_name,'study_','.csv')
+        study = um.find_between(csv_name,'study_','_')
+        execution_line = \
+            'python /home/z5044992/InputOutput/en/morePVs/morePVs.py -b /home/z5044992/InputOutput/DATA_EN_4 -p '\
+            + new_project +' -s ' \
+            + um.find_between(csv_name,'study_','.csv')
 
         bash_content = pd.Series([
             '#!/bin/bash',
@@ -85,7 +89,7 @@ def main(project, study, base_path, maxjobs):
             '#SBATCH --ntasks=1',
             '#SBATCH --cpus-per-task=1',
             '#SBATCH --mem=8192',
-            '#SBATCH --output "/home/z5044992/InputOutput/DATA_EN_4/slurm/slurm-%j.out"',
+            '#SBATCH --output "/home/z5044992/InputOutput/DATA_EN_4/slurm/slurm_study_%j.out"',
             'module load python/3.6',
             'source /home/z5044992/python_venv/bin/activate',
             execution_line,
@@ -93,7 +97,7 @@ def main(project, study, base_path, maxjobs):
             'module unload python/3.6'
             ]).apply(lambda x: x.replace('\r\n', '\n'))
         # nb replace unix line ending
-        bash_name = 'f'+ um.find_between(csv_name,'hpc','.csv') + '.bat'
+        bash_name = 'f' + um.find_between(csv_name,'hpc','.csv') + '.bat'
         bash_file = os.path.join(bash_path, bash_name)
         pd.DataFrame(bash_content).to_csv(bash_file, index=False,header=False,
                                           quoting=csv.QUOTE_NONE, line_terminator='\n')
@@ -104,7 +108,7 @@ def main(project, study, base_path, maxjobs):
     # Create PuTTY Script:
     # --------------------
 
-    putty_file = os.path.join(script_path, 'script')
+    putty_file = os.path.join(script_path, 'script_'+study)
     putty_out = pd.DataFrame(putty_script)
     putty_out.to_csv(putty_file, index=False,
                                  header=False,
@@ -135,7 +139,7 @@ if __name__ == "__main__":
         # Reduce the argument list by copying it starting from index 1.
     if '-p' in opts:
         project = opts['-p']
-    else: 
+    else:
         project = default_project
     if '-s' in opts:
         study = opts['-s']

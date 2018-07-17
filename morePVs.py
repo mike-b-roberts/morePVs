@@ -1686,7 +1686,7 @@ class Scenario():
         # ----------------------
         # NPV for whole building
         # ----------------------
-        net.npv_whole_building = -sum(net.total_building_payment / (1 + self.a_rate / 12) ** t
+        net.npv_whole_building = -sum(net.total_building_payment /(12*(1 + self.a_rate / 12) ** t)
                                       for t in np.arange(1, 12 * self.a_term))
 
 
@@ -2146,7 +2146,7 @@ def main(base_path,project,study_name, use_threading = False):
                     study_name=study_name,
                     dst_region=dst_region)
 
-        if use_threading:
+        if use_threading == 'True':   # NB use_threading is a string so need to compare with string
             # -------------
             # Use Threading
             # -------------
@@ -2183,9 +2183,9 @@ if __name__ == "__main__":
     # Set up relative paths for data files:
 
     num_threads = 6
-    default_project = 's_testing'
-    default_study = 'zero_battery'
-    use_threading = False
+    default_project = 'optimiser060'
+    default_study = 'pv_optimiser_060'
+    default_use_threading = 'True'
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
     opts = {}  # Empty dictionary to store key-value pairs.
@@ -2205,22 +2205,16 @@ if __name__ == "__main__":
     if '-t' in opts:
         use_threading = opts['-t']
     else:
-        use_threading = False
+        use_threading = default_use_threading
     if '-b' in opts:
         base_path = opts['-b']
     else:
-        base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3'
+        base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_4'
     if '-dst' in opts:
         dst_region = opts['-dst']
     else:
         dst_region = 'nsw'
 
-
-
-    # main(project=project,
-    #      study_name=study,
-    #      base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3',
-    #      use_threading=use_threading)
 
     main(project=project,
          study_name=study,
