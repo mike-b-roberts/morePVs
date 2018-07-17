@@ -28,7 +28,7 @@ i_path =os.path.join(np_path,'inputs')
 hpc_path =os.path.join(np_path,'outputs')
 
 # Path for combined output:
-o_path = os.path.join(base_pathproject)
+o_path = os.path.join(base_path,project,'outputs')
 if not os.path.exists(o_path):
     os.makedirs(o_path)
 so_path = os.path.join(o_path,'scenarios')
@@ -38,8 +38,7 @@ po_path = os.path.join(o_path,'pv')
 if not os.path.exists(po_path):
     os.makedirs(po_path)
 
-# Bash file path
-bash_path = os.path.join(bash_root,new_project)
+
 
 
 
@@ -62,7 +61,7 @@ for ff in folder_list:
             small_file = os.path.join(folder_path, f)
             df_s = pd.read_csv(small_file)
             df_s = df_s.set_index('scenario')
-            df[type] = df[type].append(df_s)
+            df[type] = df[type].append(df_s, sort=False)
             os.remove(small_file)
 
 for type in types:
@@ -82,7 +81,7 @@ for ff in folder_list:
             sf = os.path.join(spath, s)
             nf = os.path.join(so_path, s)
             shutil.move(sf, nf)
-        os.rmdir(spath)
+        # os.rmdir(spath)
     pvpath = os.path.join(hpc_path, ff, 'pv')
     # -------------
     # copy PV files 
@@ -94,6 +93,6 @@ for ff in folder_list:
             nf = os.path.join(po_path, s)
             shutil.move(sf, nf)
 
-        os.rmdir(pvpath)
+        # os.rmdir(pvpath)
     fff = os.path.join(hpc_path, ff)
-    os.rmdir(fff)
+    # os.rmdir(fff)

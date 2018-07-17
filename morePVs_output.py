@@ -270,8 +270,8 @@ class Output():
 
             # Get tariff_lookup table to find customer numbers from vb
             # -------------------------------------------------
-            vb_reference_path = 'C:\\Users\\z5044992\Documents\\MainDATA\\DATA_EN_3\\load_profiles'
-            vb_id = pd.read_csv(vb_reference_path + '\\vb_id_log_original.csv', index_col=0)
+            vb_reference_path = 'C:\\Users\\z5044992\Documents\\MainDATA\\DATA_EN_4\\load_profiles'
+            vb_id = pd.read_csv(vb_reference_path + '\\vb_index.csv', index_col=0)
             sgsc_stats = pd.read_csv(vb_reference_path + '\\sgsc_self_consumption_metric.csv', index_col=0)
 
             # extract unit loads and sc metrics to plot against
