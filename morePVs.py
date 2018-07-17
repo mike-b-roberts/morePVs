@@ -2185,7 +2185,7 @@ if __name__ == "__main__":
     num_threads = 6
     default_project = 'optimiser060'
     default_study = 'pv_optimiser_060'
-    default_use_threading = 'True'
+    default_use_threading = 'False'
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
     opts = {}  # Empty dictionary to store key-value pairs.
