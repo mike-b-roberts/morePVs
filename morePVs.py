@@ -1959,6 +1959,7 @@ class Study():
             self.different_loads = False  # Same load or set of loads for each scenario
         else:
             self.different_loads = True  # Different loads for each scenario
+
         self.load_path = os.path.join(self.base_path, 'load_profiles', self.study_parameters.loc[self.study_parameters.index[0], 'load_folder'])
         self.load_list = os.listdir(self.load_path)
         if len(self.load_list) == 0:

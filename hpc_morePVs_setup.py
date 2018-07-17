@@ -13,7 +13,7 @@ def main(project, study, base_path, maxjobs):
 
     # Variables
     # ---------
-    num_threads = 16
+    num_threads = 8
     # See explanation: `https://stackoverflow.com/questions/51256738/multiple-instances-of-python-running-simultaneously-limited-to-35`
 
 
