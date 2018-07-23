@@ -9,8 +9,8 @@ import en_utilities as um
 
 # Input parameters:
 # -----------------
-project = 'EN1_rerun'
-study = 'value11'
+project = 'EN1_rerun3'
+study = 'value11a'
 
 
 # Establish paths etc
@@ -66,7 +66,7 @@ for ff in folder_list:
 
 for type in types:
     df[type] = df[type].sort_index()
-    o_name = 'hpc_' + study + '_' + type
+    o_name = study + '_' + type
     o_file = os.path.join(o_path, o_name)
     df[type].to_csv(o_file)
 
