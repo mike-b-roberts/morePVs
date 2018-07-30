@@ -178,27 +178,28 @@ Batteries are identified by `x_battery_id` and battery control strategy by `x_ba
 
 N.B. (all `_id`s require `_strategy` too.)
 
-| Arrangement                               | Battery Set-up                                             |
-| ----------------------------------------- | ---------------------------------------------------------- |
-| `bau`                                     | No battery, by definition                                  |
-| `en` or `en_pv`  - with central battery   | `central_battery_id`                                       |
-| `en` or `en_pv` with individual batteries | `all_battery_id`  (or multiple `x_bat....`)                |
-|                                           | `cp_battery_id`                                            |
-| `en...` with central *and* individual ??  | `central_` and `all_` and `cp_` ??                         |
-| `cp_only` - central bat only              | `central_battery_id`                                       |
-| `btm_i_c`  `btm_i_u`- only ind batteries  | `all_battery_id`  (or multiple `x_bat....`)`cp_battery_id` |
-| `btm_s_c`  `btm_s_u` - only ind batteries | `all_battery_id`  (or multiple `x_bat....`)`cp_battery_id` |
-|                                           |                                                            |
+| Arrangement                                                  | Battery Set-up                                             |
+| ------------------------------------------------------------ | ---------------------------------------------------------- |
+| `bau`                                                        | No battery, by definition                                  |
+| `bau_bat` -  no pv, individual bats                          | `all_battery_id`  (or multiple `x_bat....`)`cp_battery_id` |
+| `en` or `en_pv`  - with central battery                      | `central_battery_id`                                       |
+| *This isn't allowed currently:*<br />`en` or `en_pv` with individual batteries | `all_battery_id`  (or multiple `x_bat....`)`cp_battery_id` |
+|                                                              |                                                            |
+| `en...` with central *and* individual ??                     | `central_` and `all_` and `cp_` ??                         |
+| `cp_only` - central bat only                                 | `central_battery_id`                                       |
+| `btm_i_c`  `btm_i_u`- only ind batteries                     | `all_battery_id`  (or multiple `x_bat....`)`cp_battery_id` |
+| `btm_s_c`  `btm_s_u` - only ind batteries                    | `all_battery_id`  (or multiple `x_bat....`)`cp_battery_id` |
+|                                                              |                                                            |
 
 
 
 
 __Battery Characteristics__
 All battery technical data is kept in `reference\battery_lookup.csv`
-`battery_id  - identifier unique to battery characteristics 
+`battery_id`  - identifier unique to battery characteristics 
 `capacity_kWh`      - Single capacity figure: Useful discharge energy
 `efficiency_cycle`  - for charge and discharge (MAX = 1.0)  (default `0.95`)
-`charge_kW` - for charge and discharge. constrained by inverter power and/or max ~0.8C for charging. Defaults to `0.5C`
+`charge_kW` - for charge and discharge. Max charge rate constrained by inverter power and/or max ~0.8C for charging. Defaults to `0.5C`
 `maxDOD` (default `0.8`
 `maxSOC` (default `0.9`)
 `max_cycles`(default `2000`)
@@ -206,11 +207,13 @@ All battery technical data is kept in `reference\battery_lookup.csv`
 `battery_cost`: Installed battery cost __*excluding*__ inverter (if inverter cost is given) , including GST
 `battery_inv_cost` : Installed cost of battery inverter, inc GST (If = zero, inverter and battery treated as single unit).
 
-N.B. If `battery_capex_per_kW` is given in the `study_` parameter file, it overrides capital costs given in `battery_lookup.csv`
+N.B. If `battery_capex_per_kWh` is given in the `study_` parameter file, it overrides capital costs given in `battery_lookup.csv`
 
 `life_bat_inv` : lifetime of battery inverter (years)) (Defaults to capital amortization period `a_term` )
 
+__Scalable Battery__
 
+If `battery_id` includes `scale` and `x.....battery_capacity_kWh` is in the `study....csv` file (for x = `central` or `cp` or `all` or `customer_id`) this capacity is used to scale the capacity and `max_charge_kW` in the `battery_lookup.csv` file
 
 __Control Strategies__
 kept in `reference/battery_control_strategies`
@@ -228,6 +231,19 @@ Optional additional grid-charging period
 `discharge_day1` , `discharge_day2`and `charge_day1` and `charge_day2`
 
 ​	= `week`, `end` or `both` : days to discharge / charge
+
+__Charge / Discharge Rate__
+
+`charge_c_rate` and `discharge_c_rate` given in `battery_control_strategies.csv` as C-rate fraction of capacity to charge / discharge in 1 hour. 
+e.g 0.5C takes 2 hours to charge / discharge
+
+i.e. charging power = `battery.charge_c_rate` * `battery.capacity_kWh`
+
+If omitted, charge and discharge rate default to `max_charge_kW` in `battery_lookup.csv`
+
+
+
+
 
 
 

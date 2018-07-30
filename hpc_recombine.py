@@ -10,7 +10,7 @@ import en_utilities as um
 # Input parameters:
 # -----------------
 project = 'EN1_rerun3'
-study = 'value11a'
+study = 'value11b'
 
 
 # Establish paths etc
@@ -27,6 +27,7 @@ if not os.path.exists (np_path):
 i_path =os.path.join(np_path,'inputs')
 hpc_path =os.path.join(np_path,'outputs')
 
+
 # Path for combined output:
 o_path = os.path.join(base_path,project,'outputs')
 if not os.path.exists(o_path):
@@ -37,7 +38,9 @@ if not os.path.exists(so_path):
 po_path = os.path.join(o_path,'pv')
 if not os.path.exists(po_path):
     os.makedirs(po_path)
-
+to_path = os.path.join(o_path,'saved_tariffs')
+if not os.path.exists(to_path):
+    os.makedirs(to_path)
 
 
 
@@ -79,18 +82,31 @@ for ff in folder_list:
         slist = os.listdir(spath)
         for s in slist:
             sf = os.path.join(spath, s)
-            nf = os.path.join(so_path, s)
+            newname = s[0:8] + s[15:]
+            nf = os.path.join(so_path, newname)
             shutil.move(sf, nf)
         # os.rmdir(spath)
-    pvpath = os.path.join(hpc_path, ff, 'pv')
+    #pvpath = os.path.join(hpc_path, ff, 'pv')
+    # # -------------
+    # # copy PV files
+    # # -------------
+    # if os.path.exists(pvpath):
+    #     slist = os.listdir(pvpath)
+    #     for s in slist:
+    #         sf = os.path.join(pvpath, s)
+    #         nf = os.path.join(po_path, s)
+    #         shutil.move(sf, nf)
     # -------------
-    # copy PV files 
+    # copy tariff files
     # -------------
-    if os.path.exists(pvpath):
-        slist = os.listdir(pvpath)
+    # WRONG! - this just overwrites teh last tariff_file.
+    # Need to combine them into a single file or change the names
+    tariffpath = os.path.join(hpc_path, ff, 'saved_tariffs')
+    if os.path.exists(tariffpath):
+        slist = os.listdir(tariffpath)
         for s in slist:
-            sf = os.path.join(pvpath, s)
-            nf = os.path.join(po_path, s)
+            sf = os.path.join(tariffpath, s)
+            nf = os.path.join(to_path, s)
             shutil.move(sf, nf)
 
         # os.rmdir(pvpath)

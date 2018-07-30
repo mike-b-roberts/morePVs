@@ -170,7 +170,7 @@ def plot_tariffs(path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3\\re
 ##############################################################
 def plot_battery(project,
                  study_name,
-                 base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3\\studies',
+                 base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_4\\studies',
                  start_day=0):
     """Plots timeseries data of pv, load, import, export and SOC."""
 
@@ -195,7 +195,7 @@ def plot_battery(project,
         #     df = df.drop(['sum_of_customer_imports','sum_of_customer_exports'], axis=1)
         # if '_btm_' in name:
         #     df = df.drop(['grid_import', 'grid_export'], axis=1)
-        max_kwh = df[[c for c in df.columns if 'SOC' not in c]].max().max()
+        max_kwh = df[[c for c in df.columns if 'SOC' not in c and 'SOH' not in c]].max().max()
         fig, ax = plt.subplots()
         df.index = pd.to_datetime(df.index)
         for c in  [c for c in df.columns if 'SOC' not in c]:
@@ -222,7 +222,7 @@ def plot_battery(project,
         h_fmt = mdates.DateFormatter('%H')
         ax.xaxis.set_major_formatter(h_fmt)
         # set font and rotation for date tick labels
-        fig.autofmt_xdate(rotation = 90)
+        fig.autofmt_xdate(rotation=90)
 
 
         # legend
@@ -249,9 +249,9 @@ def main():
 
     # plot_battery(project='p_testing', study_name='test_indbat1')
 
-    project = 's_testing'
-    study_name = 'test_lifecycles'
-    plot_battery(project=project, study_name=study_name, start_day=9)
+    project = 'tests'
+    study_name = 'test_bat_scale'
+    plot_battery(project=project, study_name=study_name, start_day=0)
 
     pass
 

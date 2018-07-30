@@ -814,14 +814,14 @@ class Output():
 
 def main():
 
-    project = 'envb6'
-    study_name = 'envb_6r_REVISED'
-    base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3\\studies'
+    project = 'tests'
+    study_name = 'test_bat_scale'
+    base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_4\\studies'
     op = Output(base_path=base_path,
                     project=project,
                     study_name=study_name)
     # op.plotOutput('bar_en_income_vs_tariff')
-    op.plotOutput('scat_cust_sav_vs_sc_per_tariff')
+    # op.plotOutput('scat_cust_sav_vs_sc_per_tariff')
 
     # project = 'envb6'
     # study_name = 'envb_6s_REVISED'

@@ -383,7 +383,7 @@ class Tariff():
 
 class Battery():
     # adapted from script by Luke Marshall
-    def __init__(self, scenario, battery_id, battery_strategy):
+    def __init__(self, scenario, battery_id, battery_strategy, battery_capacity):
         self.battery_id = battery_id
         self.scenario = scenario
 
@@ -394,7 +394,7 @@ class Battery():
             # Load battery parameters from battery tariff_lookup
             # --------------------------------------------------
             self.capacity_kWh = study.battery_lookup.loc[battery_id, 'capacity_kWh']
-            self.charge_kW = study.battery_lookup.loc[battery_id, 'charge_kW']
+            self.max_charge_kW = study.battery_lookup.loc[battery_id, 'max_charge_kW']
             self.efficiency_cycle = study.battery_lookup.loc[battery_id, 'efficiency_cycle']
             if self.efficiency_cycle > 1.0:
                 logging.info('***************Exception!!! Battery Efficiency must be < 1.0*******')
@@ -415,10 +415,16 @@ class Battery():
             self.battery_life_years = study.battery_lookup.loc[battery_id,'battery_life_years']
             self.max_cycles = study.battery_lookup.loc[battery_id, 'max_cycles']
 
+            # Scalable Battery
+            # ----------------
+            if any(word in self.battery_id for word in ['scale', 'scalable']):
+                self.capacity_kWh = self.capacity_kWh * battery_capacity
+                self.max_charge_kW = self.max_charge_kW * battery_capacity
+
             # Use default values if missing:
             # ------------------------------
-            if pd.isnull(self.charge_kW):
-                self.charge_kW = self.capacity_kWh * 0.5
+            if pd.isnull(self.max_charge_kW):
+                self.max_charge_kW = self.capacity_kWh * 0.5
             if pd.isnull(self.maxDOD):
                 self.maxDOD = 0.8
             if pd.isnull(self.maxSOC):
@@ -477,42 +483,56 @@ class Battery():
             # Calculate additional charging period(s):
             # -------------------------------------
             if pd.isnull(charge_start1):
-                self.charge_period = pd.DatetimeIndex([])
+                charge_period1 = pd.DatetimeIndex([])
             elif pd.Timestamp(charge_start1) > pd.Timestamp(charge_end1):
-                self.charge_period = (ts.days[charge_day1][(ts.days[charge_day1].time > pd.Timestamp(charge_start1).time()) & (
+                charge_period1 = (ts.days[charge_day1][(ts.days[charge_day1].time > pd.Timestamp(charge_start1).time()) & (
                             ts.days[charge_day1].time <= pd.Timestamp('23:59').time())].append(
                     ts.days[charge_day1][(ts.days[charge_day1].time >= pd.Timestamp('0:00').time()) & (
                                 ts.days[charge_day1].time <= pd.Timestamp(charge_end1).time())])).sort_values()
             else:
-                self.charge_period = \
+                charge_period1 = \
                     ts.days[charge_day1][(ts.days[charge_day1].time > pd.Timestamp(charge_start1).time())
                                            & (ts.days[charge_day1].time <= pd.Timestamp(charge_end1).time())]
-                if pd.isnull(charge_start2):
-                    self.charge_period = pd.DatetimeIndex([])
-                elif pd.Timestamp(charge_start2) > pd.Timestamp(charge_end2):
-                    self.charge_period = (
-                    ts.days[charge_day2][(ts.days[charge_day2].time > pd.Timestamp(charge_start2).time()) & (
-                            ts.days[charge_day2].time <= pd.Timestamp('23:59').time())].append(
-                        ts.days[charge_day2][(ts.days[charge_day2].time >= pd.Timestamp('0:00').time()) & (
-                                ts.days[charge_day2].time <= pd.Timestamp(charge_end2).time())])).sort_values()
-                else:
-                    self.charge_period = \
-                        ts.days[charge_day2][(ts.days[charge_day2].time > pd.Timestamp(charge_start2).time())
-                                             & (ts.days[charge_day2].time <= pd.Timestamp(charge_end2).time())]
+            if pd.isnull(charge_start2):
+                charge_period2 = pd.DatetimeIndex([])
+            elif pd.Timestamp(charge_start2) > pd.Timestamp(charge_end2):
+                charge_period2 = (
+                ts.days[charge_day2][(ts.days[charge_day2].time > pd.Timestamp(charge_start2).time()) & (
+                        ts.days[charge_day2].time <= pd.Timestamp('23:59').time())].append(
+                    ts.days[charge_day2][(ts.days[charge_day2].time >= pd.Timestamp('0:00').time()) & (
+                            ts.days[charge_day2].time <= pd.Timestamp(charge_end2).time())])).sort_values()
+            else:
+                charge_period2 = \
+                    ts.days[charge_day2][(ts.days[charge_day2].time > pd.Timestamp(charge_start2).time())
+                                         & (ts.days[charge_day2].time <= pd.Timestamp(charge_end2).time())]
+            self.charge_period = charge_period1.join(charge_period2, how='outer')
+            # Calculate charge and discharge rates
+            # ------------------------------------
+            self.charge_rate_kW = self.max_charge_kW
+            if 'charge_c_rate' in study.battery_strategies.columns:
+                if not pd.isnull(study.battery_strategies.loc[battery_strategy, 'charge_c_rate']):
+                    self.charge_rate_kW = min(self.max_charge_kW,study.battery_strategies.loc[
+                        battery_strategy, 'charge_c_rate']* self.capacity_kWh)
+            self.discharge_rate_kW = self.max_charge_kW
+            if 'discharge_c_rate' in study.battery_strategies.columns:
+                if not pd.isnull(study.battery_strategies.loc[battery_strategy, 'discharge_c_rate']):
+                    self.discharge_rate_kW = min(self.max_charge_kW, study.battery_strategies.loc[
+                        battery_strategy, 'discharge_c_rate'] * self.capacity_kWh)
 
-            # Initialise battery variables
-            # ----------------------------
+
+            # Initialise remaining battery variables
+            # --------------------------------------
             self.initial_SOC = 0.5  # BATTERY STARTS AT 50% SOC
             self.charge_level_kWh = self.capacity_kWh * self.initial_SOC
             self.number_cycles = 0
             self.SOH = 100  # State of health
             # Max charge / discharge rate is accepted / delivered energy
-            self.max_timestep_delivered = self.charge_kW * ts.interval / 3600
-            self.max_timestep_accepted = self.charge_kW * ts.interval / 3600
+            self.max_timestep_delivered = self.discharge_rate_kW * ts.interval / 3600
+            self.max_timestep_accepted = self.charge_rate_kW * ts.interval / 3600
             self.cumulative_losses = 0
             self.net_discharge = np.zeros(ts.num_steps) #  this is +ve for discharge, -ve for charge. Used for SC and SS calcs
 
-            # Assume losses are all in charging cycle:
+            # Assume losses are all in charging part of cycle:
             # This works if energy capacity is actually "useful discharge capacity"
             # see discussion here: https://electronics.stackexchange.com/questions/379778/how-to-estimate-li-ion-battery-soc/379793?noredirect=1#comment921865_379793
             self.efficiency_charge = self.efficiency_cycle
@@ -597,11 +617,11 @@ class Battery():
         """Calculates capex for battery"""
 
         # ---------------------------------------
-        # 1) Use 'battery_capex_per_kW' and scale
+        # 1) Use 'battery_capex_per_kWh' and scale
         # ---------------------------------------
-        # If 'battery_capex_per_kW' is in the parameter file, it overrides capex info in battery_lookup
-        if self.scenario.battery_capex_per_kW > 0:
-            self.battery_cost = self.scenario.battery_capex_per_kW * self.capacity_kWh
+        # If 'battery_capex_per_kWh' is in the parameter file, it overrides capex info in battery_lookup
+        if self.scenario.battery_capex_per_kWh > 0:
+            self.battery_cost = self.scenario.battery_capex_per_kWh * self.capacity_kWh
             bat_inv_capex = 0
             # --------------------------------------------
         # 2) Use 'battery_cost' and 'battery_inv_cost'
@@ -759,8 +779,8 @@ class Customer():
             # elif self.prev_cum_energy < self.daily_local_quota \
             #         and self.cumulative_energy > self.daily_local_quota:
             #     self.local_imports[step] = self.imports[step] - self.daily_local_quota / self.steps_in_day
-            #     
-            #     
+            #
+            #
             # else:
             #     self.local_imports[step] = self.daily_local_quota / self.steps_in_day
 
@@ -974,8 +994,7 @@ class Network(Customer):
             self.resident[c].initialiseCustomerPV(np.array(self.pv[c]).astype(np.float64))
         self.initialiseCustomerPV(np.array(self.pv['central']).astype(np.float64))
 
-        # # For diagnostics only @@@@@
-        # # @@@@@@@@@@@@@@@@@@@@@@@@@@
+        # # For diagnostics only
         # pvpath = os.path.join(study.output_path, 'pv')
         # os.makedirs(pvpath, exist_ok=True)
         # pvFile = os.path.join(pvpath, self.name + '_pv_' + str(scenario.name) +'_' + scenario.arrangement + '.csv')
@@ -1032,7 +1051,8 @@ class Network(Customer):
         if self.has_central_battery:
             self.battery = Battery(scenario=scenario,
                                    battery_id=scenario.central_battery_id,
-                                   battery_strategy=scenario.central_battery_strategy)
+                                   battery_strategy=scenario.central_battery_strategy,
+                                   battery_capacity = scenario.central_battery_capacity_kWh)
 
         # --------------------
         # Individual Batteries
@@ -1046,12 +1066,19 @@ class Network(Customer):
         if 'cp_battery_id' in scenario.parameters.index and 'cp_battery_strategy' in scenario.parameters.index:
             if not pd.isnull(scenario.parameters['cp_battery_id']) and \
                     not pd.isnull(scenario.parameters['cp_battery_strategy']):
-                self.resident['cp'].battery = Battery(scenario=scenario,
-                                                   battery_id=scenario.parameters['cp_battery_id'],
-                                                   battery_strategy=scenario.parameters['cp_battery_strategy'])
                 self.resident['cp'].has_battery = True
                 self.any_resident_has_battery = True  # NB 'resident' here means householder or cp
                 scenario.has_ind_batteries = 'True'
+                cp_battery_capacity_kWh = 1
+                # Scalable battery:
+                if 'cp_battery_capacity_kWh' in scenario.parameters.index:
+                    if not pd.isnull(scenario.parameters['cp_battery_capacity_kWh']):
+                        cp_battery_capacity_kWh = scenario.parameters['cp_battery_capacity_kWh']
+                #Initialise battery:
+                self.resident['cp'].battery = Battery(scenario=scenario,
+                                                      battery_id=scenario.parameters['cp_battery_id'],
+                                                      battery_strategy=scenario.parameters['cp_battery_strategy'],
+                                                      battery_capacity=cp_battery_capacity_kWh)
                 self.tot_ind_bat_capacity += self.resident['cp'].battery.capacity_kWh
             else:
                 self.resident['cp'].has_battery = False
@@ -1070,11 +1097,11 @@ class Network(Customer):
                             - not included in this model', str(scenario.name))
             print('***************Warning!!! Scenario %s has cp_only arrangement with individual battery(s) \
                             - not included in this model', str(scenario.name))
-        if 'bau' in scenario.arrangement and (self.any_resident_has_battery or self.has_central_battery):
+        if ('bau' == scenario.arrangement) and (self.any_resident_has_battery or self.has_central_battery):
             logging.info('***************Warning!!! Scenario %s is bau with battery(s) \
-                            - not included in this model', str(scenario.name))
+                            - please use `bau_bat`', str(scenario.name))
             print('***************Warning!!! Scenario %s is bau with battery(s) \
-                            - not included in this model', str(scenario.name))
+                             - please use `bau_bat`', str(scenario.name))
 
 
         # Household batteries - all the same
@@ -1087,13 +1114,18 @@ class Network(Customer):
                 self.any_resident_has_battery = True
                 self.battery_list = self.households
                 scenario.has_ind_batteries = 'True'
+                all_battery_capacity_kWh = 1
+                # Scalable batteries:
+                if 'all_battery_capacity_kWh' in scenario.parameters.index:
+                    if not pd.isnull(scenario.parameters['all_battery_capacity_kWh']):
+                        all_battery_capacity_kWh = scenario.parameters['all_battery_capacity_kWh']
                 for c in self.households:
                     self.resident[c].battery = Battery(scenario=scenario,
                                                        battery_id=scenario.parameters[bat_name],
-                                                       battery_strategy=scenario.parameters[bat_strategy])
+                                                       battery_strategy=scenario.parameters[bat_strategy],
+                                                       battery_capacity = all_battery_capacity_kWh)
                     self.resident[c].has_battery = True
                     self.tot_ind_bat_capacity += self.resident[c].battery.capacity_kWh
-
 
         # Household batteries - separately defined
         # ----------------------------------------
@@ -1101,21 +1133,28 @@ class Network(Customer):
             for c in self.households:
                 bat_name = str(c) + '_battery_id'
                 bat_strategy = str(c) + '_battery_strategy'
+                bat_capacity = str(c) + '_battery_capacity_kWh'
+                battery_capacity_kWh = 1
                 if bat_name in scenario.parameters.index and bat_strategy in scenario.parameters.index:
                     if not pd.isnull(scenario.parameters[bat_name]) and \
                             not pd.isnull(scenario.parameters[bat_strategy]):
-                        self.resident[c].battery = Battery(scenario=scenario,
-                                                           battery_id=scenario.parameters[bat_name],
-                                                           battery_strategy=scenario.parameters[bat_strategy])
                         self.resident[c].has_battery = True
                         self.any_resident_has_battery = True
                         self.battery_list.append(c)
                         scenario.has_ind_batteries = 'True'
-                        self.tot_ind_bat_capacity += self.resident[c].battery.capacity_kWh
-                    else:
-                        self.resident[c].has_battery = False
+                        # Scalable battery:
+                        if bat_capacity in scenario.parameters.index:
+                            if not pd.isnull(scenario.parameters[bat_capacity]):
+                                battery_capacity_kWh = scenario.parameters[bat_capacity]
+                    self.resident[c].battery = Battery(scenario=scenario,
+                                                       battery_id=scenario.parameters[bat_name],
+                                                       battery_strategy=scenario.parameters[bat_strategy],
+                                                       battery_capacity=battery_capacity_kWh)
+                    self.tot_ind_bat_capacity += self.resident[c].battery.capacity_kWh
                 else:
                     self.resident[c].has_battery = False
+            else:
+                self.resident[c].has_battery = False
 
         # No individual household batteries
         # ---------------------------------
@@ -1457,7 +1496,6 @@ class Scenario():
             # use first load profile in list to establish list of residents:
             # --------------------------------------------------------------
             self.resident_list = list(self.dict_load_profiles[self.load_list[0]].columns.values)  # list of potential child meters - residents + cp
-
         else:
             # Loads are the same for every scenario and have been read already:
             # -----------------------------------------------------------------
@@ -1566,8 +1604,17 @@ class Scenario():
                 self.central_battery_strategy = self.parameters['central_battery_strategy']
                 self.has_central_battery = not pd.isnull(self.central_battery_id) and \
                                            not pd.isnull(self.central_battery_strategy)
+                if 'central_battery_capacity_kWh' in self.parameters.index:
+                    if not pd.isnull(self.parameters['central_battery_capacity_kWh']):
+                        self.central_battery_capacity_kWh = self.parameters['central_battery_capacity_kWh']
+                    else:
+                        self.central_battery_capacity_kWh = 1
+                    possible_batteries.remove('central_battery_capacity_kWh')
+                else:
+                    self.central_battery_capacity_kWh = 1
                 possible_batteries.remove('central_battery_id')
                 possible_batteries.remove('central_battery_strategy')
+
             else:
                 self.has_central_battery = False
 
@@ -1580,13 +1627,13 @@ class Scenario():
                 self.has_ind_batteries = 'none'
             # Battery capex to override values in battery_lookup.csv:
             # --------------------------------------------------------
-            if 'battery_capex_per_kW' in self.parameters.index:
-                if not np.isnan(self.parameters['battery_capex_per_kW']):
-                    self.battery_capex_per_kW = self.parameters['battery_capex_per_kW']
+            if 'battery_capex_per_kWh' in self.parameters.index:
+                if not np.isnan(self.parameters['battery_capex_per_kWh']):
+                    self.battery_capex_per_kWh= self.parameters['battery_capex_per_kWh']
                 else:
-                    self.battery_capex_per_kW = 0.0
+                    self.battery_capex_per_kWh = 0.0
             else:
-                self.battery_capex_per_kW = 0.0
+                self.battery_capex_per_kWh = 0.0
         else:  # 'bau` arrangement has no batteries by definition:
             self.has_central_battery = False
             self.has_ind_batteries = 'none'
@@ -2250,7 +2297,7 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 'tests'
-    default_study = 'test_ppa'
+    default_study = 'test_bat_scale'
     default_use_threading = 'False'
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
