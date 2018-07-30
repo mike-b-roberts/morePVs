@@ -1413,7 +1413,7 @@ class Network(Customer):
             self.self_sufficiency_OLD = 0
 
 
-    def logTimeseries(self, scenario):
+    def logTimeseriesDetailed(self, scenario):
         """Logs timeseries data for whole building to csv file."""
 
         timedata = pd.DataFrame(index=ts.timeseries)
@@ -1440,6 +1440,23 @@ class Network(Customer):
                                  self.scenario.label + '_' +
                                  scenario.arrangement + '_' +
                                  self.load_name)
+        um.df_to_csv(timedata, time_file)
+
+    def logTimeseriesBrief(self, scenario):
+        """Logs basic timeseries data for whole building to csv file."""
+
+        timedata = pd.DataFrame(index=ts.timeseries)
+        timedata['network_load'] = self.network_load.sum(axis=1)
+        #timedata['pv_generation'] = self.pv.sum(axis=1)
+        timedata['grid_import'] = self.imports
+        #timedata['grid_export'] = self.exports
+        timedata['sum_of_customer_imports'] = self.cum_resident_imports
+        #timedata['sum_of_customer_exports'] = self.cum_resident_exports
+
+        time_file = os.path.join(study.timeseries_path,
+                         self.scenario.label + '_' +
+                         scenario.arrangement + '_' +
+                         self.load_name)
         um.df_to_csv(timedata, time_file)
 
 class Scenario():
@@ -2014,12 +2031,18 @@ class Study():
         os.makedirs(self.output_path, exist_ok=True)
         self.scenario_path = os.path.join(self.output_path,'scenarios')
         os.makedirs(self.scenario_path, exist_ok=True)
-        if 'log_timeseries_csv' in self.output_list:
-            self.log_timeseries = True
+        if 'log_timeseries_detailed' in self.output_list:
+            self.log_timeseries_detailed = True
             self.timeseries_path = os.path.join(self.output_path, 'timeseries')
             os.makedirs(self.timeseries_path, exist_ok=True)
         else:
-            self.log_timeseries = False
+            self.log_timeseries_detailed = False
+        if 'log_timeseries_brief' in self.output_list:
+            self.log_timeseries_brief = True
+            self.timeseries_path = os.path.join(self.output_path, 'timeseries')
+            os.makedirs(self.timeseries_path, exist_ok=True)
+        else:
+            self.log_timeseries_brief = False
 
         # --------------
         #  Locate pv data
@@ -2217,7 +2240,7 @@ def runScenario(scenario_name):
         eno.retailer.calcStaticEnergy()
 
         # Summary energy metrics
-        # ----------------------
+        # ----------------------lo
         eno.calcEnergyMetrics(scenario)
 
         # Financials
@@ -2226,8 +2249,10 @@ def runScenario(scenario_name):
         eno.allocateAllCapex(scenario)  # per load profile to allow for scenarios where capex allocation depends on load
         scenario.calcFinancials(eno)
         scenario.collateNetworkResults(eno)
-        if study.log_timeseries:
-            eno.logTimeseries(scenario)
+        if study.log_timeseries_detailed:
+            eno.logTimeseriesDetailed(scenario)
+        if study.log_timeseries_brief:
+            eno.logTimeseriesBrief(scenario)
 
     # collate / log data for all loads in scenario
     if use_threading == 'True':
