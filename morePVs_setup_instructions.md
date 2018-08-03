@@ -193,8 +193,8 @@ N.B. (all `_id`s require `_strategy` too.)
 
 
 
+### Battery Characteristics
 
-__Battery Characteristics__
 All battery technical data is kept in `reference\battery_lookup.csv`
 `battery_id`  - identifier unique to battery characteristics 
 `capacity_kWh`      - Single capacity figure: Useful discharge energy
@@ -215,24 +215,31 @@ __Scalable Battery__
 
 If `battery_id` includes `scale` and `x.....battery_capacity_kWh` is in the `study....csv` file (for x = `central` or `cp` or `all` or `customer_id`) this capacity is used to scale the capacity and `max_charge_kW` in the `battery_lookup.csv` file
 
-__Control Strategies__
+ ### Battery Control Strategies
 kept in `reference/battery_control_strategies`
 
+__Discharge periods:__
+
 `discharge_start1` and `discharge_end1` (optional) Discharge *only* allowed between these hours 
-or these hours: `discharge_start2` and `discharge_end2` 
+or these hours: `discharge_start2` and `discharge_end2` . If there is no period, specified, battery is discharged whenever load > generation.
 
-Optional additional grid-charging period
-`charge_start1` and `charge_end1`
+`discharge_day1` , `discharge_day2`	= `week`, `end` or `both` : days to discharge 
 
-`charge_start2` and `charge_end2 `
+__Charge Periods:__
 
+Battery is charged whenever generation > load, 
 
+*plus* Optional additional grid-charging periods (`charge_start1` to `charge_end1`), 
 
-`discharge_day1` , `discharge_day2`and `charge_day1` and `charge_day2`
+(`charge_start2` to`charge_end2 `)
 
-​	= `week`, `end` or `both` : days to discharge / charge
+If there is no charge period specified, battery is never charged from grid.
 
-__Charge / Discharge Rate__
+ `charge_day1` and `charge_day2` 	= `week`, `end` or `both` : days to charge from grid 
+
+If `seasonal_strategy = True` then the model shifts all charge and discharge periods an hour EARLIER in summer. If `False` then winter and summer periods are the same.
+
+__Charge / Discharge Rate__:
 
 `charge_c_rate` and `discharge_c_rate` given in `battery_control_strategies.csv` as C-rate fraction of capacity to charge / discharge in 1 hour. 
 e.g 0.5C takes 2 hours to charge / discharge

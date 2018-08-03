@@ -227,10 +227,14 @@ def plot_battery(project,
 
         # legend
         # -------
-
         leg = ax.legend(fancybox=True)
         leg.get_frame().set_alpha(0.5)
         ax.set_title(name[:-4], fontsize=14)
+        # box = ax.get_position()
+        # ax.set_position([box.x0, box.y0, box.width * 0.7, box.height])
+        # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0)
+
+
         # plt.show()
         plt.savefig(plotfile, dpi=1000)
         plt.close('all')
