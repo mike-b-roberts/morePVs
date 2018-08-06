@@ -457,9 +457,12 @@ class Battery():
             # Calculate discharge period(s):
             # -----------------------------
             # If battery strategy is seasonal, add an hour to summer charge and discharge periods
-            seasonal_stratagey = study.battery_strategies.fillna(False).loc[battery_strategy, 'seasonal_strategy']
+            if not 'seasonal_stratagy' in  study.battery_strategies.columns:
+                seasonal_stratagy = Fales
+            else:
+                seasonal_stratagy = study.battery_strategies.fillna(False).loc[battery_strategy, 'seasonal_strategy']
 
-            if seasonal_stratagey:
+            if seasonal_stratagy:
                 # If battery strategy is seasonal, add an hour to summer charge and discharge periods
                 # discharge_1
                 winter_days_affected = ts.days[discharge_day1].join(
@@ -598,7 +601,7 @@ class Battery():
                 charge_period2 =  winter_period.join(summer_period, 'outer').sort_values()
 
             else:
-                # If non-seasonal battery stratagey, use same periods for whole year:
+                # If non-seasonal battery , use same periods for whole year:
                 # discharge_1
                 if pd.isnull(discharge_start1):
                     discharge_period1 = pd.DatetimeIndex([])
