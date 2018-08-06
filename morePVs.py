@@ -656,7 +656,7 @@ class Battery():
             # Combine multiple charge and dischare periods:
             # ---------------------------------------------
             self.discharge_period = discharge_period1.join(discharge_period2, how='outer')
-            if self.discharge_period  == pd.DatetimeIndex([]):
+            if len(self.discharge_period) == 0:
                 self.discharge_period = ts.timeseries  # if no discharge period set, discharge any time
             self.charge_period = charge_period1.join(charge_period2, how='outer')
 
