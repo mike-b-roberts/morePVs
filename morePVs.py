@@ -457,7 +457,7 @@ class Battery():
             # Calculate discharge period(s):
             # -----------------------------
             # If battery strategy is seasonal, add an hour to summer charge and discharge periods
-            if not 'seasonal_strategy' in  study.battery_strategies.columns:
+            if 'seasonal_strategy'not in  study.battery_strategies.columns:
                 seasonal_strategy = False
             else:
                 seasonal_strategy = study.battery_strategies.fillna(False).loc[battery_strategy, 'seasonal_strategy']
