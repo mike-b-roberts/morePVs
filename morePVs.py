@@ -2117,14 +2117,10 @@ class Scenario():
         # Average results across multiple loads
         # -------------------------------------
         # For remaining parameters in results, average across multiple load profiles:
-        mcols = []
+        mcols = [c + '_mean' for c in cols]
         stdcols = [c + '_std' for c in cols]
         for c in cols:
             i = cols.index(c)
-            if self.results.loc[:,c].std(axis=0) == 0: 
-                mcols[i] = c
-            else:
-                mcols[i] = c + '_mean'
             study.op.loc[self.name,mcols[i]] = self.results.loc[:,c].mean(axis=0)
             study.op.loc[self.name,stdcols[i]] = self.results.loc[:,c].std(axis=0)
 
@@ -2493,7 +2489,7 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 'EN2_bat2'  # 'tests'
-    default_study = 'bat_energy3_F'
+    default_study = 'bat_energy2_G_testing'
     default_use_threading = 'False'
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
