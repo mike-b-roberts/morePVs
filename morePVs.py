@@ -754,21 +754,37 @@ class Battery():
         # -------------------------------
         # Make battery control decisions:
         # -------------------------------
-        # 1) Use excess PV to charge
-        # --------------------------
-        if available_kWh > 0:
-            available_kWh = \
-            self.charge(available_kWh)
-        # 2) Discharge if needed to meet load, within discharge period
-        # ------------------------------------------------------------
-        elif available_kWh < 0 and ts.timeseries[step] in self.discharge_period:
-            available_kWh += \
-                self.discharge(-available_kWh)
-        # 3) Charge from grid in additional charge period:
-        # ------------------------------------------------
-        elif available_kWh <= 0 and ts.timeseries[step] in self.charge_period:
-            available_kWh -= (self.max_timestep_accepted -
-                              self.charge(self.max_timestep_accepted))
+
+        if not self.priorities_battery:
+            # A) Strategy to maximise SC: meet onsite load first
+            # --------------------------------------------------
+            # 1) Use excess PV to charge
+            # --------------------------
+            if available_kWh > 0:
+                available_kWh = \
+                self.charge(available_kWh)
+            # 2) Discharge if needed to meet load, within discharge period
+            # ------------------------------------------------------------
+            elif available_kWh < 0 and ts.timeseries[step] in self.discharge_period:
+                available_kWh += \
+                    self.discharge(-available_kWh)
+            # 3) Charge from grid in additional charge period:
+            # ------------------------------------------------
+            elif available_kWh <= 0 and ts.timeseries[step] in self.charge_period:
+                available_kWh -= (self.max_timestep_accepted -
+                                  self.charge(self.max_timestep_accepted))
+
+        else:
+            # B) Strategy to reduce peak demand with low PV potential
+            # -------------------------------------------------------
+            # 1) Charge battery first:
+            # -----------------------
+
+
+
+
+
+
 
         # For monitoring purposes, log battery SOC:
         # -----------------------------------------
