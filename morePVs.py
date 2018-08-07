@@ -1530,11 +1530,13 @@ class Network(Customer):
         # Calc sum of battery losses & discharge across all batteries in network
         # ----------------------------------------------------------------------
         if self.has_central_battery:
+            self.central_battery_capacity = self.battery.capacity_kWh
             self.total_battery_losses += self.battery.cumulative_losses
             self.battery_cycles = self.battery.number_cycles
             self.battery_SOH = self.battery.SOH
             self.total_discharge = self.battery.net_discharge
         else:
+            self.central_battery_capacity =0
             self.battery_cycles = 0
             self.battery_SOH = 0
             self.total_discharge = np.zeros(ts.num_steps)
@@ -2021,6 +2023,7 @@ class Scenario():
                        net.self_sufficiency,
                        net.self_consumption_OLD,
                        net.self_sufficiency_OLD,
+                       net.central_battery_capacity,
                        net.total_battery_losses,
                        net.battery_cycles,
                        net.battery_SOH] + \
@@ -2052,6 +2055,7 @@ class Scenario():
                          'self-sufficiency',
                          'self-consumption_OLD',
                          'self-sufficiency_OLD',
+                         'central_battery_capacity_kWh',
                          'total_battery_losses',
                          'central_battery_cycles',
                          'central_battery_SOH'] + \
@@ -2084,13 +2088,6 @@ class Scenario():
         study.op.loc[self.name,'number_of_households'] = len(self.households)
         study.op.loc[self.name,'load_folder'] = self.load_folder
 
-        # Central battery parameters:
-        # ---------------------------
-        if self.has_central_battery:
-            study.op.loc[self.name, 'central_battery_kWh'] = study.battery_lookup.loc[self.central_battery_id, 'capacity_kWh']
-        else:
-            study.op.loc[self.name, 'central_battery_kWh'] = 0
-
         # Scenario total capex and opex repayments
         # ----------------------------------------
         study.op.loc[self.name, 'en_opex'] = self.en_opex
@@ -2120,10 +2117,14 @@ class Scenario():
         # Average results across multiple loads
         # -------------------------------------
         # For remaining parameters in results, average across multiple load profiles:
-        mcols = [c + '_mean' for c in cols]
+        mcols = []
         stdcols = [c + '_std' for c in cols]
         for c in cols:
             i = cols.index(c)
+            if self.results.loc[:,c].std(axis=0) == 0: 
+                mcols[i] = c
+            else:
+                mcols[i] = c + '_mean'
             study.op.loc[self.name,mcols[i]] = self.results.loc[:,c].mean(axis=0)
             study.op.loc[self.name,stdcols[i]] = self.results.loc[:,c].std(axis=0)
 
