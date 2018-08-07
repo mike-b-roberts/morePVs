@@ -392,8 +392,8 @@ class Battery():
             logging.info("battery-id %s is not in battery_lookup.csv :", battery_id)
             sys.exit("battery-id %s is not in battery_lookup.csv :", battery_id)
         else:
-            # Load battery parameters from battery tariff_lookup
-            # --------------------------------------------------
+            # Load battery parameters from battery_lookup
+            # -------------------------------------------
             self.capacity_kWh = study.battery_lookup.loc[battery_id, 'capacity_kWh']
             self.max_charge_kW = study.battery_lookup.loc[battery_id, 'max_charge_kW']
             self.efficiency_cycle = study.battery_lookup.loc[battery_id, 'efficiency_cycle']
@@ -439,6 +439,19 @@ class Battery():
             if pd.isnull(self.battery_inv_cost):
                 self.battery_inv_cost =0.0
 
+            # Define battery charging and discharging strategy
+            # ------------------------------------------------
+            # strategy that prioritises using PV to charg over onsite load:
+            if 'prioritise_battery' in study.battery_strategies.columns:
+                self.prioritise_battery = study.battery_strategies.fillna(False).loc[battery_strategy, 'prioritise_battery']
+            else:
+                self.prioritise_battery = False
+            # Strategy with different summer / winter charge and discharge periods (DST):
+            if 'seasonal_strategy' not in  study.battery_strategies.columns:
+                seasonal_strategy = False
+            else:
+                seasonal_strategy = study.battery_strategies.fillna(False).loc[battery_strategy, 'seasonal_strategy']
+
             # Set up restricted discharge period(s) and additional charge period(s)
             # ---------------------------------------------------------------------
             discharge_start1 = study.battery_strategies.loc[battery_strategy, 'discharge_start1']
@@ -457,10 +470,7 @@ class Battery():
             # Calculate discharge period(s):
             # -----------------------------
             # If battery strategy is seasonal, add an hour to summer charge and discharge periods
-            if 'seasonal_strategy' not in  study.battery_strategies.columns:
-                seasonal_strategy = False
-            else:
-                seasonal_strategy = study.battery_strategies.fillna(False).loc[battery_strategy, 'seasonal_strategy']
+
 
             if seasonal_strategy:
                 # If battery strategy is seasonal, add an hour to summer charge and discharge periods
@@ -748,27 +758,30 @@ class Battery():
         self.net_discharge_for_ts = energy_delivered
         return energy_delivered  # returns delivered energy
 
-    def dispatch(self, available_kWh, step):
+    def dispatch(self, generation, load, step):
         """Determines charge and discharge of battery at timestep."""
         self.net_discharge_for_ts = 0.0  # reset
         # -------------------------------
         # Make battery control decisions:
         # -------------------------------
 
-        if not self.priorities_battery:
-            # A) Strategy to maximise SC: meet onsite load first
-            # --------------------------------------------------
-            # 1) Use excess PV to charge
+        if not self.prioritise_battery:
+            # A) Strategy to maximise SC:
+            # ---------------------------
+            # 1) meet onsite load first:
+            # --------------------------
+            available_kWh = generation - load
+            # 2) Use excess PV to charge
             # --------------------------
             if available_kWh > 0:
                 available_kWh = \
                 self.charge(available_kWh)
-            # 2) Discharge if needed to meet load, within discharge period
+            # 3) Discharge if needed to meet load, within discharge period
             # ------------------------------------------------------------
             elif available_kWh < 0 and ts.timeseries[step] in self.discharge_period:
                 available_kWh += \
                     self.discharge(-available_kWh)
-            # 3) Charge from grid in additional charge period:
+            # 4) Charge from grid in additional charge period:
             # ------------------------------------------------
             elif available_kWh <= 0 and ts.timeseries[step] in self.charge_period:
                 available_kWh -= (self.max_timestep_accepted -
@@ -777,14 +790,31 @@ class Battery():
         else:
             # B) Strategy to reduce peak demand with low PV potential
             # -------------------------------------------------------
-            # 1) Charge battery first:
-            # -----------------------
-
-
-
-
-
-
+            # Within discharge period:
+            if ts.timeseries[step] in self.discharge_period:
+                # 1) Apply PV to load
+                # -------------------
+                available_kWh = generation - load
+                # 2) Discharge battery to meet residual load
+                # ------------------------------------------
+                if available_kWh < 0 :
+                    available_kWh += self.discharge(-available_kWh)
+                # 3) or use excess PV to charge battery:
+                # --------------------------------------
+                elif available_kWh > 0 :
+                    available_kWh = \
+                        self.charge(available_kWh)
+            else: # outside discharge period
+                # 1) Use PV to charge battery:
+                # ----------------------------
+                if generation > 0:
+                    generation = self.charge(generation)
+                # 2) use excess PV to meet load
+                available_kWh = generation - load
+                # If in grid-charging period, charge from grid
+                if available_kWh <=0 and  ts.timeseries[step] in self.charge_period:
+                    available_kWh -= (self.max_timestep_accepted -
+                                      self.charge(self.max_timestep_accepted))
 
         # For monitoring purposes, log battery SOC:
         # -----------------------------------------
@@ -902,7 +932,11 @@ class Customer():
         # -------------------------------------------------------------------------------
         self.flows[step] = self.generation[step] - self.load[step]
         if self.has_battery:
-            self.flows[step] = self.battery.dispatch(available_kWh=self.flows[step], step=step)
+            self.flows[step] = self.battery.dispatch(generation = self.generation[step],
+                                                     load = self.load[step],
+                                                     step=step)
+        else:
+            self.flows[step] = self.generation[step] - self.load[step]
         self.exports[step] = self.flows[step].clip(0)
         self.imports[step] = (-1 * self.flows[step]).clip(0)
         #TODO: Check this local quota - should be OK
@@ -1414,8 +1448,13 @@ class Network(Customer):
                          + self.cum_resident_exports[step] \
                          - self.cum_resident_imports[step]
         if self.has_central_battery:
-            self.flows[step] = self.battery.dispatch(available_kWh=self.flows[step], step=step)
-
+            self.flows[step] = self.battery.dispatch(generation = self.generation[step] + self.cum_resident_exports[step],
+                                                     load = self.cum_resident_imports[step],
+                                                     step=step)
+        else:
+            self.flows[step] = self.generation[step] \
+                               + self.cum_resident_exports[step] \
+                               - self.cum_resident_imports[step]
         # Calc imports and exports
         # ------------------------
         self.exports[step] = self.flows[step].clip(0)
