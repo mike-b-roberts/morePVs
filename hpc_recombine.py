@@ -10,7 +10,7 @@ import en_utilities as um
 # Input parameters:
 # -----------------
 project = 'EN2_bat2'
-study = 'bat_energy2_J'
+study = 'bat_finance1j_J'
 
 
 

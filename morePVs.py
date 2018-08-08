@@ -467,10 +467,9 @@ class Battery():
             charge_end2 = study.battery_strategies.loc[battery_strategy, 'charge_end2']
             charge_day2 = study.battery_strategies.loc[battery_strategy, 'charge_day2']
 
-            # Calculate discharge period(s):
-            # -----------------------------
+            # Calculate discharge and grid-charge period(s):
+            # ----------------------------------------------
             # If battery strategy is seasonal, add an hour to summer charge and discharge periods
-
 
             if seasonal_strategy:
                 # If battery strategy is seasonal, add an hour to summer charge and discharge periods
@@ -693,6 +692,7 @@ class Battery():
                 if not pd.isnull(study.battery_strategies.loc[battery_strategy, 'charge_c_rate']):
                     self.charge_rate_kW = min(self.max_charge_kW,study.battery_strategies.loc[
                         battery_strategy, 'charge_c_rate']* self.capacity_kWh)
+
             self.discharge_rate_kW = self.max_charge_kW
             if 'discharge_c_rate' in study.battery_strategies.columns:
                 if not pd.isnull(study.battery_strategies.loc[battery_strategy, 'discharge_c_rate']):
@@ -2543,8 +2543,8 @@ if __name__ == "__main__":
     # Set up relative paths for data files:
 
     num_threads = 6
-    default_project = 'EN2_bat2'  # 'tests'
-    default_study = 'bat_energy2_G_testing'
+    default_project = 'tests'  # 'tests'
+    default_study = 'test_bat_strat2'
     default_use_threading = 'False'
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------

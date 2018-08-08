@@ -254,7 +254,7 @@ def main():
     # plot_battery(project='p_testing', study_name='test_indbat1')
 
     project = 'tests'
-    study_name = 'test_bat_scale'
+    study_name = 'test_bat_strat2'
     plot_battery(project=project, study_name=study_name, start_day=0)
 
     pass
