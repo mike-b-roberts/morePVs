@@ -103,7 +103,7 @@ def main(project, study, base_path, maxjobs):
                                           quoting=csv.QUOTE_NONE, line_terminator='\n')
 
         putty_script +=['sbatch '+ bash_file]
-        putty_script += ['sleep 2']
+        putty_script += ['sleep 0.5']
 
     # Create PuTTY Script:
     # --------------------
