@@ -10,8 +10,7 @@ import en_utilities as um
 # Input parameters:
 # -----------------
 project = 'EN2_bat2'
-study = 'energy4_F'
-
+study = 'energy4b_H'
 
 
 # Establish paths etc
