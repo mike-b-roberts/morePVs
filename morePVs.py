@@ -384,7 +384,11 @@ class Tariff():
 
 class Battery():
     # adapted from original script by Luke Marshall
-    def __init__(self, scenario, battery_id, battery_strategy, battery_capacity):
+    def __init__(self,
+                 scenario,
+                 battery_id,
+                 battery_strategy,
+                 battery_capacity):
         self.battery_id = battery_id
         self.scenario = scenario
 
@@ -418,9 +422,11 @@ class Battery():
 
             # Scalable Battery
             # ----------------
+            # details in `battery_lookup` are for 1kWh and this is scaled by capacity in `study_parameters`
             if any(word in self.battery_id for word in ['scale', 'scalable']):
                 self.capacity_kWh = self.capacity_kWh * battery_capacity
                 self.max_charge_kW = self.max_charge_kW * battery_capacity
+
 
             # Use default values if missing:
             # ------------------------------
@@ -446,11 +452,18 @@ class Battery():
                 self.prioritise_battery = study.battery_strategies.fillna(False).loc[battery_strategy, 'prioritise_battery']
             else:
                 self.prioritise_battery = False
+
             # Strategy with different summer / winter charge and discharge periods (DST):
             if 'seasonal_strategy' not in  study.battery_strategies.columns:
                 seasonal_strategy = False
             else:
                 seasonal_strategy = study.battery_strategies.fillna(False).loc[battery_strategy, 'seasonal_strategy']
+
+            # peak_demand strategy only discharges when net export >= peak_demand_percentage of annual peak load
+            if 'peak_demand_percentage' not in study.battery_strategies.columns:
+                self.peak_demand_percentage = 0
+            else:
+                self.peak_demand_percentage = study.battery_strategies.fillna(0).loc[battery_strategy,'peak_demand_percentage']
 
             # Set up restricted discharge period(s) and additional charge period(s)
             # ---------------------------------------------------------------------
@@ -722,13 +735,16 @@ class Battery():
             # ------------------
             self.SOC_log = np.zeros(ts.num_steps)
 
-    def reset(self):
+    def reset(self,
+              annual_peak_load):
         self.charge_level_kWh = self.capacity_kWh * self.initial_SOC
         self.number_cycles = 0
         self.SOH = 100
         self.SOC_log = np.zeros(ts.num_steps)
         self.cumulative_losses = 0
         self.net_discharge = np.zeros(ts.num_steps)
+        self.peak_demand_threshold = annual_peak_load * self.peak_demand_percentage / 100
+
 
     def charge(self, desired_charge):
         amount_to_charge = min((self.capacity_kWh * self.maxSOC - self.charge_level_kWh),
@@ -778,7 +794,7 @@ class Battery():
                 self.charge(available_kWh)
             # 3) Discharge if needed to meet load, within discharge period
             # ------------------------------------------------------------
-            elif available_kWh < 0 and ts.timeseries[step] in self.discharge_period:
+            elif available_kWh < -self.peak_demand_threshold and ts.timeseries[step] in self.discharge_period:
                 available_kWh += \
                     self.discharge(-available_kWh)
             # 4) Charge from grid in additional charge period:
@@ -797,7 +813,7 @@ class Battery():
                 available_kWh = generation - load
                 # 2) Discharge battery to meet residual load
                 # ------------------------------------------
-                if available_kWh < 0 :
+                if available_kWh < -self.peak_demand_threshold:
                     available_kWh += self.discharge(-available_kWh)
                 # 3) or use excess PV to charge battery:
                 # --------------------------------------
@@ -1088,6 +1104,7 @@ class Network(Customer):
         # --------------
         self.load_name = load_name
         self.network_load = scenario.dict_load_profiles[load_name]
+
         # set eno load, cumulative load and generation to zero
         # ----------------------------------------------------
         self.initialiseCustomerLoad(np.zeros(ts.num_steps))
@@ -1387,7 +1404,7 @@ class Network(Customer):
         # Central Battery
         # ---------------
         if self.has_central_battery:
-            self.battery.reset()
+            self.battery.reset(annual_peak_load=self.network_load.sum(axis=1).max())
         # Individual Batteries
         # --------------------
         self.cum_ind_bat_charge = np.zeros(ts.num_steps)
@@ -1395,7 +1412,7 @@ class Network(Customer):
         #self.any_resident_has_battery = False
         if self.any_resident_has_battery:
             for c in self.battery_list:
-                    self.resident[c].battery.reset()
+                    self.resident[c].battery.reset(annual_peak_load=self.resident[c].load.max().max())
         self.total_battery_losses = 0
 
     def calcBuildingStaticEnergyFlows(self):
@@ -2544,7 +2561,7 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 'tests'  # 'tests'
-    default_study = 'test_bat_strat2'
+    default_study = 'test_bat_strat3'
     default_use_threading = 'False'
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------

@@ -192,7 +192,6 @@ N.B. (all `_id`s require `_strategy` too.)
 |                                                              |                                                            |
 
 
-
 ### Battery Characteristics
 
 All battery technical data is kept in `reference\battery_lookup.csv`
@@ -215,7 +214,7 @@ __Scalable Battery__
 
 If `battery_id` includes `scale` and `x.....battery_capacity_kWh` is in the `study....csv` file (for x = `central` or `cp` or `all` or `customer_id`) this capacity is used to scale the capacity and `max_charge_kW` in the `battery_lookup.csv` file
 
- ### Battery Control Strategies
+### Battery Control Strategies
 kept in `reference/battery_control_strategies`
 
 __Discharge periods:__
@@ -247,6 +246,17 @@ e.g 0.5C takes 2 hours to charge / discharge
 i.e. charging power = `battery.charge_c_rate` * `battery.capacity_kWh`
 
 If omitted, charge and discharge rate default to `max_charge_kW` in `battery_lookup.csv`
+
+__Priority Charging__
+
+If `prioritise_battery` is `True`: PV generation is applied to charge battery *before* applying to net load.
+
+__Peak demand Strategy__
+
+If `peak_demand_percentage` is present (0 <= x <=100), it is applied as a percentage
+to the maximum 30-minute demand in the timeseries to calculate a `peak_demand_threshold`.
+Battery is discharged *only* if net import is above this threshold *and* timestep is within `discharge_period`. Default is `0` - i.e. discharge is regardless of load value.
+i.e. to discharge battery to meet peak demand, regardless of time, `discharge_period` should be set to 24 hours.
 
 
 
