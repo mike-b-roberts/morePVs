@@ -1083,7 +1083,7 @@ class Network(Customer):
     def __init__(self, scenario):
         self.resident_list = scenario.resident_list.copy() # all residents plus cp
         self.households = scenario.households.copy()  # just residents, not cp
-        self.battery_list = [] # Households with batteries - initial state
+        self.battery_list = [] # residents (inc cp) with batteries - initial state
         # (these may change later if different_loads)
         #initialise characteristics of the network as a customer:
         super().__init__('network')
@@ -1305,6 +1305,7 @@ class Network(Customer):
                     not pd.isnull(scenario.parameters['cp_battery_strategy']):
                 self.resident['cp'].has_battery = True
                 self.any_resident_has_battery = True  # NB 'resident' here means householder or cp
+                self.battery_list = ['cp']
                 scenario.has_ind_batteries = 'True'
                 cp_battery_capacity_kWh = 1
                 # Scalable battery:
@@ -1350,7 +1351,7 @@ class Network(Customer):
             not pd.isnull(scenario.parameters[bat_name]) and \
             not pd.isnull(scenario.parameters[bat_strategy]):
                 self.any_resident_has_battery = True
-                self.battery_list = self.households
+                self.battery_list += self.households
                 scenario.has_ind_batteries = 'True'
                 all_battery_capacity_kWh = 1
                 # Scalable batteries:
