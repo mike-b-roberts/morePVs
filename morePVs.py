@@ -1330,8 +1330,9 @@ class Network(Customer):
             print('***************Warning!!! Scenario %s has btm arrangement with central battery \
                 - not included in this model', str(scenario.name))
         if 'cp_only' in scenario.arrangement and self.any_resident_has_battery:
-            logging.info('***************Warning!!! Scenario %s has cp_only arrangement with individual battery(s) \
+            logging.info('***************Warning!!! Scenario %s has cp_only arrangement with unit or cp battery(s) \
                             - not included in this model', str(scenario.name))
+            logging.info('*************** For cp_only with battery, use central_battery *******************')
             print('***************Warning!!! Scenario %s has cp_only arrangement with individual battery(s) \
                             - not included in this model', str(scenario.name))
         if ('bau' == scenario.arrangement) and (self.any_resident_has_battery or self.has_central_battery):
