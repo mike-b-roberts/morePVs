@@ -2562,8 +2562,8 @@ if __name__ == "__main__":
     # Set up relative paths for data files:
 
     num_threads = 6
-    default_project = 'tests'  # 'tests'
-    default_study = 'test_bat_strat3'
+    default_project = 'EN2_bat2'  # 'tests'
+    default_study = 'energy4pd_G'
     default_use_threading = 'False'
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
