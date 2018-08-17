@@ -92,7 +92,7 @@ def main(project, study, base_path, maxjobs):
         '#SBATCH --job-name=arrayJob',
         '#SBATCH --output=arrayJob_%A_%a.out'
         '#SBATCH --error=arrayJob_%A_%a.err'
-        '#SBATCH --array=0-'+str(num_jobs)
+        '#SBATCH --array=0-'+str(num_jobs),
         '#SBATCH --time=96:00:00',
         '#SBATCH --ntasks=1',
         '#SBATCH --cpus-per-task=1',
@@ -101,9 +101,7 @@ def main(project, study, base_path, maxjobs):
         '#SBATCH --error="/home/z5044992/InputOutput/DATA_EN_4/slurm_err/err_study_%A_%a.err"',
         'module load python/3.6',
         'source /home/z5044992/python_venv/bin/activate',
-        'python /home/z5044992/InputOutput/en/morePVs/ morePVs.py -b /home/z5044992/InputOutput/DATA_EN_4 -p '\
-                + new_project +' -s ' \
-                + study+'_hpc'+'$(printf "%03d" $SLURM_ARRAY_TASK_ID)'+ '.csv'
+        'python /home/z5044992/InputOutput/en/morePVs/ morePVs.py -b /home/z5044992/InputOutput/DATA_EN_4 -p ' + new_project +' -s ' + study+'_hpc'+'$(printf "%03d" $SLURM_ARRAY_TASK_ID)'+'.csv',
         'bash_script $SLURM_ARRAY_TASK_ID',
         'deactivate',
         'module unload python/3.6'
