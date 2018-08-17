@@ -37,7 +37,7 @@ def main(project, study, base_path, maxjobs):
 
     # Path for bash script files and for script
     # ----------------------------------------
-    bash_path = '/home/z5044992/InputOutput/en/morePVs/bash_files/'+project
+    bash_path = '/home/z5044992/InputOutput/en/morePVs'
 
     # Split input (s'study_....csv') files
     # ------------------------------------
@@ -75,13 +75,12 @@ def main(project, study, base_path, maxjobs):
 
 
 
-    # empty bash directory
-    # --------------------
-    if not os.path.exists(bash_path):
-        os.makedirs(bash_path)
-    for f in os.listdir(bash_path):
-        xfile = os.path.join(bash_path, f)
-        os.remove(xfile)
+
+    # if not os.path.exists(bash_path):
+    #     os.makedirs(bash_path)
+    # for f in os.listdir(bash_path):
+    #     xfile = os.path.join(bash_path, f)
+    #     os.remove(xfile)
     # Create single batch bash file
     # -----------------------------
     bash_content = pd.Series([
@@ -105,7 +104,7 @@ def main(project, study, base_path, maxjobs):
         'module unload python/3.6'
         ]).apply(lambda x: x.replace('\r\n', '\n'))
     # nb replace unix line ending
-    bash_name = 'bash_'+ study + '.bat'
+    bash_name = 'bash_'+study+'.bat'
     bash_file = os.path.join(bash_path, bash_name)
     pd.DataFrame(bash_content).to_csv(bash_file,
                                       index=False,
