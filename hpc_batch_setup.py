@@ -28,9 +28,11 @@ def main(project, study, base_path, maxjobs):
     np_path =os.path.join(base_path,new_project)
     if not os.path.exists (np_path):
         os.makedirs(np_path)
-    o_path =os.path.join(np_path,'inputs')
-    if not os.path.exists (o_path):
-        os.makedirs(o_path)
+    new_i_path =os.path.join(np_path,'inputs')
+    if not os.path.exists (new_i_path):
+        os.makedirs(new_i_path)
+    o_path = os.path.join(np_path, 'outputs')
+
 
     df = pd.read_csv(i_file)
     df = df.set_index('scenario')
@@ -56,7 +58,7 @@ def main(project, study, base_path, maxjobs):
         df1 = df1.iloc[joblength[job]:]
         o_name = 'study_'+study+'_hpc'+ str(job).zfill(3) +'.csv'
         csv_list += [o_name]
-        o_file = os.path.join(o_path ,o_name)
+        o_file = os.path.join(new_i_path ,o_name)
         dfn.to_csv(o_file)
 
 
@@ -100,10 +102,13 @@ def main(project, study, base_path, maxjobs):
         'source /home/z5044992/python_venv/bin/activate',
         'python /home/z5044992/InputOutput/en/morePVs/morePVs.py -b /home/z5044992/InputOutput/DATA_EN_4 -p ' + new_project +' -s ' + study+'_hpc'+'$(printf "%03d" $SLURM_ARRAY_TASK_ID)',
         'deactivate',
-        'module unload python/3.6'
+        'module unload python/3.6',
+        'cp -pr //home/z5044992/InputOutput/DATA_EN_4/studies'+new_project+'/outputs/'+study+'_hpc'+'$(printf "%03d" $SLURM_ARRAY_TASK_ID) //share/scratch/z5044992/outputs',
+        'rm //home/z5044992/InputOutput/DATA_EN_4/studies'+new_project+'/outputs/'+study+'_hpc'+'$(printf "%03d" $SLURM_ARRAY_TASK_ID)/*.*',
+        'rmdir //home/z5044992/InputOutput/DATA_EN_4/studies' + new_project + '/outputs/' + study + '_hpc' + '$(printf "%03d" $SLURM_ARRAY_TASK_ID)'
         ]).apply(lambda x: x.replace('\r\n', '\n'))
     # nb replace unix line ending
-    bash_name = 'bash_'+study+'.bat'
+    bash_name = study+'.bat'
     bash_file = os.path.join(bash_path, bash_name)
     pd.DataFrame(bash_content).to_csv(bash_file,
                                       index=False,
