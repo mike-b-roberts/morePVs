@@ -2353,7 +2353,7 @@ class Study():
         if not self.different_loads:
             for load_name in self.load_list:
                 loadFile = os.path.join(self.load_path, load_name)
-                temp_load = pd.read_csv(loadFile,
+		                temp_load = pd.read_csv(loadFile,
                                         parse_dates=['timestamp'],
                                         dayfirst=True)
                 temp_load = temp_load.set_index('timestamp')

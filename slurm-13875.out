@@ -1,0 +1,25 @@
+Traceback (most recent call last):
+  File "/home/z5044992/InputOutput/en/morePVs/morePVs.py", line 2526, in main
+    dst_region=dst_region)
+  File "/home/z5044992/InputOutput/en/morePVs/morePVs.py", line 2358, in __init__
+    dayfirst=True)
+  File "/home/z5044992/python_venv/lib/python3.6/site-packages/pandas/io/parsers.py", line 678, in parser_f
+    return _read(filepath_or_buffer, kwds)
+  File "/home/z5044992/python_venv/lib/python3.6/site-packages/pandas/io/parsers.py", line 446, in _read
+    data = parser.read(nrows)
+  File "/home/z5044992/python_venv/lib/python3.6/site-packages/pandas/io/parsers.py", line 1036, in read
+    ret = self._engine.read(nrows)
+  File "/home/z5044992/python_venv/lib/python3.6/site-packages/pandas/io/parsers.py", line 1848, in read
+    data = self._reader.read(nrows)
+  File "pandas/_libs/parsers.pyx", line 876, in pandas._libs.parsers.TextReader.read
+  File "pandas/_libs/parsers.pyx", line 891, in pandas._libs.parsers.TextReader._read_low_memory
+  File "pandas/_libs/parsers.pyx", line 945, in pandas._libs.parsers.TextReader._read_rows
+  File "pandas/_libs/parsers.pyx", line 932, in pandas._libs.parsers.TextReader._tokenize_rows
+  File "pandas/_libs/parsers.pyx", line 2112, in pandas._libs.parsers.raise_parser_error
+pandas.errors.ParserError: Error tokenizing data. C error: out of memory
+> /home/z5044992/InputOutput/en/morePVs/pandas/_libs/parsers.pyx(2112)pandas._libs.parsers.raise_parser_error()
+(Pdb) 
+[?1034henergy4pd_G_hpc000
+cp: cannot stat `//home/z5044992/InputOutput/DATA_EN_4/studiesEN2_bat2_hpc/outputs/energy4pd_G_hpc000': No such file or directory
+rm: cannot remove `//home/z5044992/InputOutput/DATA_EN_4/studiesEN2_bat2_hpc/outputs/energy4pd_G_hpc000/*.*': No such file or directory
+rmdir: failed to remove `//home/z5044992/InputOutput/DATA_EN_4/studiesEN2_bat2_hpc/outputs/energy4pd_G_hpc000': No such file or directory
