@@ -98,8 +98,7 @@ def main(project, study, base_path, maxjobs):
         '#SBATCH --error="/home/z5044992/InputOutput/DATA_EN_4/slurm_err/err_study_%A_%a.err"',
         'module load python/3.6',
         'source /home/z5044992/python_venv/bin/activate',
-        'python /home/z5044992/InputOutput/en/morePVs/ morePVs.py -b /home/z5044992/InputOutput/DATA_EN_4 -p ' + new_project +' -s ' + study+'_hpc'+'$(printf "%03d" $SLURM_ARRAY_TASK_ID)'+'.csv',
-        'bash_script $SLURM_ARRAY_TASK_ID',
+        'python /home/z5044992/InputOutput/en/morePVs/morePVs.py -b /home/z5044992/InputOutput/DATA_EN_4 -p ' + new_project +' -s ' + study+'_hpc'+'$(printf "%03d" $SLURM_ARRAY_TASK_ID)',
         'deactivate',
         'module unload python/3.6'
         ]).apply(lambda x: x.replace('\r\n', '\n'))
