@@ -2361,7 +2361,7 @@ class Study():
                     temp_load['cp'] = 0
                 self.dict_load_profiles[load_name] = temp_load
 
-        # Otherwise, get the first load anyway:
+        # Otherwise, get the first load anyway:#@
         # -------------------------------------
         else:
             loadFile = os.path.join(self.load_path, self.load_list[0])
