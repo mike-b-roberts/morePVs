@@ -85,7 +85,7 @@ def main(project, study, base_path, maxjobs):
     # -----------------------------
     bash_content = pd.Series([
         '#!/bin/bash',
-        'export OPENBLAS_NUM_THREADS ='+str(num_threads),
+        'export OPENBLAS_NUM_THREADS='+str(num_threads),
         '#SBATCH --mail-user=m.roberts@unsw.edu.au',
         '#SBATCH --mail-type=FAIL',
         '#SBATCH --job-name=arrayJob',
