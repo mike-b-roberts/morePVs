@@ -1297,6 +1297,7 @@ class Network(Customer):
         self.cum_ind_bat_charge = np.zeros(ts.num_steps)
         self.tot_ind_bat_capacity =0
         self.any_resident_has_battery = False
+        self.any_householder_has_battery = False
 
         # CP battery
         # ----------
@@ -1323,26 +1324,6 @@ class Network(Customer):
         else:
             self.resident['cp'].has_battery = False
 
-        # Flag battery arrangements that don't exist in the model:
-        # --------------------------------------------------------
-        if 'btm' in scenario.arrangement and self.has_central_battery:
-            logging.info('***************Warning!!! Scenario %s has btm arrangement with central battery \
-                - not included in this model', str(scenario.name))
-            print('***************Warning!!! Scenario %s has btm arrangement with central battery \
-                - not included in this model', str(scenario.name))
-        if 'cp_only' in scenario.arrangement and self.any_resident_has_battery:
-            logging.info('***************Warning!!! Scenario %s has cp_only arrangement with unit or cp battery(s) \
-                            - not included in this model', str(scenario.name))
-            logging.info('*************** For cp_only with battery, use central_battery *******************')
-            print('***************Warning!!! Scenario %s has cp_only arrangement with individual battery(s) \
-                            - not included in this model', str(scenario.name))
-        if ('bau' == scenario.arrangement) and (self.any_resident_has_battery or self.has_central_battery):
-            logging.info('***************Warning!!! Scenario %s is bau with battery(s) \
-                            - please use `bau_bat`', str(scenario.name))
-            print('***************Warning!!! Scenario %s is bau with battery(s) \
-                             - please use `bau_bat`', str(scenario.name))
-
-
         # Household batteries - all the same
         # ----------------------------------
         bat_name = 'all_battery_id'
@@ -1351,6 +1332,7 @@ class Network(Customer):
             not pd.isnull(scenario.parameters[bat_name]) and \
             not pd.isnull(scenario.parameters[bat_strategy]):
                 self.any_resident_has_battery = True
+                self.any_householder_has_battery = True
                 self.battery_list += self.households
                 scenario.has_ind_batteries = 'True'
                 all_battery_capacity_kWh = 1
@@ -1379,6 +1361,7 @@ class Network(Customer):
                             not pd.isnull(scenario.parameters[bat_strategy]):
                         self.resident[c].has_battery = True
                         self.any_resident_has_battery = True
+                        self.any_householder_has_battery = True
                         self.battery_list.append(c)
                         scenario.has_ind_batteries = 'True'
                         # Scalable battery:
@@ -1400,6 +1383,34 @@ class Network(Customer):
         else:
             for c in self.households:
                 self.resident[c].has_battery = False
+            self.any_householder_has_battery = False
+
+        # Flag battery arrangements that don't exist in the model:
+        # --------------------------------------------------------
+        if 'btm' in scenario.arrangement and self.has_central_battery:
+            logging.info('***************Warning!!! Scenario %s has btm arrangement with central battery \
+                       - not included in this model', str(scenario.name))
+            print('***************Warning!!! Scenario %s has btm arrangement with central battery \
+                       - not included in this model', str(scenario.name))
+        if 'cp_only' in scenario.arrangement and self.any_householder_has_battery:
+            logging.info('***************Warning!!! Scenario %s has cp_only arrangement with unit battery(s) \
+                                   - not included in this model', str(scenario.name))
+            print('***************Warning!!! Scenario %s has cp_only arrangement with unit battery(s) \
+                                   - not included in this model', str(scenario.name))
+
+        if 'cp_only' in scenario.arrangement and self.has_central_battery:
+            logging.info('***************Warning!!! Scenario %s has cp_only arrangement with central battery(s) \
+                                          - not included in this model', str(scenario.name))
+            logging.info('*************** For cp_only with battery, use cp_battery *******************')
+            print('***************Warning!!! Scenario %s has cp_only arrangement with central battery(s) \
+                                          - not included in this model', str(scenario.name))
+
+        if ('bau' == scenario.arrangement) and (self.any_resident_has_battery or self.has_central_battery):
+            logging.info('***************Warning!!! Scenario %s is bau with battery(s) \
+                                   - please use `bau_bat`', str(scenario.name))
+            print('***************Warning!!! Scenario %s is bau with battery(s) \
+                                    - please use `bau_bat`', str(scenario.name))
+
 
     def resetAllBatteries(self, scenario):
         """reset batteries to new as required."""
@@ -1467,8 +1478,8 @@ class Network(Customer):
                          + self.cum_resident_exports[step] \
                          - self.cum_resident_imports[step]
         if self.has_central_battery:
-            self.flows[step] = self.battery.dispatch(generation = self.generation[step] + self.cum_resident_exports[step],
-                                                     load = self.cum_resident_imports[step],
+            self.flows[step] = self.battery.dispatch(generation=self.generation[step] + self.cum_resident_exports[step],
+                                                     load=self.cum_resident_imports[step],
                                                      step=step)
         else:
             self.flows[step] = self.generation[step] \
@@ -2562,9 +2573,9 @@ if __name__ == "__main__":
     # Set up relative paths for data files:
 
     num_threads = 6
-    default_project = 'EN2_bat2'  # 'tests'
-    default_study = 'energy4pd_G'
-    default_use_threading = 'False'
+    default_project = 'tests'  # 'tests'
+    default_study = 'testcp'
+    default_use_threading = 'True'
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
     opts = {}  # Empty dictionary to store key-value pairs.
