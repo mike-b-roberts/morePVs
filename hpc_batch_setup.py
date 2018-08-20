@@ -90,7 +90,7 @@ def main(project, study, base_path, maxjobs):
         '#SBATCH --export OPENBLAS_NUM_THREADS='+str(num_threads),
         '#SBATCH --mail-user=m.roberts@unsw.edu.au',
         '#SBATCH --mail-type=FAIL',
-        '#SBATCH --job-name='+study+ '$(printf "%03d" $SLURM_ARRAY_TASK_ID)',
+        '#SBATCH --job-name='+study,
         '#SBATCH --array=0-'+str(num_jobs),
         '#SBATCH --nodes=2'
         '#SBATCH --time=96:00:00',
