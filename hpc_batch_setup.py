@@ -105,7 +105,8 @@ def main(project, study, base_path, maxjobs):
         'deactivate',
         'module unload python/3.6',
         'cp -pr /home/z5044992/InputOutput/DATA_EN_4/studies/'+new_project+'/outputs/'+study+'_hpc'+'$(printf "%03d" $SLURM_ARRAY_TASK_ID) //share/scratch/z5044992/outputs',
-        'rm -rf /home/z5044992/InputOutput/DATA_EN_4/studies/' + new_project + '/outputs/' + study + '_hpc' + '$(printf "%03d" $SLURM_ARRAY_TASK_ID)'
+        'rm -rf /home/z5044992/InputOutput/DATA_EN_4/studies/' + new_project + '/outputs/' + study + '_hpc' + '$(printf "%03d" $SLURM_ARRAY_TASK_ID)',
+        'rm /home/z5044992/InputOutput/DATA_EN_4/studies/' + new_project + '/inputs/study_' + study+'_hpc'+'$(printf "%03d" $SLURM_ARRAY_TASK_ID)'+'.csv'
         ]).apply(lambda x: x.replace('\r\n', '\n'))
     # 'rm /home/z5044992/InputOutput/DATA_EN_4/studies/'+new_project+'/outputs/'+study+'_hpc'+'$(printf "%03d" $SLURM_ARRAY_TASK_ID)/*.*',
     # nb replace unix line ending
