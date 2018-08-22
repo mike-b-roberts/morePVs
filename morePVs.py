@@ -1686,12 +1686,15 @@ class Network(Customer):
             timedata['battery_charge_kWh'] = self.battery.SOC_log * self.battery.capacity_kWh / 100
         if scenario.has_ind_batteries == 'True':
             timedata['ind_battery_SOC'] = self.cum_ind_bat_charge / self.tot_ind_bat_capacity *100
-            for c in self.resident_list:
-                bc1 = 'battery_'+c+'cycles'
-                bc2 = 'SOH_battery_'+c
-                if self.resident[c].has_battery:
-                    timedata[bc1] = self.resident[c].battery.number_cycles
-                    timedata[bc2] = self.resident[c].battery.SOH
+            # for c in self.resident_list:
+            #     bc1 = 'battery_'+c+'cycles'
+            #     bc2 = 'SOH_battery_'+c
+            #     bc3 = 'SOC_battery_'+c
+            #     if self.resident[c].has_battery:
+            #         timedata[bc1] = self.resident[c].battery.number_cycles
+            #         timedata[bc2] = self.resident[c].battery.SOH
+            #         timedata[bc3] = self.resident[c].battery.SOC_log
+
 
         time_file = os.path.join(study.timeseries_path,
                                  self.scenario.label + '_' +
