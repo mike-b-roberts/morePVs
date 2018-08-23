@@ -91,7 +91,7 @@ def main(project, study, base_path, maxjobs):
         '#SBATCH --mail-user=m.roberts@unsw.edu.au',
         '#SBATCH --mail-type=FAIL',
         '#SBATCH --job-name='+study,
-        '#SBATCH --array=0-'+str(num_jobs),
+        '#SBATCH --array=0-'+str(num_jobs-1),
         '#SBATCH --nodes=1',
         '#SBATCH --time=96:00:00',
         '#SBATCH --ntasks=1',
