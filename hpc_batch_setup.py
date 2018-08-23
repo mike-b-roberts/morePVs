@@ -108,7 +108,7 @@ def main(project, study, base_path, maxjobs):
         'rm -rf /home/z5044992/InputOutput/DATA_EN_4/studies/' + new_project + '/outputs/' + study + '_hpc' + '$(printf "%03d" $SLURM_ARRAY_TASK_ID)',
         'rm /home/z5044992/InputOutput/DATA_EN_4/studies/' + new_project + '/inputs/study_' + study+'_hpc'+'$(printf "%03d" $SLURM_ARRAY_TASK_ID)'+'.csv'
         ]).apply(lambda x: x.replace('\r\n', '\n'))
-    # 'rm /home/z5044992/InputOutput/DATA_EN_4/studies/'+new_project+'/outputs/'+study+'_hpc'+'$(printf "%03d" $SLURM_ARRAY_TASK_ID)/*.*',
+
     # nb replace unix line ending
     bash_name = study+'.bat'
     bash_file = os.path.join(bash_path, bash_name)
