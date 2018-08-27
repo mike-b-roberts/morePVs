@@ -522,7 +522,7 @@ class Battery():
                     summer_period = \
                         summer_days_affected[(summer_days_affected.time > (pd.Timestamp(discharge_start1)+ ts.dst_shift).time())
                                              & (summer_days_affected.time <= (pd.Timestamp(discharge_end1)+ ts.dst_shift).time())]
-                discharge_period1 =  winter_period.join(summer_period, 'outer').sort_values()
+                discharge_period1 = winter_period.join(summer_period, 'outer').sort_values()
 
                 # discharge_2
                 if pd.isnull(discharge_start2):
@@ -1747,7 +1747,18 @@ class Scenario():
         else:
             self.pv_allocation = 'fixed'
 
-
+        # -----------------------------------
+        # Set up flags for logging timeseries
+        # -----------------------------------
+        if 'output_types' in self.parameters.index:
+            if 'log_timeseries_detailed' in self.parameters['output_type']:
+                self.log_timeseries_detailed = True
+            else:
+                self.log_timeseries_detailed = False
+            if 'log_timeseries_brief' in self.parameters['output_type']:
+                self.log_timeseries_brief = True
+            else:
+                self.log_timeseries_brief = False
         # -----------------------------------------------------------------
         # Set up load profiles, resident list & results df for the scenario
         # -----------------------------------------------------------------
@@ -2287,17 +2298,11 @@ class Study():
         self.scenario_path = os.path.join(self.output_path,'scenarios')
         os.makedirs(self.scenario_path, exist_ok=True)
         if 'log_timeseries_detailed' in self.output_list:
-            self.log_timeseries_detailed = True
-            self.timeseries_path = os.path.join(self.output_path, 'timeseries')
+            self.timeseries_path = os.path.join(self.output_path, 'timeseries_d')
             os.makedirs(self.timeseries_path, exist_ok=True)
-        else:
-            self.log_timeseries_detailed = False
         if 'log_timeseries_brief' in self.output_list:
-            self.log_timeseries_brief = True
-            self.timeseries_path = os.path.join(self.output_path, 'timeseries')
+            self.timeseries_path = os.path.join(self.output_path, 'timeseries_b')
             os.makedirs(self.timeseries_path, exist_ok=True)
-        else:
-            self.log_timeseries_brief = False
 
         # --------------
         #  Locate pv data
@@ -2504,9 +2509,9 @@ def runScenario(scenario_name):
         eno.allocateAllCapex(scenario)  # per load profile to allow for scenarios where capex allocation depends on load
         scenario.calcFinancials(eno)
         scenario.collateNetworkResults(eno)
-        if study.log_timeseries_detailed:
+        if scenario.log_timeseries_detailed:
             eno.logTimeseriesDetailed(scenario)
-        if study.log_timeseries_brief:
+        if scenario.log_timeseries_brief:
             eno.logTimeseriesBrief(scenario)
 
     # collate / log data for all loads in scenario
@@ -2577,8 +2582,8 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 'tests'  # 'tests'
-    default_study = 'testcp2'
-    default_use_threading = 'False'
+    default_study = 'dcxx'
+    default_use_threading = 'True'
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
     opts = {}  # Empty dictionary to store key-value pairs.
