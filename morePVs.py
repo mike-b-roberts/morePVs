@@ -1751,11 +1751,11 @@ class Scenario():
         # Set up flags for logging timeseries
         # -----------------------------------
         if 'output_types' in self.parameters.index:
-            if 'log_timeseries_detailed' in self.parameters['output_type']:
+            if 'log_timeseries_detailed' in self.parameters['output_types']:
                 self.log_timeseries_detailed = True
             else:
                 self.log_timeseries_detailed = False
-            if 'log_timeseries_brief' in self.parameters['output_type']:
+            if 'log_timeseries_brief' in self.parameters['output_types']:
                 self.log_timeseries_brief = True
             else:
                 self.log_timeseries_brief = False
@@ -2582,8 +2582,8 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 'tests'  # 'tests'
-    default_study = 'dcxx'
-    default_use_threading = 'True'
+    default_study = 'test_bat_period'
+    default_use_threading = 'False'
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
     opts = {}  # Empty dictionary to store key-value pairs.
