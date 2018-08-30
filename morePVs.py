@@ -1762,6 +1762,10 @@ class Scenario():
                 self.log_timeseries_brief = True
             else:
                 self.log_timeseries_brief = False
+        else:
+            self.log_timeseries_brief = False
+            self.log_timeseries_detailed = False
+
         # -----------------------------------------------------------------
         # Set up load profiles, resident list & results df for the scenario
         # -----------------------------------------------------------------
