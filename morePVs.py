@@ -466,7 +466,7 @@ class Battery():
             if 'peak_demand_percentage' not in study.battery_strategies.columns:
                 self.peak_demand_percentage = 0
             else:
-                self.peak_demand_percentage = study.battery_strategies.fillna(0).loc[battery_strategy,'peak_demand_percentage']
+                self.peak_demand_percentage = study.battery_strategies.fillna(0).loc[battery_strategy, 'peak_demand_percentage']
 
             # Set up restricted discharge period(s) and additional charge period(s)
             # ---------------------------------------------------------------------
@@ -694,12 +694,18 @@ class Battery():
                         ts.days[charge_day2][(ts.days[charge_day2].time >= pd.Timestamp(charge_start2).time())
                                              & (ts.days[charge_day2].time < pd.Timestamp(charge_end2).time())]
 
-            # Combine multiple charge and dischare periods:
+            # Combine multiple charge and discharge periods:
             # ---------------------------------------------
             self.discharge_period = discharge_period1.join(discharge_period2, how='outer')
             if len(self.discharge_period) == 0:
                 self.discharge_period = ts.timeseries  # if no discharge period set, discharge any time
             self.charge_period = charge_period1.join(charge_period2, how='outer')
+
+            # discharge period as array for calculating peak demand
+            # -----------------------------------------------------
+            s = pd.Series(0, index=ts.timeseries)
+            s[self.discharge_period] = 1
+            self.discharge_period_array = np.array(s)
 
             # Calculate charge and discharge rates
             # ------------------------------------
@@ -739,13 +745,14 @@ class Battery():
             self.SOC_log = np.zeros(ts.num_steps)
 
     def reset(self,
-              annual_peak_load):
+              annual_load):  # annual road as np.array
         self.charge_level_kWh = self.capacity_kWh * self.initial_SOC
         self.number_cycles = 0
         self.SOH = 100
         self.SOC_log = np.zeros(ts.num_steps)
         self.cumulative_losses = 0
         self.net_discharge = np.zeros(ts.num_steps)
+        annual_peak_load = np.multiply(annual_load, self.discharge_period_array).max()
         self.peak_demand_threshold = annual_peak_load * self.peak_demand_percentage / 100
 
 
@@ -1420,7 +1427,7 @@ class Network(Customer):
         # Central Battery
         # ---------------
         if self.has_central_battery:
-            self.battery.reset(annual_peak_load=self.network_load.sum(axis=1).max())
+            self.battery.reset(annual_load=np.array(self.network_load.sum(axis=1)))
         # Individual Batteries
         # --------------------
         self.cum_ind_bat_charge = np.zeros(ts.num_steps)
@@ -1428,7 +1435,8 @@ class Network(Customer):
         #self.any_resident_has_battery = False
         if self.any_resident_has_battery:
             for c in self.battery_list:
-                    self.resident[c].battery.reset(annual_peak_load=self.resident[c].load.max().max())
+                    self.resident[c].battery.reset(annual_load=self.resident[c].load)
+                # NB ###@@@@@ check max here for ind bats
         self.total_battery_losses = 0
 
     def calcBuildingStaticEnergyFlows(self):
@@ -2589,7 +2597,7 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 'tests'  # 'tests'
-    default_study = 'test_bat_period'
+    default_study = 'testpd'
     default_use_threading = 'False'
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
