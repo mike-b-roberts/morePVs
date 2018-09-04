@@ -2544,7 +2544,7 @@ def runScenario(scenario_name):
 # ------------
 # MAIN PROGRAM
 # ------------
-def main(base_path,project,study_name, use_threading = 'False'):
+def main(base_path,project,study_name, override_output = '', use_threading = 'False'):
 
     # set up script logging
     pyname = os.path.basename(__file__)
@@ -2559,9 +2559,10 @@ def main(base_path,project,study_name, use_threading = 'False'):
         logging.info("study_name = %s", study_name)
         logging.info("Thread variable is %s", use_threading)
         study = Study(base_path=base_path,
-                    project=project,
-                    study_name=study_name,
-                    dst_region=dst_region)
+                      project=project,
+                      study_name=study_name,
+                      dst_region=dst_region,
+                      override_output=override_output)
 
         if use_threading == 'True':   # NB use_threading is a string so need to compare with string
             # -------------
@@ -2640,7 +2641,8 @@ if __name__ == "__main__":
     main(project=project,
          study_name=study,
          base_path=base_path,
-         use_threading=use_threading)
+         use_threading=use_threading,
+         override_output=override_output)
 
 
 # TODO - FUTURE - Variable allocation of pv between cp and residents
