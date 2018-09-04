@@ -2245,7 +2245,8 @@ class Study():
                  base_path,
                  project,
                  study_name,
-                 dst_region
+                 dst_region,
+                 override_output
                  ):
         # --------------------------------
         # Set up paths and files for Study
@@ -2306,7 +2307,10 @@ class Study():
         # -------------------
         # Set up output paths
         # -------------------
-        self.output_path = os.path.join(self.project_path, 'outputs')
+        if override_output != 'False':
+            self.output_path = override_output
+        else:
+            self.output_path = os.path.join(self.project_path, 'outputs')
         os.makedirs(self.output_path, exist_ok=True)
         self.output_path = os.path.join(self.output_path, study_name)
         os.makedirs(self.output_path, exist_ok=True)
@@ -2597,8 +2601,8 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 'tests'  # 'tests'
-    default_study = 'testpd'
-    default_use_threading = 'False'
+    default_study = 'test_xe_G'
+    default_use_threading = 'True'
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
     opts = {}  # Empty dictionary to store key-value pairs.
@@ -2627,6 +2631,10 @@ if __name__ == "__main__":
         dst_region = opts['-dst']
     else:
         dst_region = 'nsw'
+    if '-o' in opts:
+        override_output = opts['-o']
+    else:
+        override_output = ''
 
 
     main(project=project,

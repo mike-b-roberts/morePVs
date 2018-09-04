@@ -171,18 +171,19 @@ def plot_tariffs(path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_3\\re
 def plot_battery(project,
                  study_name,
                  base_path='C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_4\\studies',
-                 start_day=0):
+                 start_day=0,
+                 include_string =''):
     """Plots timeseries data of pv, load, import, export and SOC."""
 
     path = os.path.join(base_path,project,'outputs',study_name,'timeseries')
     plotpath = os.path.join(path, 'plots')
     if not os.path.exists(plotpath):
         os.makedirs(plotpath)
-    flist = [f for f in os.listdir(path) if '.csv' in f]
+    flist = [f for f in os.listdir(path) if '.csv' in f and include_string in f]
     for name in flist:  # [f for f in flist if f == 'test_energy3_119_btm_s_c_test_2night.csv']:
         print(name)
         file = os.path.join(path, name)
-        plotfile = os.path.join(plotpath, name[0:-3] + 'png')
+        plotfile = os.path.join(plotpath, name[0:-4] +'_day'+str(start_day).zfill(3)+ '.png')
         df = pd.read_csv(file)
         df = df.set_index('timestamp')
         # Slice for 2 days starting at start_day"
@@ -192,7 +193,7 @@ def plot_battery(project,
         if 'battery_charge_kWh' in df.columns:
             df = df.drop(['battery_charge_kWh'], axis=1)
         # if '_en_' in name:
-        #     df = df.drop(['sum_of_customer_imports','sum_of_customer_exports'], axis=1)
+        df = df.drop(['sum_of_customer_imports','sum_of_customer_exports'], axis=1)
         # if '_btm_' in name:
         #     df = df.drop(['grid_import', 'grid_export'], axis=1)
         max_kwh = df[[c for c in df.columns if 'SOC' not in c and 'SOH' not in c]].max().max()
@@ -201,6 +202,7 @@ def plot_battery(project,
         for c in  [c for c in df.columns if 'SOC' not in c]:
             ax.plot(df.index, df[c], label = c)
         if 'battery_SOC' in df.columns:
+
             ax2 = ax.twinx()
             ax2.plot(df.index, df['battery_SOC'], linestyle='--')
             ax2.set_ylabel("Battery SOC %")
@@ -237,6 +239,7 @@ def plot_battery(project,
 
         # plt.show()
         plt.savefig(plotfile, dpi=1000)
+        print(plotfile)
         plt.close('all')
 
 
@@ -253,11 +256,12 @@ def main():
 
     # plot_battery(project='p_testing', study_name='test_indbat1')
 
-    project = 'tests'
-    study_name = 'test_bat_strat3'
-    plot_battery(project=project, study_name=study_name, start_day=0)
+    project = 'EN2_x'
+    study_name = 'xsoc2_G'
+    #plot_battery(project=project, study_name=study_name, start_day=2)
 
-    pass
+    for strg in ['_106_']:
+        plot_battery(project=project, study_name=study_name, start_day=170, include_string = strg)
 
 if __name__ == "__main__":
    # stuff only to run when not called via 'import' here

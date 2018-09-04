@@ -31,7 +31,8 @@ def main(project, study, base_path, maxjobs):
     new_i_path =os.path.join(np_path,'inputs')
     if not os.path.exists (new_i_path):
         os.makedirs(new_i_path)
-    o_path = os.path.join(np_path, 'outputs')
+
+
 
 
     df = pd.read_csv(i_file)
@@ -101,11 +102,11 @@ def main(project, study, base_path, maxjobs):
         '#SBATCH --error "/home/z5044992/InputOutput/DATA_EN_4/slurm_err/err_%A_%a.err"',
         'module load python/3.6',
         'source /home/z5044992/python_venv/bin/activate',
-        'python /home/z5044992/InputOutput/en/morePVs/morePVs.py -b /home/z5044992/InputOutput/DATA_EN_4 -p ' + new_project +' -s ' + study+'_hpc'+'$(printf "%03d" $SLURM_ARRAY_TASK_ID)',
+        'python /home/z5044992/InputOutput/en/morePVs/morePVs.py -b /home/z5044992/InputOutput/DATA_EN_4 -p ' + new_project +' -s ' + study+'_hpc'+'$(printf "%03d" $SLURM_ARRAY_TASK_ID)' + '-o //share/scratch/z5044992/working/' + new_project,
         'deactivate',
         'module unload python/3.6',
-        'cp -pr /home/z5044992/InputOutput/DATA_EN_4/studies/'+new_project+'/outputs/'+study+'_hpc'+'$(printf "%03d" $SLURM_ARRAY_TASK_ID) //share/scratch/z5044992/outputs',
-        'rm -rf /home/z5044992/InputOutput/DATA_EN_4/studies/' + new_project + '/outputs/' + study + '_hpc' + '$(printf "%03d" $SLURM_ARRAY_TASK_ID)',
+        'cp -pr //share/scratch/z5044992/working/'+new_project+'/'+study +'_hpc'+'$(printf "%03d" $SLURM_ARRAY_TASK_ID) //share/scratch/z5044992/outputs',
+        'rm -rf //share/scratch/z5044992/working/'+new_project+'/'+study + '_hpc' + '$(printf "%03d" $SLURM_ARRAY_TASK_ID)',
         'rm /home/z5044992/InputOutput/DATA_EN_4/studies/' + new_project + '/inputs/study_' + study+'_hpc'+'$(printf "%03d" $SLURM_ARRAY_TASK_ID)'+'.csv'
         ]).apply(lambda x: x.replace('\r\n', '\n'))
 

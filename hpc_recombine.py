@@ -9,10 +9,10 @@ import en_utilities as um
 
 # Input parameters:
 # -----------------
-project = 'EN2_bat2'
-study_root = 'finance2_'
-sites =['F','G','H','I','J']
+project = 'EN2_x'
+study_root = 'xenergypd2_'
 
+sites = ['G']
 # Establish paths etc
 # -------------------
 new_project = project+'_hpc'
@@ -21,30 +21,30 @@ base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_4\\studies'
 
 
 # Paths for hpc outputs
-np_path = os.path.join(base_path,new_project)
-if not os.path.exists (np_path):
+np_path = os.path.join(base_path, new_project)
+if not os.path.exists(np_path):
     os.makedirs(np_path)
-i_path =os.path.join(np_path,'inputs')
-hpc_path =os.path.join(np_path,'outputs')
+i_path = os.path.join(np_path, 'inputs')
+hpc_path = os.path.join(np_path, 'outputs')
 
 #loop over sites
 for site in sites:
-    study = study_root+site
+    study = study_root + site
 
     # Path for combined output:
-    o_path = os.path.join(base_path,project,'outputs',study)
+    o_path = os.path.join(base_path, project, 'outputs', study)
     if not os.path.exists(o_path):
         os.makedirs(o_path)
-    so_path = os.path.join(o_path,'scenarios')
+    so_path = os.path.join(o_path, 'scenarios')
     if not os.path.exists(so_path):
         os.makedirs(so_path)
-    po_path = os.path.join(o_path,'pv')
+    po_path = os.path.join(o_path, 'pv')
     if not os.path.exists(po_path):
         os.makedirs(po_path)
-    to_path = os.path.join(o_path,'saved_tariffs')
+    to_path = os.path.join(o_path, 'saved_tariffs')
     if not os.path.exists(to_path):
         os.makedirs(to_path)
-    tso_path = os.path.join(o_path,'timeseries')
+    tso_path = os.path.join(o_path, 'timeseries')
     if not os.path.exists(tso_path):
         os.makedirs(tso_path)
 
@@ -58,6 +58,7 @@ for site in sites:
     folder_list = [f for f in os.listdir(hpc_path) if 'hpc' in f and study in f and not '.csv' in f]
     df = dict(zip(types, [pd.DataFrame(), pd.DataFrame(), pd.DataFrame()]))
 
+    #Combine results files:
     for ff in folder_list:
         folder_path = os.path.join(hpc_path, ff)
 
@@ -86,11 +87,11 @@ for site in sites:
             if len(slist) > 0:
                 for s in slist:
                     sf = os.path.join(spath, s)
-                    newname = s[-14:-4] + s[15:]
+                    newname = s.split('_')[0]+'_'+s.split('_')[len(s.split('_'))-1]
                     nf = os.path.join(so_path, newname)
                     shutil.move(sf, nf)
             os.rmdir(spath)
-        #pvpath = os.path.join(hpc_path, ff, 'pv')
+        pvpath = os.path.join(hpc_path, ff, 'pv')
         # # -------------
         # # copy PV files
         # # -------------
@@ -100,7 +101,8 @@ for site in sites:
         #         sf = os.path.join(pvpath, s)
         #         nf = os.path.join(po_path, s)
         #         shutil.move(sf, nf)
-        #   os.rmdir(pvpath)
+        if os.path.exists(pvpath):
+            os.rmdir(pvpath)
         # -------------
         # copy tariff files
         # -------------
@@ -118,16 +120,17 @@ for site in sites:
         # -------------
         # copy timeseries files
         # -------------
-        tspath = os.path.join(hpc_path, ff, 'timeseries')
-        if os.path.exists(tspath):
-            slist = os.listdir(tspath)
-            if len(slist) > 0:
-                for s in slist:
-                    sf = os.path.join(tspath, s)
-                    newname = s[len(study) + 1:]
-                    nf = os.path.join(tso_path, newname)
-                    shutil.move(sf, nf)
-            os.rmdir(tspath)
+        for tstype in [ 'timeseries', 'timeseries_b', 'timeseries_d']:
+            tspath = os.path.join(hpc_path, ff, tstype)
+            if os.path.exists(tspath):
+                slist = os.listdir(tspath)
+                if len(slist) > 0:
+                    for s in slist:
+                        sf = os.path.join(tspath, s)
+                        newname = s[len(study) + 1:]
+                        nf = os.path.join(tso_path, newname)
+                        shutil.move(sf, nf)
+                os.rmdir(tspath)
 
         fff = os.path.join(hpc_path, ff)
         os.rmdir(fff)

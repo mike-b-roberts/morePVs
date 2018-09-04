@@ -186,7 +186,7 @@ N.B. (all `_id`s require `_strategy` too.)
 | *This isn't allowed currently:*<br />`en` or `en_pv` with individual batteries | `all_battery_id`  (or multiple `x_bat....`)`cp_battery_id` |
 |                                                              |                                                            |
 | `en...` with central *and* individual ??                     | `central_` and `all_` and `cp_` ??                         |
-| `cp_only` - central bat only                                 | `central_battery_id`                                       |
+| `cp_only` - cp bat only                                 | `cp_battery_id`                                       |
 | `btm_i_c`  `btm_i_u`- only ind batteries                     | `all_battery_id`  (or multiple `x_bat....`)`cp_battery_id` |
 | `btm_s_c`  `btm_s_u` - only ind batteries                    | `all_battery_id`  (or multiple `x_bat....`)`cp_battery_id` |
 |                                                              |                                                            |
@@ -267,11 +267,17 @@ i.e. to discharge battery to meet peak demand, regardless of time, `discharge_pe
 ------------
 OUTPUT TYPES
 ------------
-Column `output_type` in `'study_...csv` *applies to all scenarios*
+Column `output_type` in `'study_...csv` 
 
 | `output_types`       |                                                      | Fields                                                       |
 | -------------------- | ---------------------------------------------------- | ------------------------------------------------------------ |
-| `log_timeseries_csv` | timeseries `.csv` for each scenario and load profile | ` total load  `,` total building import`, `total building export`,`total generation`,`battery saved charge` |
+| `log_timeseries_brief` | timeseries `.csv` for each scenario and load profile | ` total load  `,` total building import`, `sum_of_customer_imports` |
+| `log_timeseries_detailed` | timeseries `.csv` for each scenario and load profile | ` total load  `,` total building import`, `total building export`,`total generation`,`battery saved charge`, etc. |
+
+
+the following are no longer functional:
+
+| -------------------- | ---------------------------------------------------- | 
 | `csv_total_vs_type`  | Summary `.csv`                                       | `scenario_label`,`load_folder`, `arrangement`, `number_of_households`,`total$_building_costs_mean`,`cp_ratio_mean`,`pv_ratio_mean` |
 | `csv_total_vs_bat`   | summary `.csv`                                       | `scenario_label`,`load_folder`, `arrangement`, `number_of_households`,`total$_building_costs_mean`,`self-consumption_mean`,`pv_ratio_mean`, `battery_id` `battery_strategy` |
 |                      |                                                      |                                                              |

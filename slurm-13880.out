@@ -1,8 +1,0 @@
-  File "/home/z5044992/InputOutput/en/morePVs/morePVs.py", line 2356
-    temp_load = pd.read_csv(loadFile,
-    ^
-IndentationError: unexpected indent
-energy4pd_G_hpc000
-cp: cannot stat `//home/z5044992/InputOutput/DATA_EN_4/studiesEN2_bat2_hpc/outputs/energy4pd_G_hpc000': No such file or directory
-rm: cannot remove `//home/z5044992/InputOutput/DATA_EN_4/studiesEN2_bat2_hpc/outputs/energy4pd_G_hpc000/*.*': No such file or directory
-rmdir: failed to remove `//home/z5044992/InputOutput/DATA_EN_4/studiesEN2_bat2_hpc/outputs/energy4pd_G_hpc000': No such file or directory
