@@ -1762,11 +1762,11 @@ class Scenario():
         # Set up flags for logging timeseries
         # -----------------------------------
         if 'output_types' in self.parameters.index:
-            if 'log_timeseries_detailed' in self.parameters['output_types']:
+            if 'log_timeseries_detailed' in self.parameters.fillna('')['output_types']:
                 self.log_timeseries_detailed = True
             else:
                 self.log_timeseries_detailed = False
-            if 'log_timeseries_brief' in self.parameters['output_types']:
+            if 'log_timeseries_brief' in self.parameters.fillna('')['output_types']:
                 self.log_timeseries_brief = True
             else:
                 self.log_timeseries_brief = False
