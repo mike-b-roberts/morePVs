@@ -430,7 +430,6 @@ class Battery():
                 self.capacity_kWh = self.capacity_kWh * battery_capacity
                 self.max_charge_kW = self.max_charge_kW * battery_capacity
 
-
             # Use default values if missing:
             # ------------------------------
             if pd.isnull(self.max_charge_kW):
@@ -965,7 +964,7 @@ class Customer():
             self.flows[step] = self.generation[step] - self.load[step]
         self.exports[step] = self.flows[step].clip(0)
         self.imports[step] = (-1 * self.flows[step]).clip(0)
-        #TODO: Check this local quota - should be OK
+        #TODO: test local quotas
         # Calculate local quota here??
         self.local_imports[step] = min(self.imports[step], self.local_quota[step])  # for use of local generation
         self.local_consumption[step] = np.minimum(self.generation[step], self.load[step])
@@ -1556,7 +1555,7 @@ class Network(Customer):
 
         # Allocate network, pv and battery capex & opex payments depending on network arrangements
         # ----------------------------------------------------------------------------------------
-        # TODO Allocation of capex needs refining. e.g in some `btm_s` arrangements, capex payable by owners, not residents
+        # TODO Allocation of capex needs refining. e.g in some `btm_s` arrangements, capex is payable by owners, not residents
         if 'en' in scenario.arrangement:
             # For en, all capex & opex are borne by the ENO
             self.en_opex = scenario.en_opex
@@ -2090,7 +2089,7 @@ class Scenario():
             + (self.en_opex + self.en_capex_repayment + self.pv_capex_repayment \
                + self.total_battery_capex_repayment)*100 - net.total_building_payment
 
-        # #TODO sort out battery capex for 'cp_only' ?????
+        # #TODO sort out battery capex for 'cp_only'
         # NB checksum: These two total should be the same for all arrangements
         if abs(net.checksum_total_payments) > 0.005:
             print('**************CHECKSUM ERROR***See log ******* Study: ', study.name, ' Scenario: ', self.name)
@@ -2469,6 +2468,7 @@ class Study():
 
 
 def runScenario(scenario_name):
+    """ This is the main body of script."""
     logging.info("Running Scenario number %i ", scenario_name)
     # Initialise scenario
     scenario = Scenario(scenario_name=scenario_name)
@@ -2598,20 +2598,21 @@ def main(base_path,project,study_name, override_output = '', use_threading = 'Fa
         pdb.post_mortem(tb)
 
 if __name__ == "__main__":
-    # Set up relative paths for data files:
+
 
     num_threads = 6
     default_project = 'tests'  # 'tests'
     default_study = 'test_xe_G'
-    default_use_threading = 'True'
+    default_use_threading = 'False'
+
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
-    opts = {}  # Empty dictionary to store key-value pairs.
-    while sys.argv:  # While there are arguments left to parse...
-        if sys.argv[0][0] == '-':  # Found a "-name value" pair.
-            opts[sys.argv[0]] = sys.argv[1]  # Add key and value to the dictionary.
+    opts = {}
+    while sys.argv:
+        if sys.argv[0][0] == '-':
+            opts[sys.argv[0]] = sys.argv[1]
         sys.argv = sys.argv[1:]
-        # Reduce the argument list by copying it starting from index 1.
+
     if '-p' in opts:
         project = opts['-p']
     else:
@@ -2624,14 +2625,17 @@ if __name__ == "__main__":
         use_threading = opts['-t']
     else:
         use_threading = default_use_threading
+    # base_path for all input data
     if '-b' in opts:
         base_path = opts['-b']
     else:
         base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_4'
+    # daylight savings:
     if '-dst' in opts:
         dst_region = opts['-dst']
     else:
         dst_region = 'nsw'
+    # direct hpc output:
     if '-o' in opts:
         override_output = opts['-o']
     else:
@@ -2646,18 +2650,11 @@ if __name__ == "__main__":
 
 
 # TODO - FUTURE - Variable allocation of pv between cp and residents
-# TODO - en_external scenario: cp tariff != TIDNULL
-
-# TODO Add import-export plot to output module
-# TODO test solar block and inst tariffs
-# TODO Add combined central and individual PV
-# TODO Battery: Go through all tech arrangements and allow central and ind batteries / PC (e.g. add `bau_bat`)
-# TODO Battery: Add capex calcs for individual batteries Need to update Network.allocateAllCapex
-
-# TODO - Optimisation Separate financial settings from scenarios to reduce calculation
+# TODO - test solar block and inst tariffs
+# TODO - Add combined central and individual PV
+# TODO - Battery: Add capex calcs for individual batteries Need to update Network.allocateAllCapex
+# TODO - Optimisation Separate financial settings from energy calcs to reduce calculation
 # TODO - Optimisation: for loops -> i in np.arange rather than iter  thru' list
 # TODO - Optimisation: change all calcs to np.calcs
-# TODO - Optimisation: remove print, sort, etc.
-# TODO - Optimisation: time runs: i/o vs calcs
 # TODO - Exception handling
 

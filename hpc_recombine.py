@@ -10,9 +10,10 @@ import en_utilities as um
 # Input parameters:
 # -----------------
 project = 'EN2_x'
-study_root = 'xenergypd2_'
+study_root = 'xfi1_fit_'
 
-sites = ['G']
+sites = ['G'] # '['F','H','I','J']
+
 # Establish paths etc
 # -------------------
 new_project = project+'_hpc'
