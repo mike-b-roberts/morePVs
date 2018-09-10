@@ -75,10 +75,6 @@ def main(project, study, base_path, maxjobs):
     #         + um.find_between(csv_name,'study_','.csv')
     # num_jobs = len(csv_list)
 
-
-
-
-
     # if not os.path.exists(bash_path):
     #     os.makedirs(bash_path)
     # for f in os.listdir(bash_path):
@@ -92,8 +88,8 @@ def main(project, study, base_path, maxjobs):
         '#SBATCH --mail-user=m.roberts@unsw.edu.au',
         '#SBATCH --mail-type=FAIL',
         '#SBATCH --job-name='+study,
-        '#SBATCH --array=0-'+str(num_jobs-1),
         '#SBATCH --nodes=1',
+        '#SBATCH --array=0-'+str(num_jobs-1),
         '#SBATCH --time=96:00:00',
         '#SBATCH --ntasks=1',
         '#SBATCH --cpus-per-task=1',
