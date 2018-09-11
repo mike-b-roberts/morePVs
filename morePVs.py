@@ -791,7 +791,7 @@ class Battery():
         # -------------------------------
 
         if not self.prioritise_battery:
-            # A) Strategy to maximise SC:
+            # A) Strategy to maximise SC :
             # ---------------------------
             # 1) meet onsite load first:
             # --------------------------
@@ -803,18 +803,18 @@ class Battery():
                 self.charge(available_kWh)
             # 3) Discharge if needed to meet load, within discharge period
             # ------------------------------------------------------------
-            elif available_kWh < -self.peak_demand_threshold and ts.timeseries[step] in self.discharge_period:
+            if available_kWh < -self.peak_demand_threshold and ts.timeseries[step] in self.discharge_period:
                 available_kWh += \
                     self.discharge(-available_kWh)
             # 4) Charge from grid in additional charge period:
             # ------------------------------------------------
-            elif available_kWh <= 0 and ts.timeseries[step] in self.charge_period:
+            if available_kWh <= 0 and ts.timeseries[step] in self.charge_period:
                 available_kWh -= (self.max_timestep_accepted -
                                   self.charge(self.max_timestep_accepted))
 
         else:
-            # B) Strategy to reduce peak demand with low PV potential
-            # -------------------------------------------------------
+            # B) Strategy to reduce peak demand (apply PV to charge first)
+            # -----------------------------------------------------------
             # Within discharge period:
             if ts.timeseries[step] in self.discharge_period:
                 # 1) Apply PV to load
@@ -837,7 +837,7 @@ class Battery():
                 # 2) use excess PV to meet load
                 available_kWh = generation - load
                 # If in grid-charging period, charge from grid
-                if available_kWh <=0 and  ts.timeseries[step] in self.charge_period:
+                if available_kWh <=0 and ts.timeseries[step] in self.charge_period:
                     available_kWh -= (self.max_timestep_accepted -
                                       self.charge(self.max_timestep_accepted))
 

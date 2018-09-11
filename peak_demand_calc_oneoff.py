@@ -99,16 +99,16 @@ def main(project, study_name):
     # get timeseries data and create dfs with peak demand
     # -----------------------------------------
     ts_path = os.path.join(base_path,project,'outputs',study_name,'timeseries')
-    tslist = os.listdir(ts_path)
+    tslist = [f for f in os.listdir(ts_path) if 'hpc094_403' in f]
 
     process_path = os.path.join(base_path,project,'outputs',study_name,'process')
     if not os.path.exists(process_path):
         os.makedirs(process_path)
 
     # paths for peak demand files
-    pf = 'peak_demand_peak_period.csv'
+    pf = 'Xpeak_demand_peak_period.csv'
     peakFile = os.path.join(process_path, pf)
-    pf10 = 'peak_demand_10_peak_period.csv'
+    pf10 = 'Xpeak_demand_10_peak_period.csv'
     peakFile10 = os.path.join(process_path, pf10)
 
     # Calc single highest demand:
@@ -141,7 +141,7 @@ def main(project, study_name):
 if __name__ == "__main__":
 
     default_project = 'EN2_x'
-    default_study=''
+    default_study='xenergy2_G'
     opts = {}  # Empty dictionary to store key-value pairs.
     while sys.argv:  # While there are arguments left to parse...
         if sys.argv[0][0] == '-':  # Found a "-name value" pair.

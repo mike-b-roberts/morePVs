@@ -257,11 +257,11 @@ def main():
     # plot_battery(project='p_testing', study_name='test_indbat1')
 
     project = 'EN2_x'
-    study_name = 'xsoc2_G'
+    study_name = 'xsoc2_H'
     #plot_battery(project=project, study_name=study_name, start_day=2)
 
-    for strg in ['_106_']:
-        plot_battery(project=project, study_name=study_name, start_day=170, include_string = strg)
+    for strg in ['_238_','_242_']:
+        plot_battery(project=project, study_name=study_name, start_day=233, include_string = strg)
 
 if __name__ == "__main__":
    # stuff only to run when not called via 'import' here

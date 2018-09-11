@@ -16,7 +16,6 @@ def main(project, study, base_path, maxjobs):
     num_threads = 2
     # See explanation: `https://stackoverflow.com/questions/51256738/multiple-instances-of-python-running-simultaneously-limited-to-35`
 
-
     # Establish paths etc
     # -------------------
     new_project = project+'_hpc'
@@ -38,7 +37,6 @@ def main(project, study, base_path, maxjobs):
     # Path for bash script files and for script
     # ----------------------------------------
     bash_path = '/home/z5044992/InputOutput/en/morePVs/bash_files/'+project+'/'+study
-
     script_path = '/home/z5044992/InputOutput/en/morePVs/'
 
     # Split input (s'study_....csv') files

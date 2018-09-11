@@ -10,9 +10,10 @@ import en_utilities as um
 # Input parameters:
 # -----------------
 project = 'EN2_x'
-study_root = 'xfi1_fit_'
+study_root = 'x_'
 
-sites = ['G'] # '['F','H','I','J']
+
+sites = ['F','G','H','I','J']
 
 # Establish paths etc
 # -------------------
@@ -88,7 +89,7 @@ for site in sites:
             if len(slist) > 0:
                 for s in slist:
                     sf = os.path.join(spath, s)
-                    newname = s.split('_')[0]+'_'+s.split('_')[len(s.split('_'))-1]
+                    newname = s.split('_')[0]+'_'+ s.split('_')[1] + '_' + s.split('_')[len(s.split('_'))-1]
                     nf = os.path.join(so_path, newname)
                     shutil.move(sf, nf)
             os.rmdir(spath)
