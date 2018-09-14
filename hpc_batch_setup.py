@@ -90,7 +90,6 @@ def main(project, study, base_path, maxjobs):
         '#SBATCH --job-name='+study,
         '#SBATCH --nodes=1',
         '#SBATCH --array=0-'+str(num_jobs-1),
-        '#SBATCH --nodelist=tyrion01b[03,04,05,06]',
         '#SBATCH --time=96:00:00',
         '#SBATCH --ntasks=1',
         '#SBATCH --cpus-per-task=1',
@@ -106,7 +105,6 @@ def main(project, study, base_path, maxjobs):
         'rm -rf //share/scratch/z5044992/working/'+new_project+'/'+study + '_hpc' + '$(printf "%03d" $SLURM_ARRAY_TASK_ID)',
         'rm /home/z5044992/InputOutput/DATA_EN_4/studies/' + new_project + '/inputs/study_' + study+'_hpc'+'$(printf "%03d" $SLURM_ARRAY_TASK_ID)'+'.csv'
         ]).apply(lambda x: x.replace('\r\n', '\n'))
-
     # nb replace unix line ending
     bash_name = study+'.bat'
     bash_file = os.path.join(bash_path, bash_name)
