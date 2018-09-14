@@ -10,8 +10,7 @@ import en_utilities as um
 # Input parameters:
 # -----------------
 project = 'EN2_x'
-study_root = 'x_'
-
+study_root = 'xsoc6pd_'
 
 sites = ['F','G','H','I','J']
 
