@@ -8,7 +8,7 @@ import sys
 import stat
 
 # change
-def main(project, study, base_path, maxjobs):
+def main(project, study, base_path, maxjobs, node):
 
 
     # Variables
@@ -90,7 +90,7 @@ def main(project, study, base_path, maxjobs):
         '#SBATCH --job-name='+study,
         '#SBATCH --nodes=1',
         '#SBATCH --array=0-'+str(num_jobs-1),
-        '#SBATCH --nodelist=tyrion01b[03-06]',
+        '#SBATCH --nodelist=tyrion01b'+node,
         '#SBATCH --time=96:00:00',
         '#SBATCH --ntasks=1',
         '#SBATCH --cpus-per-task=1',
@@ -153,8 +153,12 @@ if __name__ == "__main__":
         base_path = opts['-b']
     else:
         base_path = default_base_path
-
+    if '-n' in opts:
+        node = opts['-b']
+    else:
+        node = '01'
 main(project=project,
      study=study,
      base_path=base_path,
-     maxjobs=maxjobs)
+     maxjobs=maxjobs,
+     node=node)
