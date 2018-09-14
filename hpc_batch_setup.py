@@ -90,7 +90,7 @@ def main(project, study, base_path, maxjobs):
         '#SBATCH --job-name='+study,
         '#SBATCH --nodes=1',
         '#SBATCH --array=0-'+str(num_jobs-1),
-        '#SBATCH --nodelist=tyrion01b[03,04,05,06]',
+        '#SBATCH --nodelist=tyrion01b[03-06]',
         '#SBATCH --time=96:00:00',
         '#SBATCH --ntasks=1',
         '#SBATCH --cpus-per-task=1',
