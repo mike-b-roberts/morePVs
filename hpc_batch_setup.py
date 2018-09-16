@@ -88,7 +88,6 @@ def main(project, study, base_path, maxjobs, node):
         '#SBATCH --mail-user=m.roberts@unsw.edu.au',
         '#SBATCH --mail-type=FAIL',
         '#SBATCH --job-name='+study,
-        '#SBATCH --nodes=1',
         '#SBATCH --array=0-'+str(num_jobs-1),
         '#SBATCH --nodelist=tyrion01b'+node,
         '#SBATCH --time=96:00:00',
@@ -99,7 +98,7 @@ def main(project, study, base_path, maxjobs, node):
         '#SBATCH --error "/home/z5044992/InputOutput/DATA_EN_4/slurm_err/err_%A_%a.err"',
         'module load python/3.6',
         'source /home/z5044992/python_venv/bin/activate',
-        'python /home/z5044992/InputOutput/en/morePVs/morePVs.py -b /home/z5044992/InputOutput/DATA_EN_4 -p ' + new_project +' -s ' + study + '_hpc' + '$(printf "%03d" $SLURM_ARRAY_TASK_ID)' + '-o //share/scratch/z5044992/working/' + new_project,
+        'python /home/z5044992/InputOutput/en/morePVs/morePVs.py -b /home/z5044992/InputOutput/DATA_EN_4 -p ' + new_project +' -s ' + study + '_hpc' + '$(printf "%03d" $SLURM_ARRAY_TASK_ID)' + '.csv -o //share/scratch/z5044992/working/' + new_project,
         'deactivate',
         'module unload python/3.6',
         'cp -pr //share/scratch/z5044992/working/'+new_project+'/'+study +'_hpc'+'$(printf "%03d" $SLURM_ARRAY_TASK_ID) //share/scratch/z5044992/outputs',
@@ -154,7 +153,7 @@ if __name__ == "__main__":
     else:
         base_path = default_base_path
     if '-n' in opts:
-        node = opts['-b']
+        node = opts['-n']
     else:
         node = '01'
 main(project=project,
