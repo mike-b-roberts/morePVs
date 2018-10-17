@@ -965,7 +965,7 @@ class Customer():
         self.imports = (-1 * self.flows).clip(0)
         # # Calculate local quota here??
         # self.solar_allocation = np.minimum(self.imports, self.local_quota)  # for use of local generation
-        # for btm_p arrangement:
+        # for btm_p and btm_s arrangements:
         self.local_consumption = np.minimum(self.generation, self.load)
 
     def calcDynamicEnergy(self, step):
@@ -988,7 +988,7 @@ class Customer():
         # # Solar allocation is for solar_instantaneous tariff
         # self.solar_allocation[step] = np.minimum(self.imports[step], self.local_quota[step])
 
-        # Local Consumption is PV self-consumed by customer which is charged for in btm_p arrangement
+        # Local Consumption is PV self-consumed by customer (which is charged for in btm_p arrangement)
         self.local_consumption[step] = np.minimum(self.generation[step], self.load[step])
 
     def calcDemandCharge(self):
@@ -2526,7 +2526,7 @@ def runScenario(scenario_name):
         eno.initialiseBuildingLoads(load_name, scenario)
         if scenario.pv_allocation == 'load_dependent':  # ie. for btm_i_c, btm_s and btm_p arrangements
             eno.allocatePV(scenario, scenario.pv)
-        eno.initialiseSolarInstQuotas(scenario)  # depends on load and pv
+        # eno.initialiseSolarInstQuotas(scenario)  # depends on load and pv - not implemented. Solar Inst for EN
 
         # If no battery, calc all internal energy flows statically (i.e. as single df calculation)
         # ----------------------------------------------------------------------------------------
