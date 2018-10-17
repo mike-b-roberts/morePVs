@@ -933,7 +933,7 @@ class Customer():
         self.exports = np.zeros(ts.num_steps)
         self.imports = np.zeros(ts.num_steps)
         # self.local_exports = np.zeros(ts.num_steps)  # not used, available for local trading
-        self.local_imports = np.zeros(ts.num_steps)  # used for import of local generation
+        self.solar_allocation = np.zeros(ts.num_steps)  # used for allocation of local generation
         self.local_consumption = np.zeros(ts.num_steps)
         self.flows = np.zeros(ts.num_steps)
         self.cashflows = np.zeros(ts.num_steps)
@@ -952,8 +952,7 @@ class Customer():
                                  scenario):
         self.tariff_id = customer_tariff_id
         self.scenario = scenario
-        self.tariff = Tariff(
-                            tariff_id=self.tariff_id,
+        self.tariff = Tariff(tariff_id=self.tariff_id,
                             scenario=scenario)
 
     def initialiseCustomerPV(self, pv_generation):  # 1-D array
@@ -964,101 +963,33 @@ class Customer():
         self.flows = self.generation - self.load
         self.exports = self.flows.clip(0)
         self.imports = (-1 * self.flows).clip(0)
-        # Calculate local quota here??
-        self.local_imports = np.minimum(self.imports, self.local_quota)  # for use of local generation
+        # # Calculate local quota here??
+        # self.solar_allocation = np.minimum(self.imports, self.local_quota)  # for use of local generation
         # for btm_p arrangement:
         self.local_consumption = np.minimum(self.generation, self.load)
 
     def calcDynamicEnergy(self, step):
         """Calculate Customer imports and exports for single timestep"""
+        # Used for scenarios with batteries
         # -------------------------------------------------------------------------------
         # Calculate energy flow without battery, then modify by calling battery.dispatch:
         # -------------------------------------------------------------------------------
         self.flows[step] = self.generation[step] - self.load[step]
         if self.has_battery:
             self.flows[step] = self.battery.dispatch(generation = self.generation[step],
-                                                     load = self.load[step],
+                                                     load=self.load[step],
                                                      step=step)
         else:
             self.flows[step] = self.generation[step] - self.load[step]
         self.exports[step] = self.flows[step].clip(0)
         self.imports[step] = (-1 * self.flows[step]).clip(0)
-        #TODO: test local quotas
+
         # Calculate local quota here??
-        self.local_imports[step] = min(self.imports[step], self.local_quota[step])  # for use of local generation
+        # # Solar allocation is for solar_instantaneous tariff
+        # self.solar_allocation[step] = np.minimum(self.imports[step], self.local_quota[step])
+
+        # Local Consumption is PV self-consumed by customer which is charged for in btm_p arrangement
         self.local_consumption[step] = np.minimum(self.generation[step], self.load[step])
-
-    def calcCustomerBlockTariff (self, step):
-        """Calculates import rates for timestep for dynamic (eg block and solar block) tariffs."""
-        # -----------------------------------------------
-        # For block tariffs, calculate rate for timestep:
-        # -----------------------------------------------
-        self.tariff.calcDynamicTariff(
-                                      tariff_id=self.tariff_id,
-                                      scenario=self.scenario,
-                                      step=step,
-                                      customer_load=self.imports
-                                      )
-        # Whoops - never finished this!
-
-        if self.tariff_id in self.scenario.dynamic_list:
-            if self.scenario.tariff_lookup.loc[self.tariff_id, 'tariff_type'] == 'Block_Quarterly':
-                # Block Quarterly tariff has fixed load tariff blocks per quarter
-                self.tariff.steps_since_reset = np.mod((step - self.scenario.block_quarterly_billing_start),
-                                                self.scenario.steps_in_block)
-                self.cumulative_energy = self.imports[step - self.steps_since_reset:step + 1].sum()
-                if self.cumulative_energy <= self.scenario.tariff_lookup.loc[self.tariff_id, 'high_1']:
-                    self.import_tariff[step] = self.scenario.tariff_lookup.loc[self.tariff_id, 'block_rate_1']
-                elif self.cumulative_energy > self.scenario.tariff_lookup.loc[self.tariff_id, 'high_1'] \
-                        and self.cumulative_energy <= self.scenario.tariff_lookup.loc[self.tariff_id, 'high_2']:
-                    self.import_tariff[step] = self.scenario.tariff_lookup.loc[self.tariff_id, 'block_rate_2']
-                elif self.cumulative_energy > self.scenario.tariff_lookup.loc[self.tariff_id, 'high_2']:
-                    self.import_tariff[step] = self.scenario.tariff_lookup.loc[self.tariff_id, 'block_rate_3']
-            elif self.scenario.tariff_lookup.loc[self.tariff_id, 'tariff_type'] == 'Block_Weekly':
-                # Block Daily tariff has fixed load tariff blocks per day
-                print("BLOCK DAILY TARIFF NOT SCRIPTED")
-
-                steps_today = ts.steps_today(step)
-                self.cumulative_energy = self.imports[steps_today].sum()
-
-
-
-            # TODO: BLOCK DAILY TARIFF
-            else:
-                logging.info("*****************Dynamic Tariff %s of unknown Tariff type", self.tariff_id)
-        # ----------------------------------------------------------------------
-        # For solar block daily tariff, calc kWh local import / solar allocation
-        # ----------------------------------------------------------------------
-        if self.scenario.tariff_lookup.loc[self.tariff_id, 'tariff_type'] == 'Solar_Block_Daily':
-            self.tariff.steps_since_reset = np.mod((step - self.scenario.block_quarterly_billing_start),
-                                            self.tariff.steps_in_day)
-            # Cumulative Energy for this day:
-            if self.cumulative_energy.all():
-                self.prev_cum_energy = self.cumulative_energy
-            else:
-                self.prev_cum_energy= np.zeros(ts.num_steps)
-            self.cumulative_energy = self.imports[step - self.steps_since_reset:step + 1].sum()
-            # Allocate local_import depending on cumulative energy relative to quota:
-            if self.cumulative_energy <= self.daily_local_quota:
-                self.local_imports[step] = self.imports[step]
-            elif self.prev_cum_energy < self.daily_local_quota \
-                    and self.cumulative_energy > self.daily_local_quota:
-                self.local_imports[step] = self.cumulative_energy - self.daily_local_quota
-            else:
-                self.local_imports[step] = 0
-
-            # TODO: Solar Block Tariff. Test changed algorithm
-            # (Was previously as below:)
-
-            # if self.cumulative_energy <= self.daily_local_quota:
-            #     self.local_imports[step] = self.imports[step]
-            # elif self.prev_cum_energy < self.daily_local_quota \
-            #         and self.cumulative_energy > self.daily_local_quota:
-            #     self.local_imports[step] = self.imports[step] - self.daily_local_quota / self.steps_in_day
-            #
-            #
-            # else:
-            #     self.local_imports[step] = self.daily_local_quota / self.steps_in_day
 
     def calcDemandCharge(self):
         if self.tariff.is_demand:
@@ -1078,22 +1009,20 @@ class Customer():
         self.total_payment includes opex & capex repayments"""
 
         if any(s in self.tariff.solar_rate_name for s in ['self_con', 'Self_Con', 'sc', 'SC']):
-            # IFF solar tariff paid for self-consumed generation
+            # IFF solar tariff paid to secondary solar retailer for self-consumed generation
             # and export FiT paid for exported generation
             # NB cost of exported self generation is received from retailer and passed to PV seller, so zero net effect
+            # Energy flows treated as if PV is owned by customer
             self.local_solar_bill = (np.multiply(self.local_consumption, self.tariff.solar_import_tariff) + \
                                      np.multiply(self.exports, self.tariff.export_tariff)).sum()
         else:
             self.local_solar_bill = 0.0
-
-
 
         if self.tariff.is_dynamic:
             # ------------------------------------
             # calculate tariffs and costs stepwise
             # ------------------------------------
             for step in np.arange(0, ts.num_steps):
-
                 # --------------------------------------------------------------
                 # Solar Block Daily Tariff : Calculate energy used at solar rate
                 # --------------------------------------------------------------
@@ -1107,67 +1036,71 @@ class Customer():
                         previous_energy = 0
                     else:
                         previous_energy = self.imports[steps_today[:-1]].sum()
-                    # Allocate local_import depending on cumulative energy relative to quota:
+                    # Allocate local solar allocation depending on cumulative energy relative to quota:
                     if cumulative_energy <= self.daily_local_quota:
-                        self.local_imports[step] = self.imports[step]
+                        self.solar_allocation[step] = self.imports[step]
                     elif previous_energy < self.daily_local_quota \
                             and cumulative_energy > self.daily_local_quota:
-                        self.local_imports[step] = self.daily_local_quota - previous_energy
+                        self.solar_allocation[step] = self.daily_local_quota - previous_energy
                     else:
-                        self.local_imports[step] = 0
+                        self.solar_allocation[step] = 0
+                else:
+                    # ---------------------------------------------------------
+                    # For Block Tariffs, calc volumetric charges for each block
+                    # ---------------------------------------------------------
+                    # Block Quarterly Tariff
+                    # ----------------------
+                    if self.tariff.tariff_type == 'Block_Quarterly':
+                        steps_since_reset = np.mod((step - self.tariff.block_billing_start),
+                                                               self.tariff.steps_in_block)
+                        cumulative_energy = self.imports[step - steps_since_reset:step + 1].sum()
+                        if steps_since_reset == 0:
+                            previous_energy = 0
+                        else:
+                            previous_energy = self.imports[step - steps_since_reset:step].sum()
+                    # Block Daily Tariff
+                    # -------------------
+                    elif self.tariff.tariff_type == 'Block_Daily':
+                        steps_today = ts.steps_today(step)
+                        cumulative_energy = self.imports[steps_today].sum()
+                        if len(steps_today) <= 1:
+                            previous_energy = 0
+                        else:
+                            previous_energy = self.imports[steps_today[:-1]].sum()
 
-                # ---------------------------------------------------------
-                # For Block Tariffs, calc volumetric charges for each block
-                # ---------------------------------------------------------
-                # Block Quarterly Tariff
-                # ----------------------
-                if self.tariff.tariff_type == 'Block_Quarterly':
-                    steps_since_reset = np.mod((step - self.tariff.block_billing_start),
-                                                           self.tariff.steps_in_block)
-                    cumulative_energy = self.imports[step - steps_since_reset:step + 1].sum()
-                    if steps_since_reset == 0:
-                        previous_energy = 0
-                    else:
-                        previous_energy = self.imports[step - steps_since_reset:step].sum()
-                # Block Daily Tariff
-                # -------------------
-                elif self.tariff.tariff_type == 'Block_Daily':
-                    steps_today = ts.steps_today(step)
-                    cumulative_energy = self.imports[steps_today].sum()
-                    if len(steps_today) <= 1:
-                        previous_energy = 0
-                    else:
-                        previous_energy = self.imports[steps_today[:-1]].sum()
+                    if cumulative_energy-previous_energy-self.imports[step] >0.01:
+                        print('accumulation error')
+                    # All Block Tariffs:
+                    # -----------------
+                    if cumulative_energy <= self.tariff.high_1:
+                        self.import_charge[step] = self.imports[step] * self.tariff.block_rate_1
+                    elif previous_energy < self.tariff.high_1 and cumulative_energy <= self.tariff.high_2:
+                        self.import_charge[step] = (self.tariff.high_1 - previous_energy)* self.tariff.block_rate_1 + \
+                                            (cumulative_energy-self.tariff.high_1)* self.tariff.block_rate_2
+                    elif previous_energy > self.tariff.high_1 and cumulative_energy <= self.tariff.high_2:
+                        self.import_charge[step] = self.imports[step] * self.tariff.block_rate_2
+                    elif previous_energy < self.tariff.high_2 and cumulative_energy > self.tariff.high_2:
+                        self.import_charge[step] = (self.tariff.high_2 - previous_energy) * self.tariff.block_rate_2 + \
+                                              (cumulative_energy - self.tariff.high_2) * self.tariff.block_rate_3
+                    elif previous_energy >= self.tariff.high_2:
+                        self.import_charge[step] = self.imports[step] * self.tariff.block_rate_3
+                    elif previous_energy < self.tariff.high_1 and cumulative_energy > self.tariff.high_2:
+                        self.import_charge[step] = (self.tariff.high_1 - previous_energy) * self.tariff.block_rate_1 + \
+                                              (self.tariff.high_2 - self.tariff.high_1) * self.tariff.block_rate_2 +\
+                                              (cumulative_energy - self.tariff.high_2) * self.tariff.block_rate_3
 
-                if cumulative_energy-previous_energy-self.imports[step] >0.01:
-                    print('accumulation error')
-                # All Block Tariffs:
-                # -----------------
-                if cumulative_energy <= self.tariff.high_1:
-                    self.import_charge[step] = self.imports[step] * self.tariff.block_rate_1
-                elif previous_energy < self.tariff.high_1 and cumulative_energy <= self.tariff.high_2:
-                    self.import_charge[step] = (self.tariff.high_1 - previous_energy)* self.tariff.block_rate_1 + \
-                                        (cumulative_energy-self.tariff.high_1)* self.tariff.block_rate_2
-                elif previous_energy > self.tariff.high_1 and cumulative_energy <= self.tariff.high_2:
-                    self.import_charge[step] = self.imports[step] * self.tariff.block_rate_2
-                elif previous_energy < self.tariff.high_2 and cumulative_energy > self.tariff.high_2:
-                    self.import_charge[step] = (self.tariff.high_2 - previous_energy) * self.tariff.block_rate_2 + \
-                                          (cumulative_energy - self.tariff.high_2) * self.tariff.block_rate_3
-                elif previous_energy >= self.tariff.high_2:
-                    self.import_charge[step] = self.imports[step] * self.tariff.block_rate_3
-                elif previous_energy < self.tariff.high_1 and cumulative_energy > self.tariff.high_2:
-                    self.import_charge[step] = (self.tariff.high_1 - previous_energy) * self.tariff.block_rate_1 + \
-                                          (self.tariff.high_2 - self.tariff.high_1) * self.tariff.block_rate_2 +\
-                                          (cumulative_energy - self.tariff.high_2) * self.tariff.block_rate_3
-        else:
-            # calculate costs using array
-            self.import_charge = np.multiply((self.imports - self.local_imports), self.tariff.import_tariff)
-        # For dynamic and static tariffs:
+        # -------------------------------------------------------------
+        #  calculate costs using array for static and underlying tariffs
+        # -------------------------------------------------------------
+        if self.tariff.tariff_type == 'Solar_Block_Daily' or not self.tariff.is_dynamic:
+            self.import_charge = np.multiply((self.imports - self.solar_allocation), self.tariff.import_tariff)
+        # For all dynamic and static tariffs:
+        # -----------------------------------
         self.cashflows = self.import_charge \
-            + np.multiply(self.local_imports, self.tariff.solar_import_tariff) \
+            + np.multiply(self.solar_allocation, self.tariff.solar_import_tariff) \
             - np.multiply(self.exports, self.tariff.export_tariff)
             # - np.multiply(self.local_exports, self.tariff.local_export_tariff) could be added for LET / P2P
-            # These are all 1x17520 Arrays.
+            # (These are all 1x17520 Arrays.)
 
         self.energy_bill = self.cashflows.sum() + \
                            self.tariff.fixed_charge * ts.num_days + \
@@ -1355,40 +1288,44 @@ class Network(Customer):
 
 
     def initialiseDailySolarBlockQuotas(self, scenario):
-        """For Solar Block Daily tariff, allocate block limits for all residents."""
+        """For Solar Block Daily tariff, share allocation of central PV generation amongst all residents."""
+        # Intended for `en` arrangement
         # Check that all residents have same solar_cp_allocation basis , otherwise raise an exception:
         allocation_list = list(set((self.resident[c].tariff.solar_cp_allocation for c in self.resident_list)))
         if len(allocation_list) > 1:
             sys.exit("Inconsistent cp allocation of local generation")
         else:
             solar_cp_allocation = allocation_list[0]
-        # Calc daily quotas for cp and households:
+        # Calc daily quotas for cp and households based on proportion of annual PV generation:
         self.resident['cp'].daily_local_quota = self.pv.loc[
-                                                    self.resident['cp'].solar_period, 'cp'] * solar_cp_allocation / 365
+                                                    self.resident['cp'].solar_period, 'central'] * solar_cp_allocation / 365
         for c in self.households:
-            self.resident[c].daily_local_quota = self.pv.loc[self.resident[c].solar_period, 'cp'] * (
+            self.resident[c].daily_local_quota = self.pv.loc[self.resident[c].solar_period, 'central'] * (
                         1 - solar_cp_allocation) / (365 * len(self.households))
 
-    def initialiseSolarInstQuotas(self, scenario):
-        # calculate local quotas for solar or LET tariffs
-        # -----------------------------------------------
-        # (NB PV allocation is fixed and PV has already been initialised.)
-        # Quota is equal share of pv generation at this timestep
-        # Applies to EN arrangements only
-        # This is for instantaneous solar tariff.
-        self.local_quota = np.zeros(ts.num_steps)
-        self.retailer.local_quota = np.zeros(ts.num_steps)
-        if 'en' in scenario.arrangement:
-            for c in self.resident_list:
-                if self.resident[c].tariff.is_solar_inst:
-                    self.resident[c].local_quota = np.where((self.pv['central'] > self.resident['cp'].load),\
-                                                            (self.pv['central'] - self.resident['cp'].load) / len(
-                                                            self.households), 0)
-                else:
-                    self.resident[c].local_quota = np.zeros(ts.num_steps)
-        else:
-            for c in self.resident_list:
-                self.resident[c].local_quota = np.zeros(ts.num_steps)
+    # def initialiseSolarInstQuotas(self, scenario):
+    #     """Calculate local quotas for solar instantaneous tariffs in an EN."""
+    #     # CURRENTLY NOT IMPLEMENTED
+    #     # -------------------------
+    #     # (NB PV allocation is fixed and PV has already been initialised.)
+    #     # Quota is equal share of pv generation at this timestep
+    #     # Applies to EN arrangements only
+    #     # This is for instantaneous solar tariff.
+    #     self.solar_instantaneous_quota = np.zeros(ts.num_steps)
+    #     self.retailer.solar_instantaneous_quota = np.zeros(ts.num_steps)
+    #     if 'en' in scenario.arrangement:
+    #         for c in self.resident_list:
+    #             if self.resident[c].tariff.is_solar_inst:
+    #                 self.resident[c].solar_instantaneous_quota = np.where((self.pv['central'] > self.resident['cp'].load),\
+    #                                                         (self.pv['central'] - self.resident['cp'].load) / len(
+    #                                                         self.households), 0)
+    #             else:
+    #                 self.resident[c].solar_instantaneous_quota = np.zeros(ts.num_steps)
+    #     else:
+    #         for c in self.resident_list:
+    #             self.resident[c].solar_instantaneous_quota = np.zeros(ts.num_steps)
+
+
 
     def initialiseAllBatteries(self, scenario):
         """Initialise central and individual batteries as required."""
@@ -1537,8 +1474,8 @@ class Network(Customer):
         # Individual Batteries
         # --------------------
         self.cum_ind_bat_charge = np.zeros(ts.num_steps)
-        #self.tot_ind_bat_capacity = 0
-        #self.any_resident_has_battery = False
+        # self.tot_ind_bat_capacity = 0
+        # self.any_resident_has_battery = False
         if self.any_resident_has_battery:
             for c in self.battery_list:
                     self.resident[c].battery.reset(annual_load=self.resident[c].load)
@@ -1606,12 +1543,6 @@ class Network(Customer):
         # ------------------------
         self.exports[step] = self.flows[step].clip(0)
         self.imports[step] = (-1 * self.flows[step]).clip(0)
-
-    def calcDynamicTariffs(self,step):
-        """Dynamic calcs of (eg block) tariffs by timestep for ENO and for all residents."""
-        for c in self.resident_list:
-            self.resident[c].calcCustomerBlockTariff(step)
-        self.calcCustomerBlockTariff(step)
 
     def allocateAllCapex(self, scenario):
         """ Allocates capex repayments and opex to customers according to arrangement"""
@@ -2573,6 +2504,7 @@ class Study():
 
 def runScenario(scenario_name):
     """ This is the main body of script."""
+
     logging.info("Running Scenario number %i ", scenario_name)
     # Initialise scenario
     scenario = Scenario(scenario_name=scenario_name)
@@ -2581,7 +2513,6 @@ def runScenario(scenario_name):
     # but in other scenarios, it is a virtual intermediary to organise energy and cash flows
     eno.initialiseAllTariffs(scenario)
     eno.initialiseAllBatteries(scenario)
-
 
     # Set up pv profile if allocation not load-dependent
     if scenario.pv_allocation == 'fixed':
@@ -2608,11 +2539,9 @@ def runScenario(scenario_name):
             for step in np.arange(0, ts.num_steps):
                 eno.calcBuildingDynamicEnergyFlows(step)
 
-
-
         # Energy Flows for retailer (static)
         # -----------------------------------
-        # NB retailer acts like a customer too, buying from DNSP
+        # retailer acts like a customer too, buying from DNSP
         # These are the load and generation that it presents to DNSP
         eno.retailer.initialiseCustomerLoad(eno.imports)
         eno.retailer.initialiseCustomerPV(eno.exports)
@@ -2628,9 +2557,7 @@ def runScenario(scenario_name):
         eno.allocateAllCapex(scenario)  # per load profile to allow for scenarios where capex allocation depends on load
         # If tariffs are dynamic (e.g block), calculate them stepwise:
         # ------------------------------------------------------------
-        # if eno.has_dynamic_tariff:
-        #     for step in np.arange(0, ts.num_steps):
-        #         eno.calcDynamicTariffs
+
         scenario.calcFinancials(eno)
         scenario.collateNetworkResults(eno)
         if scenario.log_timeseries_detailed:
@@ -2703,7 +2630,6 @@ def main(base_path,project,study_name, override_output = '', use_threading = 'Fa
         pdb.post_mortem(tb)
 
 if __name__ == "__main__":
-
 
     num_threads = 6
     default_project = 'tests'  # 'tests'
