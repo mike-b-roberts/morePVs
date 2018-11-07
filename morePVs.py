@@ -249,7 +249,7 @@ class Tariff():
         # Dynamic (Block) Tariff
         # ----------------------
         if tariff_id in scenario.dynamic_list:
-            self.is_dynamic=True
+            self.is_dynamic = True
             self.block_rate_1 = scenario.tariff_lookup.loc[tariff_id, 'block_rate_1']
             self.block_rate_2 = scenario.tariff_lookup.loc[tariff_id, 'block_rate_2']
             self.block_rate_3 = scenario.tariff_lookup.loc[tariff_id, 'block_rate_3']
@@ -258,7 +258,8 @@ class Tariff():
             if self.tariff_type == 'Block Quarterly':
                 self.block_billing_start = 0  # timestep to start cumulative energy calc
                 self.steps_in_block = 4380  # quarterly half-hour steps
-
+        else:
+            self.is_dynamic = False
         # -------------
         # Demand Tariff
         # -------------
@@ -1492,7 +1493,7 @@ class Network(Customer):
             self.cum_resident_imports += self.resident[c].imports
             self.cum_resident_exports += self.resident[c].exports
             # Cumulative local imports are load presented to solar_retailer (in btm_s PPA scenario)
-            self.cum_local_imports += self.resident[c].local_imports
+            self.cum_local_imports += self.resident[c].solar_allocation
 
         # Calculate aggregate flows for ENO
         self.flows = self.generation + self.cum_resident_exports - self.cum_resident_imports
@@ -2502,7 +2503,7 @@ class Study():
 # ----------------------------------------------------------------------------------------------------
 
 
-def runScenario(scenario_name):
+def                   runScenario(scenario_name):
     """ This is the main body of script."""
 
     logging.info("Running Scenario number %i ", scenario_name)
