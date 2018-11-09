@@ -87,7 +87,7 @@ class Timeseries():
                     & (tsy < dst_start)], 'outer')
         pass
 
-    def steps_today (self, this_step):
+    def steps_today(self, this_step):
         """Returns list of earlier timesteps with same day as today"""
 
         today = self.step_ts[this_step].date()
@@ -148,7 +148,7 @@ class TariffData():
             self.static_imports[tid] = 0 # for zero rate tariff and as initialisation
             self.static_solar_imports[tid] = 0 # for zero rate tariff and as initialisation
 
-            if 'Flat_Rate' in self.lookup.loc[tid, 'tariff_type']:
+            if 'Flat' in self.lookup.loc[tid, 'tariff_type']:
                 self.static_imports[tid] = self.lookup.loc[tid, 'flat_rate']
             # Allocate TOU tariffs:
             # --------------------
@@ -255,6 +255,13 @@ class Tariff():
             self.block_rate_3 = scenario.tariff_lookup.loc[tariff_id, 'block_rate_3']
             self.high_1 = scenario.tariff_lookup.loc[tariff_id, 'high_1']
             self.high_2 = scenario.tariff_lookup.loc[tariff_id, 'high_2']
+            if self.high_1>0 and not self.block_rate_2>0 :
+                sys.exit('missing block tariff data')
+            if self.high_2>0 and not self.block_rate_3>0 :
+                sys.exit('missing block tariff data')
+
+
+
             if self.tariff_type == 'Block Quarterly':
                 self.block_billing_start = 0  # timestep to start cumulative energy calc
                 self.steps_in_block = 4380  # quarterly half-hour steps
@@ -2503,7 +2510,7 @@ class Study():
 # ----------------------------------------------------------------------------------------------------
 
 
-def                   runScenario(scenario_name):
+def runScenario(scenario_name):
     """ This is the main body of script."""
 
     logging.info("Running Scenario number %i ", scenario_name)
@@ -2634,7 +2641,7 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 'tests'  # 'tests'
-    default_study = 'test_xe_G'
+    default_study = 'test_energy2'
     default_use_threading = 'False'
 
     # Import arguments - allows multi-processing from command line
@@ -2661,7 +2668,7 @@ if __name__ == "__main__":
     if '-b' in opts:
         base_path = opts['-b']
     else:
-        base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_4'
+        base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_5'
     # daylight savings:
     if '-dst' in opts:
         dst_region = opts['-dst']
