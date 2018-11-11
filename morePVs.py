@@ -233,6 +233,9 @@ class Tariff():
                  tariff_id,
                  scenario):
         """Create time-based rates for single specific tariff."""
+        if tariff_id not in scenario.tariff_lookup.index:
+            msg = '******Exception: Tariff '+ tariff_id+' is not in tariff_lookup.csv'
+            exit(msg)
 
         # ------------------------------
         # Export Tariff and Fixed Charge
@@ -245,6 +248,7 @@ class Tariff():
             scenario.tariff_lookup['metering_sc_non_cap'].fillna(0).loc[tariff_id]
         # scenario.tariff_lookup['metering_sc_cap'].fillna(0).loc[tariff_id]
         # NB Capital component of MSC does not apply as meter capital costs included in en_capex
+
 
         # Dynamic (Block) Tariff
         # ----------------------
@@ -260,9 +264,7 @@ class Tariff():
             if self.high_2>0 and not self.block_rate_3>0 :
                 sys.exit('missing block tariff data')
 
-
-
-            if self.tariff_type == 'Block Quarterly':
+            if self.tariff_type == 'Block_Quarterly':
                 self.block_billing_start = 0  # timestep to start cumulative energy calc
                 self.steps_in_block = 4380  # quarterly half-hour steps
         else:
@@ -1843,7 +1845,13 @@ class Scenario():
                 self.dict_load_profiles[load_name] = temp_load.copy()
             # use first load profile in list to establish list of residents:
             # --------------------------------------------------------------
-            self.resident_list = list(self.dict_load_profiles[self.load_list[0]].columns.values)  # list of potential child meters - residents + cp
+            templist = list(self.dict_load_profiles[self.load_list[0]].columns.values)  # list of potential child meters - residents + cp
+            self.resident_list =[]
+            for i in templist:
+                if type(i) == 'str':
+                    self.resident_list += [i]
+                else:
+                    self.resident_list += [str(i)]
         else:
             # Loads are the same for every scenario and have been read already:
             # -----------------------------------------------------------------
@@ -1910,8 +1918,13 @@ class Scenario():
         self.tariff_in_use = self.parameters[self.customers_with_tariffs] # tariff ids for each customer
         self.tariff_short_list = self.tariff_in_use.tolist() + [self.dnsp_tariff]  # list of tariffs in use
         self.tariff_short_list = list(set(self.tariff_short_list))  # drop duplicates
-        #  Slice tariff tariff_lookup table for this scenario
+        for tariff_id in self.tariff_short_list:
+            if tariff_id not in study.tariff_data.lookup.index:
+                msg = '******Exception: Tariff '+ tariff_id+' is not in tariff_lookup.csv'
+                exit(msg)
+        #  Slice tariff_lookup table for this scenario
         self.tariff_lookup = study.tariff_data.lookup.loc[self.tariff_short_list]
+
         self.dynamic_list = [t for t in self.tariff_short_list
                              if any(word in self.tariff_lookup.loc[t, 'tariff_type'] for word in ['Block', 'block', 'Dynamic', 'dynamic'])]
                 # Currently only includes block, could also add demand tariffs
@@ -2216,11 +2229,11 @@ class Scenario():
                          'central_battery_cycles',
                          'central_battery_SOH'] + \
                         ['cust_bill_cp'] + \
-                        ['cust_bill_' + '%03d' % int(r) for r in net.resident_list if r != 'cp'] + \
+                        ['cust_bill_' + '%s' % r for r in net.resident_list if r != 'cp'] + \
                         ['cust_solar_bill_cp'] + \
-                        ['cust_solar_bill_' + '%03d' % int(r) for r in net.resident_list if r != 'cp'] + \
+                        ['cust_solar_bill_' + '%s' % r for r in net.resident_list if r != 'cp'] + \
                         ['cust_total$_cp'] + \
-                        ['cust_total$_' + '%03d' % int(r) for r in net.resident_list if r != 'cp']
+                        ['cust_total$_' + '%s' % r for r in net.resident_list if r != 'cp']
 
         self.results = self.results.append(pd.Series(result_list,
                                                      index=result_labels,
@@ -2464,7 +2477,14 @@ class Study():
         # -----------------------------------------
         # This is used for initialisation (and when different_loads = FALSE),
         # but RESIDENT_LIST CAN VARY for each scenario:
-        self.resident_list = list(self.dict_load_profiles[self.load_list[0]].columns.values)
+        templist = list(self.dict_load_profiles[
+                            self.load_list[0]].columns.values)  # list of potential child meters - residents + cp
+        self.resident_list = []
+        for i in templist:
+            if type(i) == 'str':
+                self.resident_list += [i]
+            else:
+                self.resident_list += [str(i)]
         # ---------------------------------------------------------------
         # Initialise Tariff Look-up table and generate all static tariffs
         # ---------------------------------------------------------------
@@ -2641,7 +2661,7 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 'tests'  # 'tests'
-    default_study = 'test_energy2'
+    default_study = 'test_energy3'
     default_use_threading = 'False'
 
     # Import arguments - allows multi-processing from command line
