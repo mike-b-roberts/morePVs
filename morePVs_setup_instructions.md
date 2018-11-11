@@ -111,10 +111,17 @@ Then `dst_lookup.csv` has start and end timestamps (`nsw_start` and `nsw_end` ) 
 NB Timestamps given as local standard time (e.g 2am for start and end)
 
 
-
 Discount
 --------
 % discount applied to fixed and volumetric charges
+
+Block Tariffs
+-------------
+Tariff type: `block_daily`has upto three rates for daily usage. Parameters are:
+`block_rate_1`,`high_1`,`block_rate_2`,`high_2`,`block_rate_3`. `high_1` and `high_2` are daily thresholds in kWh. If `high_1` is provided, `block_rate_2` is required.
+
+Tariff type: `block_quarterly` as above but quarterly thresholds, also in kWh. 1st Quarter starts at start of time period. 
+
 		
 Solar Tariffs
 -------------
@@ -125,18 +132,15 @@ Solar Tariffs
                 Based on TOU with `xx%` discount and each customer having a fixed daily quota of solar energy, based on total annual generation during solar period (single solar period is defined in `tariff_lookup.csv` as constant all year, and the script handles DST shift)
                 cp allocated a fixed % (`cp_solar_allocation` given as decimal (`0.yy`)in `tariff_lookup.csv`) and 
                 the remainder shared equally between units.
-                
-`SIT_xx` Solar Instantaneous TOU tariff : 
-                Based on TOU with `xx%` discount and each customer having a quota of solar energy, based on % of instantaneous generation at that timestamp after cp load has been satisfied. 
-                This is *not* a block tariff. `local_import` is calculated statically.
-
-
-
-`CostPlus_xx`   Based on bills paid at parent tariff + xx%. Fixed costs (and CP?) shared evenly; Volumetric costs shared by usage; 
-                How best to deal with demand charges? 
-
 `tariff_type` = `Solar_Block_Daily`
 - daily quota applied to solar tariff
+         
+`SIT_xx` Solar Instantaneous TOU tariff : 
+                Based on TOU with `xx%` discount and each customer having a quota of solar energy, based on % of instantaneous generation at that timestamp after cp load has been satisfied. 
+                Intended for use with `btm_s` arrangements (e.g. Allum)
+				This is **not** a block tariff. 
+				`local_import` is calculated statically, 
+				Currently doesn't allow for individual battery.
 
 `tariff_type` = `Solar_Instantaneous`
 - generation allocated according to load and charged at `solar_rate`,
@@ -158,8 +162,17 @@ for `btm_s` (eg `upfront`). btm capex and opex are treated as en capex and opex
 and shared between customers. PV is treated as if owned individually,
 with instantaneous generation allocated equally
 
-'parent' tariff
+
+
+##Other EN Tariffs
+
+`CostPlus_xx`   Based on bills paid at parent tariff + xx%. Fixed costs (and CP?) shared evenly; Volumetric costs shared by usage; 
+                How best to deal with demand charges? 
+
+
+`parent` tariff
 ---------------
+Tariff paid at the parent meter for `en` arrangement. 
 For Non EN scenarios (bau, btm, cp_only, etc.), parent tariff must be `TIDNULL`, while cp tariff is paid by strata.
 
 -------

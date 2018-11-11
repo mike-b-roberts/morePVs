@@ -1062,12 +1062,14 @@ class Customer():
                     # ----------------------
                     if self.tariff.tariff_type == 'Block_Quarterly':
                         steps_since_reset = np.mod((step - self.tariff.block_billing_start),
-                                                               self.tariff.steps_in_block)
-                        cumulative_energy = self.imports[step - steps_since_reset:step + 1].sum()
+                                                               self.tariff.steps_in_block) # to include step0
+                        cumulative_energy = self.imports[step - steps_since_reset:step+1].sum() # NB only adds to step
                         if steps_since_reset == 0:
                             previous_energy = 0
                         else:
-                            previous_energy = self.imports[step - steps_since_reset:step].sum()
+                            previous_energy = self.imports[step - steps_since_reset:step].sum() # NB adds to step-1
+
+
                     # Block Daily Tariff
                     # -------------------
                     elif self.tariff.tariff_type == 'Block_Daily':
@@ -2606,6 +2608,9 @@ def runScenario(scenario_name):
 # ------------
 def main(base_path,project,study_name, override_output = '', use_threading = 'False'):
 
+
+
+
     # set up script logging
     pyname = os.path.basename(__file__)
     um.setup_local_logging(base_path, pyname, label=study_name)
@@ -2658,6 +2663,10 @@ def main(base_path,project,study_name, override_output = '', use_threading = 'Fa
         pdb.post_mortem(tb)
 
 if __name__ == "__main__":
+
+    # Raise exceptions on warnings - for debugging
+    # import warnings
+    # warnings.filterwarnings('error', category=UnicodeWarning)
 
     num_threads = 6
     default_project = 'tests'  # 'tests'

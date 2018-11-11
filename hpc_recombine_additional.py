@@ -10,9 +10,9 @@ import en_utilities as um
 # Input parameters:
 # -----------------
 project = 'EN2_x'
-study_root = 'xfe11_'
+study_root = 'xfe8_'
 
-sites = ['F','G','H','I','J']
+sites = ['J'] # '['F','G','H','I','J']
 
 # Establish paths etc
 # -------------------
@@ -58,7 +58,12 @@ for site in sites:
 
     folder_list = [f for f in os.listdir(hpc_path) if 'hpc' in f and study in f and not '.csv' in f]
     df = dict(zip(types, [pd.DataFrame(), pd.DataFrame(), pd.DataFrame()]))
-
+    # read existing results files to append:
+    for type in types:
+        o_name = study + '_' + type
+        o_file = os.path.join(o_path, o_name)
+        df[type] = pd.read_csv(o_file)
+        df[type] = df[type].set_index('scenario')
     #Combine results files:
     for ff in folder_list:
         folder_path = os.path.join(hpc_path, ff)
@@ -121,7 +126,7 @@ for site in sites:
         # -------------
         # copy timeseries files
         # -------------
-        for tstype in [ 'timeseries', 'timeseries_b', 'timeseries_d']:
+        for tstype in ['timeseries', 'timeseries_b', 'timeseries_d']:
             tspath = os.path.join(hpc_path, ff, tstype)
             if os.path.exists(tspath):
                 slist = os.listdir(tspath)

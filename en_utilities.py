@@ -4,9 +4,9 @@
 
 # IMPORT Modules
 import pandas as pd
-# import win32api
-# import win32com.client
-# import pythoncom
+import win32api
+import win32com.client
+import pythoncom
 # # import io
 # from pytz import UTC
 # from pytz import timezone
@@ -25,6 +25,17 @@ import matplotlib.dates as mdates
 # import seaborn as sns
 import sys
 import shutil
+import traceback
+import warnings
+import sys
+
+def warn_with_traceback(message, category, filename, lineno, file=None, line=None):
+
+    log = file if hasattr(file,'write') else sys.stderr
+    traceback.print_stack(file=log)
+    log.write(warnings.formatwarning(message, category, filename, lineno, line))
+
+
 
 def setup_logging(pyname,label=''):
     # Set up logfile
@@ -44,6 +55,7 @@ def setup_logging(pyname,label=''):
 
 ###############################################################
 
+
 def setup_local_logging(root_path, pyname,label=''):
     # Set up logfile adjacent to script directory
 
@@ -60,7 +72,7 @@ def setup_local_logging(root_path, pyname,label=''):
     logging.basicConfig(level=logging.DEBUG, filename=logpath, filemode='w', format='%(asctime)s %(message)s',
                         datefmt='%d/%m/%Y %I:%M:%S %p')
     logging.info('Python Script is: %s',pyname )
-
+    # warnings.showwarning = warn_with_traceback
 ###############################################################
 def reshape_profile(df):
     # take an annual load profile organised as a single column df with column 'kW'
@@ -93,20 +105,20 @@ def df_to_csv(df,path):
     # Adapted from
     # http: // timgolden.me.uk / python / win32_how_do_i / see - if -an - excel - workbook - is -open.html
 
-    df.to_csv(path)
+    #df.to_csv(path)
 
-    # try:
-    #     df.to_csv(path)
-    #     logging.info('saved to %s', path)
-    #     pass
-    # except IOError:
-    #     context = pythoncom.CreateBindCtx(0)
-    #     for moniker in pythoncom.GetRunningObjectTable():
-    #         name = moniker.GetDisplayName(context, None)
-    #         if name == path:
-    #             obj = win32com.client.GetObject(path)
-    #             obj.Close(True)
-    #     df.to_csv(path)
+    try:
+        df.to_csv(path)
+        logging.info('saved to %s', path)
+        pass
+    except IOError:
+        context = pythoncom.CreateBindCtx(0)
+        for moniker in pythoncom.GetRunningObjectTable():
+            name = moniker.GetDisplayName(context, None)
+            if name == path:
+                obj = win32com.client.GetObject(path)
+                obj.Close(True)
+        df.to_csv(path)
 
 ###############################################################
 def find_between( s, first, last ):
