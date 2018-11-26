@@ -1888,7 +1888,7 @@ class Scenario():
                     sys.exit("PV has bad timeseries")
                 # Scaleable PV has a 1kW gneration input file scaled to array size:
                 self.pv_scaleable = ('pv_scaleable' in self.parameters.index) and \
-                                    self.parameters['pv_scaleable']
+                                    self.parameters.fillna(False)['pv_scaleable']
                 if self.pv_scaleable:
                     self.pv_kW_peak = self.parameters['pv_kW_peak']
                     self.pv = self.pv * self.pv_kW_peak
@@ -1921,6 +1921,7 @@ class Scenario():
         self.tariff_short_list = self.tariff_in_use.tolist() + [self.dnsp_tariff]  # list of tariffs in use
         self.tariff_short_list = list(set(self.tariff_short_list))  # drop duplicates
         for tariff_id in self.tariff_short_list:
+
             if tariff_id not in study.tariff_data.lookup.index:
                 msg = '******Exception: Tariff '+ tariff_id+' is not in tariff_lookup.csv'
                 exit(msg)
@@ -2669,8 +2670,8 @@ if __name__ == "__main__":
     # warnings.filterwarnings('error', category=UnicodeWarning)
 
     num_threads = 6
-    default_project = 'tests'  # 'tests'
-    default_study = 'test_energy3'
+    default_project = 'ww1'  # 'tests'
+    default_study = 'W_bldg2_s43'
     default_use_threading = 'False'
 
     # Import arguments - allows multi-processing from command line
