@@ -1886,7 +1886,7 @@ class Scenario():
                 if not self.pv.index.equals(ts.timeseries):
                     logging.info('***************Exception!!! PV %s index does not align with load ', self.pvFile)
                     sys.exit("PV has bad timeseries")
-                # Scaleable PV has a 1kW gneration input file scaled to array size:
+                # Scaleable PV has a 1kW generation input file scaled to array size:
                 self.pv_scaleable = ('pv_scaleable' in self.parameters.index) and \
                                     self.parameters.fillna(False)['pv_scaleable']
                 if self.pv_scaleable:
@@ -2070,7 +2070,19 @@ class Scenario():
 
             #  Option to use standard 1kW PV output and scale
             #  with pv_capex and inverter cost given as $/kW
+            self.pv_scaleable = ('pv_scaleable' in self.parameters.index) and \
+                                self.parameters.fillna(False)['pv_scaleable']
+            # pv capex is scaleable if pv is scaleable....
             if self.pv_scaleable:
+                self.pv_capex_scaleable = True
+            else:
+                self.pv_capex_scaleable = False
+            # .... unless otherwise specified ....
+            if ('pv_capex_scaleable' in self.parameters.index):
+                if self.parameters.fillna('missing')['pv_capex_scaleable']!='missing':
+                    self.pv_capex_scaleable = self.parameters['pv_capex_scaleable']
+
+            if self.pv_capex_scaleable:
                 self.pv_capex = self.pv_capex * self.pv_kW_peak
 
             # Calculate annual repayments
@@ -2671,7 +2683,7 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 'ww1'  # 'tests'
-    default_study = 'W_bldg2_s43'
+    default_study = 'W_bldg2_s215'
     default_use_threading = 'False'
 
     # Import arguments - allows multi-processing from command line
