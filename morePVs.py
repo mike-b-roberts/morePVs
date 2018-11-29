@@ -1033,12 +1033,13 @@ class Customer():
             # calculate tariffs and costs stepwise
             # ------------------------------------
             for step in np.arange(0, ts.num_steps):
+                print(step)
                 # --------------------------------------------------------------
                 # Solar Block Daily Tariff : Calculate energy used at solar rate
                 # --------------------------------------------------------------
                 # Fixed daily allocation (set as % of annual generation) charged at solar rate,
                 # residual is at underlying, e.g. TOU
-                if self.tariff.tariff_type == 'Solar_Block_Daily':
+                if 'Solar_Block_Daily' in self.tariff.tariff_type :
                     steps_today = ts.steps_today(step)
                     # Cumulative Energy for this day:
                     cumulative_energy = self.imports[steps_today].sum()
@@ -1310,9 +1311,9 @@ class Network(Customer):
             solar_cp_allocation = allocation_list[0]
         # Calc daily quotas for cp and households based on proportion of annual PV generation:
         self.resident['cp'].daily_local_quota = self.pv.loc[
-                                                    self.resident['cp'].solar_period, 'central'] * solar_cp_allocation / 365
+                                                    self.resident['cp'].tariff.solar_period, 'central'].sum() * solar_cp_allocation / 365
         for c in self.households:
-            self.resident[c].daily_local_quota = self.pv.loc[self.resident[c].solar_period, 'central'] * (
+            self.resident[c].daily_local_quota = self.pv.loc[self.resident[c].tariff.solar_period, 'central'].sum() * (
                         1 - solar_cp_allocation) / (365 * len(self.households))
 
     # def initialiseSolarInstQuotas(self, scenario):
@@ -2683,7 +2684,8 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 'ww1'  # 'tests'
-    default_study = 'W_bldg2_s215'
+    default_study = 'W_bldg2en_cust'
+
     default_use_threading = 'False'
 
     # Import arguments - allows multi-processing from command line
