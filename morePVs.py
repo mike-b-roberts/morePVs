@@ -337,66 +337,68 @@ class Tariff():
         else:
             self.is_solar_inst = False
 
-        # Get solar tariff data:
-        if tariff_id in scenario.solar_list:
-            for name, parameter in study.tariff_data.tou_rate_list.items():
-                if not pd.isnull(study.tariff_data.lookup.loc[tariff_id, name]):
-                    if any(s in study.tariff_data.lookup.loc[tariff_id, name] for s in ['solar','Solar']):
-                        self.solar_rate_name = study.tariff_data.lookup.loc[tariff_id, name]
-                        winter_days_affected = ts.days[scenario.tariff_lookup.loc[tariff_id, parameter[3]]].join(  # [3] is week_
-                            ts.seasonal_time['winter'], 'inner')
-                        summer_days_affected = ts.days[scenario.tariff_lookup.loc[tariff_id, parameter[3]]].join(  # [3] is week_
-                            ts.seasonal_time['summer'], 'inner')
-
-                        if pd.Timestamp(scenario.tariff_lookup.loc[tariff_id, parameter[1]]).time() > \
-                                pd.Timestamp(scenario.tariff_lookup.loc[tariff_id, parameter[2]]).time():
-                            # winter tariff period crosses midnight:
-                            winter_period = \
-                                winter_days_affected[
-                                    (winter_days_affected.time >= pd.Timestamp(
-                                        scenario.tariff_lookup.loc[tariff_id, parameter[1]]).time())  # [1] is start
-                                    & (winter_days_affected.time < pd.Timestamp('23:59').time())].append(
-                                winter_days_affected[
-                                        (winter_days_affected.time >= pd.Timestamp('0:00').time())
-                                    & (winter_days_affected.time < pd.Timestamp(
-                                        scenario.tariff_lookup.loc[tariff_id, parameter[2]]).time())])  # [2] is end_
-                        else:
-                            # winter tariff period doesn't cross midnight:
-                            winter_period = \
-                                winter_days_affected[
-                                    (winter_days_affected.time >= pd.Timestamp(
-                                        scenario.tariff_lookup.loc[tariff_id, parameter[1]]).time())  # [1] is start
-                                    & (winter_days_affected.time < pd.Timestamp(
-                                        scenario.tariff_lookup.loc[tariff_id, parameter[2]]).time())]  # [2] is end_
-
-                        if (pd.Timestamp(scenario.tariff_lookup.loc[tariff_id, parameter[1]]) + ts.dst_reverse_shift).time() > \
-                                (pd.Timestamp(scenario.tariff_lookup.loc[tariff_id, parameter[2]]) + ts.dst_reverse_shift).time():
-                            # summer tariff period crosses midnight:
-                            summer_period = \
-                                summer_days_affected[
-                                    (summer_days_affected.time >= (pd.Timestamp(
-                                        scenario.tariff_lookup.loc[
-                                            tariff_id, parameter[1]]) + ts.dst_reverse_shift).time())  # [1] is start
-                                    & (summer_days_affected.time < pd.Timestamp('23:59').time())].append(  # [2] is end_
-                                summer_days_affected[
-                                    (summer_days_affected.time >= pd.Timestamp('0:00').time())  # [1] is start
-                                    & (summer_days_affected.time < (pd.Timestamp(
-                                        scenario.tariff_lookup.loc[
-                                            tariff_id, parameter[2]]) + ts.dst_reverse_shift).time())])  # [2] is end_
-                        else:
-                            # summer tariff period doesn't cross midnight:
-                            summer_period = \
-                            summer_days_affected[
-                                (summer_days_affected.time >= (pd.Timestamp(
-                                    scenario.tariff_lookup.loc[tariff_id, parameter[1]]) + ts.dst_reverse_shift).time())  # [1] is start
-                                & (summer_days_affected.time < (pd.Timestamp(
-                                    scenario.tariff_lookup.loc[tariff_id, parameter[2]]) + ts.dst_reverse_shift).time())]  # [2] is end_
-
-                        # solar_period, solar_rate and solar_cp_allocation are for solar block tariffs:
-                        # ie fixed quotas with dynamic load-dependent calculation
-                        self.solar_period = winter_period.join(summer_period, 'outer').sort_values()
-                        self.solar_rate = scenario.tariff_lookup.loc[tariff_id, parameter[0]]  # rate_
-                        self.solar_cp_allocation = scenario.tariff_lookup['solar_cp_allocation'].fillna(0).loc[tariff_id] # % of total solar generation allocated to cp
+        # # Get solar tariff data:
+        # SOLAR BLOCK TARIFF IMPLEMENTATION INCORRECT - REMOVED
+        # # NB solar block tariff period is NOT adjusted for DST
+        # if tariff_id in scenario.solar_list:
+        #     for name, parameter in study.tariff_data.tou_rate_list.items():
+        #         if not pd.isnull(study.tariff_data.lookup.loc[tariff_id, name]):
+        #             if any(s in study.tariff_data.lookup.loc[tariff_id, name] for s in ['solar','Solar']):
+        #                 self.solar_rate_name = study.tariff_data.lookup.loc[tariff_id, name]
+        #                 winter_days_affected = ts.days[scenario.tariff_lookup.loc[tariff_id, parameter[3]]].join(  # [3] is week_
+        #                     ts.seasonal_time['winter'], 'inner')
+        #                 summer_days_affected = ts.days[scenario.tariff_lookup.loc[tariff_id, parameter[3]]].join(  # [3] is week_
+        #                     ts.seasonal_time['summer'], 'inner')
+        #
+        #                 if pd.Timestamp(scenario.tariff_lookup.loc[tariff_id, parameter[1]]).time() > \
+        #                         pd.Timestamp(scenario.tariff_lookup.loc[tariff_id, parameter[2]]).time():
+        #                     # winter tariff period crosses midnight:
+        #                     winter_period = \
+        #                         winter_days_affected[
+        #                             (winter_days_affected.time >= pd.Timestamp(
+        #                                 scenario.tariff_lookup.loc[tariff_id, parameter[1]]).time())  # [1] is start
+        #                             & (winter_days_affected.time < pd.Timestamp('23:59').time())].append(
+        #                         winter_days_affected[
+        #                                 (winter_days_affected.time >= pd.Timestamp('0:00').time())
+        #                             & (winter_days_affected.time < pd.Timestamp(
+        #                                 scenario.tariff_lookup.loc[tariff_id, parameter[2]]).time())])  # [2] is end_
+        #                 else:
+        #                     # winter tariff period doesn't cross midnight:
+        #                     winter_period = \
+        #                         winter_days_affected[
+        #                             (winter_days_affected.time >= pd.Timestamp(
+        #                                 scenario.tariff_lookup.loc[tariff_id, parameter[1]]).time())  # [1] is start
+        #                             & (winter_days_affected.time < pd.Timestamp(
+        #                                 scenario.tariff_lookup.loc[tariff_id, parameter[2]]).time())]  # [2] is end_
+        #
+        #                 if (pd.Timestamp(scenario.tariff_lookup.loc[tariff_id, parameter[1]]) ).time() > \
+        #                         (pd.Timestamp(scenario.tariff_lookup.loc[tariff_id, parameter[2]]) ).time():
+        #                     # summer tariff period crosses midnight:
+        #                     summer_period = \
+        #                         summer_days_affected[
+        #                             (summer_days_affected.time >= (pd.Timestamp(
+        #                                 scenario.tariff_lookup.loc[
+        #                                     tariff_id, parameter[1]])).time())  # [1] is start
+        #                             & (summer_days_affected.time < pd.Timestamp('23:59').time())].append(  # [2] is end_
+        #                         summer_days_affected[
+        #                             (summer_days_affected.time >= pd.Timestamp('0:00').time())  # [1] is start
+        #                             & (summer_days_affected.time < (pd.Timestamp(
+        #                                 scenario.tariff_lookup.loc[
+        #                                     tariff_id, parameter[2]]) ).time())])  # [2] is end_
+        #                 else:
+        #                     # summer tariff period doesn't cross midnight:
+        #                     summer_period = \
+        #                     summer_days_affected[
+        #                         (summer_days_affected.time >= (pd.Timestamp(
+        #                             scenario.tariff_lookup.loc[tariff_id, parameter[1]]) ).time())  # [1] is start
+        #                         & (summer_days_affected.time < (pd.Timestamp(
+        #                             scenario.tariff_lookup.loc[tariff_id, parameter[2]])).time())]  # [2] is end_
+        #
+        #                 # solar_period, solar_rate and solar_cp_allocation are for solar block tariffs:
+        #                 # ie fixed quotas with dynamic load-dependent calculation
+        #                 self.solar_period = winter_period.join(summer_period, 'outer').sort_values()
+        #                 self.solar_rate = scenario.tariff_lookup.loc[tariff_id, parameter[0]]  # rate_
+        #                 self.solar_cp_allocation = scenario.tariff_lookup['solar_cp_allocation'].fillna(0).loc[tariff_id] # % of total solar generation allocated to cp
             # Solar import tariff is static TOU tariff for instantaneous solar quota
             self.solar_import_tariff = (scenario.static_solar_imports[tariff_id]).values
             pass
@@ -1033,28 +1035,31 @@ class Customer():
             # calculate tariffs and costs stepwise
             # ------------------------------------
             for step in np.arange(0, ts.num_steps):
-                print(step)
+                # print(step)
                 # --------------------------------------------------------------
                 # Solar Block Daily Tariff : Calculate energy used at solar rate
                 # --------------------------------------------------------------
                 # Fixed daily allocation (set as % of annual generation) charged at solar rate,
                 # residual is at underlying, e.g. TOU
                 if 'Solar_Block_Daily' in self.tariff.tariff_type :
-                    steps_today = ts.steps_today(step)
-                    # Cumulative Energy for this day:
-                    cumulative_energy = self.imports[steps_today].sum()
-                    if len(steps_today) <= 1:
-                        previous_energy = 0
-                    else:
-                        previous_energy = self.imports[steps_today[:-1]].sum()
-                    # Allocate local solar allocation depending on cumulative energy relative to quota:
-                    if cumulative_energy <= self.daily_local_quota:
-                        self.solar_allocation[step] = self.imports[step]
-                    elif previous_energy < self.daily_local_quota \
-                            and cumulative_energy > self.daily_local_quota:
-                        self.solar_allocation[step] = self.daily_local_quota - previous_energy
-                    else:
-                        self.solar_allocation[step] = 0
+                    print('Solar_Block_Daily NOT SUPPORTED')
+                    sys.exit('Solar_Block_Daily NOT SUPPORTED')
+                    # SOLAR BLOCK DAILY REMOVED
+                    # steps_today = ts.steps_today(step)
+                    # # Cumulative Energy for this day:
+                    # cumulative_energy = self.imports[steps_today].sum()
+                    # if len(steps_today) <= 1:
+                    #     previous_energy = 0
+                    # else:
+                    #     previous_energy = self.imports[steps_today[:-1]].sum()
+                    # # Allocate local solar allocation depending on cumulative energy relative to quota:
+                    # if cumulative_energy <= self.daily_local_quota:
+                    #     self.solar_allocation[step] = self.imports[step]
+                    # elif previous_energy < self.daily_local_quota \
+                    #         and cumulative_energy > self.daily_local_quota:
+                    #     self.solar_allocation[step] = self.daily_local_quota - previous_energy
+                    # else:
+                    #     self.solar_allocation[step] = 0
                 else:
                     # ---------------------------------------------------------
                     # For Block Tariffs, calc volumetric charges for each block
@@ -1300,21 +1305,22 @@ class Network(Customer):
         # um.df_to_csv(self.pv, pvFile)
 
 
-    def initialiseDailySolarBlockQuotas(self, scenario):
-        """For Solar Block Daily tariff, share allocation of central PV generation amongst all residents."""
-        # Intended for `en` arrangement
-        # Check that all residents have same solar_cp_allocation basis , otherwise raise an exception:
-        allocation_list = list(set((self.resident[c].tariff.solar_cp_allocation for c in self.resident_list)))
-        if len(allocation_list) > 1:
-            sys.exit("Inconsistent cp allocation of local generation")
-        else:
-            solar_cp_allocation = allocation_list[0]
-        # Calc daily quotas for cp and households based on proportion of annual PV generation:
-        self.resident['cp'].daily_local_quota = self.pv.loc[
-                                                    self.resident['cp'].tariff.solar_period, 'central'].sum() * solar_cp_allocation / 365
-        for c in self.households:
-            self.resident[c].daily_local_quota = self.pv.loc[self.resident[c].tariff.solar_period, 'central'].sum() * (
-                        1 - solar_cp_allocation) / (365 * len(self.households))
+    # def initialiseDailySolarBlockQuotas(self, scenario):
+    #     # REMOVED - IMPLEMENTATION NEEDS CORRECTION
+    #     """For Solar Block Daily tariff, share allocation of central PV generation amongst all residents."""
+    #     # Intended for `en` arrangement
+    #     # Check that all residents have same solar_cp_allocation basis , otherwise raise an exception:
+    #     allocation_list = list(set((self.resident[c].tariff.solar_cp_allocation for c in self.resident_list)))
+    #     if len(allocation_list) > 1:
+    #         sys.exit("Inconsistent cp allocation of local generation")
+    #     else:
+    #         solar_cp_allocation = allocation_list[0]
+    #     # Calc daily quotas for cp and households based on proportion of annual PV generation:
+    #     self.resident['cp'].daily_local_quota = self.pv.loc[
+    #                                                 self.resident['cp'].tariff.solar_period, 'central'].sum() * solar_cp_allocation / 365
+    #     for c in self.households:
+    #         self.resident[c].daily_local_quota = self.pv.loc[self.resident[c].tariff.solar_period, 'central'].sum() * (
+    #                     1 - solar_cp_allocation) / (365 * len(self.households))
 
     # def initialiseSolarInstQuotas(self, scenario):
     #     """Calculate local quotas for solar instantaneous tariffs in an EN."""
@@ -2562,8 +2568,8 @@ def runScenario(scenario_name):
     if scenario.pv_allocation == 'fixed':
         eno.allocatePV(scenario, scenario.pv)
 
-    if scenario.has_solar_block:
-        eno.initialiseDailySolarBlockQuotas(scenario)
+    # if scenario.has_solar_block:
+    #     eno.initialiseDailySolarBlockQuotas(scenario)
 
     # Iterate through all load profiles for this scenario:
     for load_name in scenario.load_list:
