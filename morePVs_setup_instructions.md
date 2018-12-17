@@ -45,9 +45,10 @@ filename of 1kWp PV output is `pv_filename` column
 `pv_scaleable = TRUE`
 
 `pv_kW_peak` = value to scaleby, eg 50 for 50kWp
+If `pv_capex_scaleable` is `True` or absent (ie default setting = `True`),  `pv_cap_id` refers to a scaleable capex scenario with capex and repayments also scaled by `pv_kW_peak` (NB - use of this should be restricted to system sizes with equal $/kWp capex).
 
-In this case, `pv_cap_id` refers to a scaleable capex scenario with capex and repayments also scaled by `pv_kW_peak`
-NB - use of this should be restricted to system sizes with equal $/kWp capex
+if `pv_capex_scaleable` is `False` then `pv_cap_id` has absolute capex values
+
 
 -----
 LOADS
@@ -128,12 +129,15 @@ Solar Tariffs
 `STS_xx`  Solar TOU Tariff based on peak, shoulder and off-peak solar periods with rates at xx% discount from EASO TOU rates
 `STC_xx`  Solar TOU Combined tariff based on EASO TOU periods, with additional off-peak solar period and xx% off EASO TOU rates
 
-`SBTd_xx_yy` Solar block TOU tariff (daily):
-                Based on TOU with `xx%` discount and each customer having a fixed daily quota of solar energy, based on total annual generation during solar period (single solar period is defined in `tariff_lookup.csv` as constant all year, and the script handles DST shift)
-                cp allocated a fixed % (`cp_solar_allocation` given as decimal (`0.yy`)in `tariff_lookup.csv`) and 
-                the remainder shared equally between units.
+***SOLAR BLOCK TARIFF NOT IMPLEMENTED - NEEDS REDESIGN***
+`SBTd_xx_yy_zz` Solar block TOU tariff (daily):
+Based on TOU with `xx%` discount and each customer having a fixed daily quota of solar energy (charged at zz c/kWh) , based on total annual generation during solar period (single solar period is defined in `tariff_lookup.csv` as constant all year, and the script handles DST shift)
+cp allocated a fixed % (`cp_solar_allocation` given as decimal (`0.yy`)in `tariff_lookup.csv`) and 
+the remainder shared equally between units.
 `tariff_type` = `Solar_Block_Daily`
 - daily quota applied to solar tariff
+If residents have `Solar_Block_daily` and strata body is ENO, CP must have a `Solar_Block_Daily_Null` with same period and allocation but zero rates
+
          
 `SIT_xx` Solar Instantaneous TOU tariff : 
                 Based on TOU with `xx%` discount and each customer having a quota of solar energy, based on % of instantaneous generation at that timestamp after cp load has been satisfied. 

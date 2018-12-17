@@ -340,7 +340,7 @@ class Tariff():
         # # Get solar tariff data:
         # SOLAR BLOCK TARIFF IMPLEMENTATION INCORRECT - REMOVED
         # # NB solar block tariff period is NOT adjusted for DST
-        # if tariff_id in scenario.solar_list:
+        if tariff_id in scenario.solar_list:
         #     for name, parameter in study.tariff_data.tou_rate_list.items():
         #         if not pd.isnull(study.tariff_data.lookup.loc[tariff_id, name]):
         #             if any(s in study.tariff_data.lookup.loc[tariff_id, name] for s in ['solar','Solar']):
@@ -2690,7 +2690,7 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 'ww1'  # 'tests'
-    default_study = 'W_bldg2en_cust'
+    default_study = 'W_bldg4en_cust'
 
     default_use_threading = 'False'
 
