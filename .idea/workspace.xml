@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="575cb9b5-85bf-4baa-a8bc-373adc054006" name="Default" comment="added data files">
+    <list default="true" id="575cb9b5-85bf-4baa-a8bc-373adc054006" name="Default" comment="added data files2">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/morePVs.py" beforeDir="false" afterPath="$PROJECT_DIR$/morePVs.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/venv/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -11,16 +12,47 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="DockManager">
+    <window id="12">
+      <content type="file-editors">
+        <state>
+          <leaf>
+            <file pinned="false" current-in-tab="true">
+              <entry file="file://$PROJECT_DIR$/morePVs.py">
+                <provider selected="true" editor-type-id="text-editor">
+                  <state relative-caret-position="220">
+                    <caret line="344" selection-start-line="344" selection-end-line="344" />
+                    <folding>
+                      <element signature="e#788#806#0" expanded="true" />
+                    </folding>
+                  </state>
+                </provider>
+              </entry>
+            </file>
+          </leaf>
+        </state>
+      </content>
+    </window>
+  </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/morePVs.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="377">
-              <caret line="949" column="43" lean-forward="true" selection-start-line="949" selection-start-column="43" selection-end-line="949" selection-end-column="43" />
+            <state relative-caret-position="412">
+              <caret line="2689" column="28" selection-start-line="2689" selection-start-column="28" selection-end-line="2689" selection-end-column="28" />
               <folding>
                 <element signature="e#788#806#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/pydevd.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="143">
+              <caret line="346" selection-start-line="346" selection-end-line="346" />
             </state>
           </provider>
         </entry>
@@ -36,19 +68,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>allarea</find>
-      <find>print</find>
-      <find>summary_name</find>
-      <find>logging</find>
-      <find>df_allsites</find>
-      <find>diversity_</find>
-      <find>null_</find>
-      <find>plot_compare_stats</find>
-      <find>wos</find>
-      <find>jpgt</find>
-      <find>jpg</find>
-      <find>df</find>
-      <find>tif</find>
       <find>jpeg</find>
       <find>dir</find>
       <find>tree</find>
@@ -66,6 +85,19 @@
       <find>exit</find>
       <find>@@</find>
       <find>solar</find>
+      <find>1934</find>
+      <find>static_exports</find>
+      <find>export_kWh</find>
+      <find>export</find>
+      <find>result_list</find>
+      <find>.results</find>
+      <find>.total_building_export</find>
+      <find>exports</find>
+      <find>total_building_export</find>
+      <find>tou_rate_list</find>
+      <find>solar_rate_name)</find>
+      <find>solar_rate_name</find>
+      <find>print</find>
     </findStrings>
     <replaceStrings>
       <replace>allunits</replace>
@@ -102,35 +134,17 @@
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="8" />
-    <option name="y" value="-13" />
-    <option name="width" value="1913" />
-    <option name="height" value="1940" />
+    <option name="x" value="1912" />
+    <option name="y" value="-8" />
+    <option name="width" value="1936" />
+    <option name="height" value="1096" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
     <navigator proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
     </navigator>
-    <panes>
-      <pane id="ProjectPane">
-        <subPane>
-          <expand>
-            <path>
-              <item name="en" type="b2602c69:ProjectViewProjectNode" />
-              <item name="en" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="en" type="b2602c69:ProjectViewProjectNode" />
-              <item name="en" type="462c0819:PsiDirectoryNode" />
-              <item name="DATA_EN_5" type="462c0819:PsiDirectoryNode" />
-            </path>
-          </expand>
-          <select />
-        </subPane>
-      </pane>
-      <pane id="Scope" />
-    </panes>
+    <panes />
   </component>
   <component name="PropertiesComponent">
     <property name="last_opened_file_path" value="$USER_HOME$/AppData/Local/Continuum/anaconda3/pkgs/conda-4.5.11-py37_0/Scripts/conda.exe" />
@@ -292,7 +306,7 @@
     </recent_temporary>
   </component>
   <component name="StructureViewFactory">
-    <option name="ACTIVE_ACTIONS" value=",SHOW_FIELDS,SHOW_INHERITED" />
+    <option name="ACTIVE_ACTIONS" value=",SHOW_INHERITED" />
   </component>
   <component name="SvnConfiguration">
     <configuration />
@@ -374,7 +388,14 @@
       <option name="project" value="LOCAL" />
       <updated>1545086692502</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="added data files2">
+      <created>1545087618196</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1545087618196</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TodoView">
@@ -387,19 +408,19 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
+    <frame x="1912" y="-8" width="1936" height="1056" extended-state="6" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.2394822" visible="true" weight="0.16983122" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.2394822" weight="0.16772152" />
       <window_info id="Favorites" order="1" side_tool="true" />
-      <window_info id="Structure" order="2" sideWeight="0.7605178" weight="0.61185265" />
+      <window_info id="Structure" order="2" sideWeight="0.7605178" visible="true" weight="0.27109703" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.329718" />
-      <window_info anchor="bottom" id="Run" order="2" weight="0.32936078" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.4810401" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.31053203" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.16938111" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
-      <window_info anchor="bottom" id="TODO" order="6" weight="0.329718" />
-      <window_info active="true" anchor="bottom" id="Version Control" order="7" sideWeight="0.49947312" visible="true" weight="0.32899022" />
+      <window_info anchor="bottom" id="TODO" order="6" weight="0.32899022" />
+      <window_info anchor="bottom" id="Version Control" order="7" sideWeight="0.49947312" weight="0.35939196" />
       <window_info anchor="bottom" id="Terminal" order="8" />
       <window_info anchor="bottom" id="Event Log" order="9" sideWeight="0.50052685" side_tool="true" weight="0.329718" />
       <window_info anchor="bottom" id="Python Console" order="10" weight="0.3575298" />
@@ -470,7 +491,8 @@
     <MESSAGE value="Solar Block Tariff implemented" />
     <MESSAGE value="Solar Block Daily Removed - incorrect implementation" />
     <MESSAGE value="added data files" />
-    <option name="LAST_COMMIT_MESSAGE" value="added data files" />
+    <MESSAGE value="added data files2" />
+    <option name="LAST_COMMIT_MESSAGE" value="added data files2" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -527,8 +549,19 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/morePVs.py</url>
-          <line>134</line>
-          <option name="timeStamp" value="97" />
+          <line>2195</line>
+          <option name="timeStamp" value="105" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/morePVs.py</url>
+          <line>1779</line>
+          <option name="timeStamp" value="113" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <condition expression="'ppa' in tariff_id " language="Python" />
+          <url>file://$PROJECT_DIR$/morePVs.py</url>
+          <line>342</line>
+          <option name="timeStamp" value="117" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
@@ -538,11 +571,17 @@
         <watch expression="self.solar_rate" />
         <watch expression="cumulative_energy" />
         <watch expression="self.solar_allocation" />
+        <watch expression=".total_building_export" />
       </configuration>
     </watches-manager>
   </component>
   <component name="debuggerHistoryManager">
     <expressions id="breakpointCondition">
+      <expression>
+        <expression-string>'ppa' in tariff_id</expression-string>
+        <language-id>Python</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
       <expression>
         <expression-string>self.name=='W18'</expression-string>
         <language-id>Python</language-id>
@@ -616,20 +655,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="181">
           <caret line="181" column="40" lean-forward="true" selection-start-line="181" selection-start-column="40" selection-end-line="181" selection-end-column="40" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/isf/isf_shading_and _saveCsv.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="840">
-          <caret line="103" column="31" selection-start-line="103" selection-start-column="24" selection-end-line="103" selection-end-column="31" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/_pydev_imps/_pydev_execfile.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="289">
-          <caret line="17" column="57" lean-forward="true" selection-start-line="17" selection-start-column="57" selection-end-line="17" selection-end-column="57" />
         </state>
       </provider>
     </entry>
@@ -802,13 +827,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/pydevd.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="432">
-          <caret line="1689" lean-forward="true" selection-start-line="1689" selection-end-line="1689" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../py_projects/WWAPI/fill_WWAPI_v2.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1700">
@@ -816,10 +834,31 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/isf/isf_shading_and _saveCsv.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="246">
+          <caret line="148" selection-start-line="148" selection-end-line="148" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/_pydev_imps/_pydev_execfile.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="289">
+          <caret line="17" selection-start-line="17" selection-end-line="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/pydevd.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="143">
+          <caret line="346" selection-start-line="346" selection-end-line="346" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/morePVs.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="377">
-          <caret line="949" column="43" lean-forward="true" selection-start-line="949" selection-start-column="43" selection-end-line="949" selection-end-column="43" />
+        <state relative-caret-position="412">
+          <caret line="2689" column="28" selection-start-line="2689" selection-start-column="28" selection-end-line="2689" selection-end-column="28" />
           <folding>
             <element signature="e#788#806#0" expanded="true" />
           </folding>
