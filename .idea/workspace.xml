@@ -1,9 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="575cb9b5-85bf-4baa-a8bc-373adc054006" name="Default" comment="added data files2">
+    <list default="true" id="575cb9b5-85bf-4baa-a8bc-373adc054006" name="Default" comment="restored solar inst tariff">
+      <change afterPath="$PROJECT_DIR$/../py_projects/Misc/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/Misc/byron-battery-model-master/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/WF_Processing/Scripts/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/WF_Processing/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/WWAPI/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/WWAPI/not_current_but_will_be_again/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/WWAPI/wwapi_plots/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/en_bits_and_bobs/en2_post_processing/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/utilities/conversion_utilities/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/en.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/en.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/morePVs.py" beforeDir="false" afterPath="$PROJECT_DIR$/morePVs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/virtual_buildings/vb_variability_calc_v3.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/virtual_buildings/vb_variability_calc_v3.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/venv/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -35,29 +48,7 @@
     </window>
   </component>
   <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/morePVs.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="412">
-              <caret line="2689" column="28" selection-start-line="2689" selection-start-column="28" selection-end-line="2689" selection-end-column="28" />
-              <folding>
-                <element signature="e#788#806#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/pydevd.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="143">
-              <caret line="346" selection-start-line="346" selection-end-line="346" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -105,7 +96,7 @@
     </replaceStrings>
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../py_projects" />
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
         <entry key="$PROJECT_DIR$" value="dynamic_tariffs" />
@@ -141,15 +132,18 @@
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
-    <navigator proportions="" version="1">
+    <navigator currentView="Scope" currentSubView="Scope 'Project Files'; set:Project Files; class com.intellij.psi.search.scope.ProjectFilesScope" proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
     </navigator>
-    <panes />
+    <panes>
+      <pane id="ProjectPane" />
+      <pane id="Scope" />
+    </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$USER_HOME$/AppData/Local/Continuum/anaconda3/pkgs/conda-4.5.11-py37_0/Scripts/conda.exe" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="restartRequiresConfirmation" value="false" />
-    <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
+    <property name="settings.editor.selected.configurable" value="configurable.group.project" />
   </component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
@@ -160,15 +154,17 @@
     </option>
   </component>
   <component name="RecentsManager">
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\z5044992\Documents\python\en\DATA_EN_5" />
-      <recent name="C:\Users\z5044992\Documents\python\py_projects\isf" />
-    </key>
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\z5044992\Documents\python\py_projects\WWAPI" />
       <recent name="C:\Users\z5044992\Documents\python\py_projects\py_sgsc\Scripts\SGSC Processing" />
       <recent name="C:\Users\z5044992\Documents\python\py_projects\py_sgsc\Scripts\SGSC Clustering" />
       <recent name="C:\Users\z5044992\Documents\python\py_projects\utilities" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\z5044992\OneDrive - UNSW\python" />
+      <recent name="C:\Users\z5044992\OneDrive - UNSW" />
+      <recent name="C:\Users\z5044992\Documents\python\en\DATA_EN_5" />
+      <recent name="C:\Users\z5044992\Documents\python\py_projects\isf" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -395,7 +391,14 @@
       <option name="project" value="LOCAL" />
       <updated>1545087618196</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="restored solar inst tariff">
+      <created>1548204654255</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1548204654255</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TodoView">
@@ -410,12 +413,12 @@
   <component name="ToolWindowManager">
     <frame x="1912" y="-8" width="1936" height="1056" extended-state="6" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.2394822" weight="0.16772152" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.2394822" visible="true" weight="0.16772152" />
       <window_info id="Favorites" order="1" side_tool="true" />
-      <window_info id="Structure" order="2" sideWeight="0.7605178" visible="true" weight="0.27109703" />
+      <window_info id="Structure" order="2" sideWeight="0.7605178" weight="0.27109703" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.329718" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.31053203" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.31053203" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.16938111" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -492,7 +495,8 @@
     <MESSAGE value="Solar Block Daily Removed - incorrect implementation" />
     <MESSAGE value="added data files" />
     <MESSAGE value="added data files2" />
-    <option name="LAST_COMMIT_MESSAGE" value="added data files2" />
+    <MESSAGE value="restored solar inst tariff" />
+    <option name="LAST_COMMIT_MESSAGE" value="restored solar inst tariff" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -857,8 +861,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/morePVs.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="412">
-          <caret line="2689" column="28" selection-start-line="2689" selection-start-column="28" selection-end-line="2689" selection-end-column="28" />
+        <state relative-caret-position="220">
+          <caret line="344" selection-start-line="344" selection-end-line="344" />
           <folding>
             <element signature="e#788#806#0" expanded="true" />
           </folding>
