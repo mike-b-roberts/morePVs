@@ -2687,7 +2687,7 @@ if __name__ == "__main__":
 
     num_threads = 6
     default_project = 'ww1'  # 'tests'
-    default_study = 'T_bldg2'
+    default_study = 'T_bldg1'
 
     default_use_threading = 'False'
 

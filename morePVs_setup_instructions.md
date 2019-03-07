@@ -64,7 +64,7 @@ Load files contain:
 
 i.e `1/01/2013 00:00`  timestamp is attached to the period 00:00 - 00:30.
 
-this is to align with the PV output files produced by NREL SAM. It is likkely that interval data will need adjusting to align with this.
+this is to align with the PV output files produced by NREL SAM. It is likely that interval data will need adjusting to align with this.
 
 If there are multiple loads for each scenario, they must all have the same list of customers within the folder,
 BUT each scenario *can* have different number of residents, etc.
