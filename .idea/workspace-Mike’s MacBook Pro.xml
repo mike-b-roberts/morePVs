@@ -14,6 +14,10 @@
       <change afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/__init__.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/__init__.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/../py_projects/utilities/conversion_utilities/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/en.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/en.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/en_utilities.py" beforeDir="false" afterPath="$PROJECT_DIR$/en_utilities.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/morePVs.py" beforeDir="false" afterPath="$PROJECT_DIR$/morePVs.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../py_projects/.idea/py_projects.iml" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/.idea/py_projects.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../py_projects/isf/.idea/isf.iml" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/isf/.idea/isf.iml" afterDir="false" />
@@ -28,23 +32,14 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/morePVs.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="40170">
-              <caret line="2689" selection-start-line="2689" selection-end-line="2689" />
-              <folding>
-                <element signature="e#788#806#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/en_utilities.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="210">
-              <caret line="15" column="31" selection-start-line="15" selection-start-column="31" selection-end-line="15" selection-end-column="31" />
+            <state relative-caret-position="60">
+              <caret line="4" column="16" lean-forward="true" selection-start-line="4" selection-start-column="16" selection-end-line="4" selection-end-column="16" />
+              <folding>
+                <element signature="e#162#181#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -60,6 +55,8 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
+      <find>tree</find>
+      <find>outFile</find>
       <find>to_</find>
       <find>.fixed_charge</find>
       <find>pv_exists</find>
@@ -88,8 +85,6 @@
       <find>print</find>
       <find>z50</find>
       <find>win32</find>
-      <find>win32api</find>
-      <find>win</find>
     </findStrings>
     <replaceStrings>
       <replace>allunits</replace>
@@ -104,9 +99,13 @@
       </map>
     </option>
   </component>
+  <component name="GithubDefaultAccount">
+    <option name="defaultAccountId" value="9fd1ae5f-7f9b-48fe-8ac6-bc0a359fd163" />
+  </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
+        <option value="$PROJECT_DIR$/en_utilities.py" />
         <option value="$PROJECT_DIR$/../py_projects/utilities/SAM_generated_code/PySSC.py" />
         <option value="$PROJECT_DIR$/../py_projects/utilities/utility_module.py" />
         <option value="$PROJECT_DIR$/../py_projects/utilities/run_sam_pvwatts_isf.py" />
@@ -121,14 +120,13 @@
         <option value="$PROJECT_DIR$/../py_projects/WWAPI/fill_WWAPI_v2.py" />
         <option value="$USER_HOME$/.jupyter/jupyter_notebook_config.py" />
         <option value="$PROJECT_DIR$/morePVs.py" />
-        <option value="$PROJECT_DIR$/en_utilities.py" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
+  <component name="ProjectFrameBounds">
     <option name="y" value="3" />
     <option name="width" value="1927" />
-    <option name="height" value="1044" />
+    <option name="height" value="877" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -153,7 +151,7 @@
   <component name="PropertiesComponent">
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="restartRequiresConfirmation" value="false" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+    <property name="settings.editor.selected.configurable" value="settings.github" />
   </component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
@@ -458,22 +456,22 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="3" width="1440" height="877" extended-state="6" />
+    <frame x="0" y="3" width="1927" height="877" extended-state="0" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.2394822" visible="true" weight="0.12332629" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.2394822" visible="true" weight="0.12329486" />
       <window_info id="Favorites" order="1" side_tool="true" />
       <window_info id="Structure" order="2" sideWeight="0.7605178" weight="0.27277514" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.329718" />
-      <window_info anchor="bottom" id="Run" order="2" visible="true" weight="0.3091309" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.4989507" weight="0.30828026" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.16938111" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" weight="0.32899022" />
       <window_info anchor="bottom" id="Version Control" order="7" sideWeight="0.49894515" weight="0.35796177" />
       <window_info anchor="bottom" id="Terminal" order="8" />
-      <window_info anchor="bottom" id="Event Log" order="9" sideWeight="0.5010548" side_tool="true" weight="0.35939196" />
-      <window_info anchor="bottom" id="Python Console" order="10" weight="0.35643566" />
+      <window_info active="true" anchor="bottom" id="Event Log" order="9" sideWeight="0.50104934" side_tool="true" visible="true" weight="0.35923567" />
+      <window_info anchor="bottom" id="Python Console" order="10" weight="0.3575298" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.24959481" />
@@ -912,8 +910,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/morePVs.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="40170">
-          <caret line="2689" selection-start-line="2689" selection-end-line="2689" />
+        <state relative-caret-position="8003">
+          <caret line="2666" lean-forward="true" selection-start-line="2666" selection-end-line="2666" />
           <folding>
             <element signature="e#788#806#0" expanded="true" />
           </folding>
@@ -922,8 +920,11 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/en_utilities.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="210">
-          <caret line="15" column="31" selection-start-line="15" selection-start-column="31" selection-end-line="15" selection-end-column="31" />
+        <state relative-caret-position="60">
+          <caret line="4" column="16" lean-forward="true" selection-start-line="4" selection-start-column="16" selection-end-line="4" selection-end-column="16" />
+          <folding>
+            <element signature="e#162#181#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

@@ -2683,8 +2683,8 @@ if __name__ == "__main__":
     # -------------------------------------------------------
     # Set up defaults here: base_path, project and study name
     # --------------------------------------------------------
-    default_base_path = 'C:\\Users\\z5044992\\OneDrive - UNSW\\python\\en\\DATA_EN_5'  #(Mike's PC)
-    # default_base_path = '\\Users\\mikeroberts\\OneDrive - UNSW\\python\\en\\DATA_EN_5'  #(Mike's Mac)
+    #default_base_path = 'C:\\Users\\z5044992\\OneDrive - UNSW\\python\\en\\DATA_EN_5'  #(Mike's PC)
+    default_base_path = '/Users/mikeroberts/OneDrive - UNSW/python/en/DATA_EN_5'  #(Mike's Mac)
     default_project = 'demonstrations'
     default_study = 'demo_k1'
 
