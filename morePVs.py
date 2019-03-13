@@ -2680,17 +2680,17 @@ def main(base_path,project,study_name, override_output = '', use_threading = 'Fa
         pdb.post_mortem(tb)
 
 if __name__ == "__main__":
+    # -------------------------------------------------------
+    # Set up defaults here: base_path, project and study name
+    # --------------------------------------------------------
+    default_base_path = 'C:\\Users\\z5044992\\OneDrive - UNSW\\python\\en\\DATA_EN_5'  #(Mike's PC)
+    # default_base_path = '\\Users\\mikeroberts\\OneDrive - UNSW\\python\\en\\DATA_EN_5'  #(Mike's Mac)
+    default_project = 'demonstrations'
+    default_study = 'demo_k1'
 
-    # Raise exceptions on warnings - for debugging
-    # import warnings
-    # warnings.filterwarnings('error', category=UnicodeWarning)
-
-    num_threads = 6
-    default_project = 'ww1'  # 'tests'
-    default_study = 'T_bldg1'
 
     default_use_threading = 'False'
-
+    num_threads = 6
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
     opts = {}
@@ -2698,7 +2698,6 @@ if __name__ == "__main__":
         if sys.argv[0][0] == '-':
             opts[sys.argv[0]] = sys.argv[1]
         sys.argv = sys.argv[1:]
-
     if '-p' in opts:
         project = opts['-p']
     else:
@@ -2715,13 +2714,15 @@ if __name__ == "__main__":
     if '-b' in opts:
         base_path = opts['-b']
     else:
-        base_path = 'C:\\Users\\z5044992\\Documents\\MainDATA\\DATA_EN_5'
+        base_path = default_base_path
+
     # daylight savings:
     if '-dst' in opts:
         dst_region = opts['-dst']
     else:
         dst_region = 'nsw'
     # direct hpc output:
+    # (for use on unsw hpc facility)
     if '-o' in opts:
         override_output = opts['-o']
     else:
@@ -2736,7 +2737,6 @@ if __name__ == "__main__":
 
 
 # TODO - FUTURE - Variable allocation of pv between cp and residents
-# TODO - test solar block and inst tariffs
 # TODO - Add combined central and individual PV
 # TODO - Battery: Add capex calcs for individual batteries Need to update Network.allocateAllCapex
 # TODO - Optimisation Separate financial settings from energy calcs to reduce calculation

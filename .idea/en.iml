@@ -4,7 +4,7 @@
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$USER_HOME$/Documents/python/en/venv" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.7 (en)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.7 (base conda)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="py_projects" />
     <orderEntry type="module" module-name="isf" />
