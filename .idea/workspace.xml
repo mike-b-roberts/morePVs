@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="575cb9b5-85bf-4baa-a8bc-373adc054006" name="Default" comment="remove superfluous data and output files">
+      <change afterPath="$PROJECT_DIR$/../py_projects/.idea/misc.xml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/../py_projects/Misc/__init__.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/../py_projects/Misc/byron-battery-model-master/__init__.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/../py_projects/WF_Processing/Scripts/__init__.py" afterDir="false" />
@@ -10,13 +11,48 @@
       <change afterPath="$PROJECT_DIR$/../py_projects/WWAPI/not_current_but_will_be_again/__init__.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/../py_projects/WWAPI/wwapi_plots/__init__.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/../py_projects/en_bits_and_bobs/en2_post_processing/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters_revisedEnergypaper.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/__init__.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/__init__.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/__init__.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/../py_projects/utilities/conversion_utilities/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays_mac_abbot.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/reference/capex_pv_calc_casestudies.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/reference/capex_pv_calc_casestudies.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/reference/capex_pv_lookup.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/reference/capex_pv_lookup.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/reference/tariff_lookup.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/reference/tariff_lookup.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/demo_k1_customer_results.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/demo_k1_customer_results.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/demo_k1_results.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/demo_k1_results.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/demo_k1_results_std_dev.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/demo_k1_results_std_dev.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/saved_tariffs/static_export_tariffs.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/saved_tariffs/static_export_tariffs.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/saved_tariffs/static_import_tariffs.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/saved_tariffs/static_import_tariffs.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/saved_tariffs/static_solar_import_tariffs.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/saved_tariffs/static_solar_import_tariffs.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_001.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_001.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_002.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_002.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_003.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_003.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_004.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_004.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_005.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_005.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_006.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_006.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_007.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_007.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_008.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_008.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_009.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_009.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_010.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_010.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/morePVs.py" beforeDir="false" afterPath="$PROJECT_DIR$/morePVs.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../py_projects/.idea/py_projects.iml" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/.idea/py_projects.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../py_projects/isf/.idea/isf.iml" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/isf/.idea/isf.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters2.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_daily_load_v2.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_daily_load_v2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_plot_averages_2.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_plot_averages_2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_self_consumption_plots_ttest.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_self_consumption_plots_ttest.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_ttest_and_plots_load.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_ttest_and_plots_load.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_ttime_of_peak.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_ttime_of_peak.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_variability_stats_plots_ttest.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_variability_stats_plots_ttest.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/fill_SGSC/SGSC_genload_filled_44.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/utilities/plotting_module.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/utilities/plotting_module.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/utilities/utility_module.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/utilities/utility_module.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../py_projects/virtual_buildings/vb_variability_calc_v3.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/virtual_buildings/vb_variability_calc_v3.py" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/venv/" />
@@ -28,11 +64,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/morePVs.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="40170">
-              <caret line="2689" selection-start-line="2689" selection-end-line="2689" />
+            <state relative-caret-position="48">
+              <caret line="2467" column="36" selection-start-line="2467" selection-start-column="36" selection-end-line="2467" selection-end-column="36" />
               <folding>
                 <element signature="e#788#806#0" expanded="true" />
               </folding>
@@ -40,11 +76,14 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/en_utilities.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="210">
-              <caret line="15" column="31" selection-start-line="15" selection-start-column="31" selection-end-line="15" selection-end-column="31" />
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/morePVs_setup_instructions.md">
+          <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+            <state split_layout="SPLIT">
+              <first_editor relative-caret-position="45">
+                <caret line="10" column="21" selection-start-line="10" selection-start-column="21" selection-end-line="10" selection-end-column="21" />
+              </first_editor>
+              <second_editor />
             </state>
           </provider>
         </entry>
@@ -60,23 +99,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>to_</find>
-      <find>.fixed_charge</find>
-      <find>pv_exists</find>
-      <find>pv_sc</find>
-      <find>pv_scaleable</find>
-      <find>solar_period</find>
-      <find>daily_local_quota</find>
-      <find>'en</find>
-      <find>cp_allo</find>
-      <find>dst</find>
-      <find>exit</find>
-      <find>@@</find>
-      <find>solar</find>
-      <find>1934</find>
-      <find>static_exports</find>
-      <find>export_kWh</find>
-      <find>export</find>
       <find>result_list</find>
       <find>.results</find>
       <find>.total_building_export</find>
@@ -85,16 +107,37 @@
       <find>tou_rate_list</find>
       <find>solar_rate_name)</find>
       <find>solar_rate_name</find>
-      <find>print</find>
       <find>z50</find>
       <find>win32</find>
       <find>win32api</find>
       <find>win</find>
+      <find>plots1</find>
+      <find>fileT</find>
+      <find>fileH</find>
+      <find>plot_file</find>
+      <find>E_per_occ_freq</find>
+      <find>plot_</find>
+      <find>plot_com</find>
+      <find>to_csv</find>
+      <find>CY13_final</find>
+      <find>print</find>
+      <find>seasons</find>
+      <find>_sc</find>
+      <find>solar_sc</find>
+      <find>cost</find>
+      <find>abbo</find>
+      <find>DST</find>
+      <find>weather_file</find>
+      <find>13</find>
     </findStrings>
     <replaceStrings>
       <replace>allunits</replace>
       <replace>dfw</replace>
     </replaceStrings>
+    <dirStrings>
+      <dir>C:\Users\z5044992\OneDrive - UNSW\python\py_projects\py_sgsc\Scripts\SGSC Processing</dir>
+      <dir>C:\Users\z5044992\OneDrive - UNSW\python\py_projects\py_sgsc\Scripts\fill_SGSC</dir>
+    </dirStrings>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -108,27 +151,42 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/../py_projects/utilities/SAM_generated_code/PySSC.py" />
-        <option value="$PROJECT_DIR$/../py_projects/utilities/utility_module.py" />
         <option value="$PROJECT_DIR$/../py_projects/utilities/run_sam_pvwatts_isf.py" />
         <option value="$PROJECT_DIR$/../py_projects/isf/isf_shading_and _saveCsv.py" />
         <option value="$PROJECT_DIR$/../py_projects/WWAPI/fill_bondi.py" />
         <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/wwapi_variability_calc_v4.py" />
-        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters2.py" />
         <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/wwapi_SGSC_plot_averages_2.py" />
         <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/wwapi_plot_vs_sgsc_clusters2.py" />
         <option value="$PROJECT_DIR$/../py_projects/WWAPI/fill_WWAPI_v2_testing.py" />
         <option value="$PROJECT_DIR$/../py_projects/WWAPI/fill_WWAPI_v2_resample only.py" />
         <option value="$PROJECT_DIR$/../py_projects/WWAPI/fill_WWAPI_v2.py" />
         <option value="$USER_HOME$/.jupyter/jupyter_notebook_config.py" />
-        <option value="$PROJECT_DIR$/morePVs.py" />
         <option value="$PROJECT_DIR$/en_utilities.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_self_consumption_plots_ttest.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_plot_averages_2.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_daily_load_v2.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_variability_stats_plots_ttest.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_ttest_and_plots_load.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_ttime_of_peak.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters2.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/plotclusters_revisedEnergypaper.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/plotclusters2_revisedEnergypaper.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/look_at_bom.py" />
+        <option value="$APPLICATION_CONFIG_DIR$/scratches/scratch.py" />
+        <option value="$PROJECT_DIR$/../py_projects/utilities/plotting_module.py" />
+        <option value="$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays_mac_abbot.py" />
+        <option value="$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays.py" />
+        <option value="$PROJECT_DIR$/../py_projects/utilities/utility_module.py" />
+        <option value="$PROJECT_DIR$/morePVs.py" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
-    <option name="y" value="3" />
-    <option name="width" value="1927" />
-    <option name="height" value="1044" />
+  <component name="ProjectFrameBounds">
+    <option name="x" value="163" />
+    <option name="y" value="84" />
+    <option name="width" value="800" />
+    <option name="height" value="577" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -136,7 +194,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -148,9 +205,12 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="com.intellij.ide.scratch.LRUPopupBuilder$1/New Scratch File" value="Python" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="restartRequiresConfirmation" value="false" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
@@ -165,10 +225,11 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/../py_projects/utilities" />
+      <recent name="C:\Users\z5044992\OneDrive - UNSW\python\py_projects\py_sgsc\Scripts\SGSC Clustering" />
       <recent name="C:\Users\z5044992\Documents\python\py_projects\WWAPI" />
       <recent name="C:\Users\z5044992\Documents\python\py_projects\py_sgsc\Scripts\SGSC Processing" />
       <recent name="C:\Users\z5044992\Documents\python\py_projects\py_sgsc\Scripts\SGSC Clustering" />
-      <recent name="C:\Users\z5044992\Documents\python\py_projects\utilities" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\z5044992\OneDrive - UNSW\python" />
@@ -190,28 +251,7 @@
     </option>
   </component>
   <component name="RunManager" selected="Python.morePVs">
-    <configuration name="en_utilities" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <module name="en" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/en_utilities.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="fill_WWAPI_v2" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="create_pv_profile_subarrays" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="py_projects" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -219,11 +259,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../py_projects/WWAPI" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../py_projects/utilities" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../py_projects/WWAPI/fill_WWAPI_v2.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -232,7 +272,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="fill_WWAPI_v2_resample only" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="create_pv_profile_subarrays_mac_abbot" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="py_projects" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -240,53 +280,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../py_projects/WWAPI" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../py_projects/utilities" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../py_projects/WWAPI/fill_WWAPI_v2_resample only.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="fill_WWAPI_v2_testing" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <module name="py_projects" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../py_projects/WWAPI" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../py_projects/WWAPI/fill_WWAPI_v2_testing.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="jupyter_notebook_config" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <module name="isf" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$USER_HOME$/.jupyter" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$USER_HOME$/.jupyter/jupyter_notebook_config.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays_mac_abbot.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -316,21 +314,84 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="plotclusters2_revisedEnergypaper" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="py_projects" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/plotclusters2_revisedEnergypaper.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="plotclusters_revisedEnergypaper" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="py_projects" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="C:\Users\z5044992\OneDrive - UNSW\python\py_projects\py_sgsc\Scripts\SGSC Clustering\plotclusters2_revisedEnergypaper.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="scratch" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="isf" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$APPLICATION_CONFIG_DIR$/scratches" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$APPLICATION_CONFIG_DIR$/scratches/scratch.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="true" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <list>
+      <item itemvalue="Python.create_pv_profile_subarrays" />
+      <item itemvalue="Python.create_pv_profile_subarrays_mac_abbot" />
       <item itemvalue="Python.morePVs" />
-      <item itemvalue="Python.fill_WWAPI_v2" />
-      <item itemvalue="Python.fill_WWAPI_v2_resample only" />
-      <item itemvalue="Python.fill_WWAPI_v2_testing" />
-      <item itemvalue="Python.jupyter_notebook_config" />
-      <item itemvalue="Python.en_utilities" />
+      <item itemvalue="Python.plotclusters2_revisedEnergypaper" />
+      <item itemvalue="Python.plotclusters_revisedEnergypaper" />
+      <item itemvalue="Python.scratch" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.en_utilities" />
-        <item itemvalue="Python.jupyter_notebook_config" />
-        <item itemvalue="Python.fill_WWAPI_v2" />
-        <item itemvalue="Python.fill_WWAPI_v2_resample only" />
-        <item itemvalue="Python.fill_WWAPI_v2_testing" />
+        <item itemvalue="Python.create_pv_profile_subarrays" />
+        <item itemvalue="Python.create_pv_profile_subarrays_mac_abbot" />
+        <item itemvalue="Python.scratch" />
+        <item itemvalue="Python.scratch" />
+        <item itemvalue="Python.plotclusters2_revisedEnergypaper" />
       </list>
     </recent_temporary>
   </component>
@@ -445,7 +506,14 @@
       <option name="project" value="LOCAL" />
       <updated>1551997403342</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="remove win32 functionality in utility module for osx">
+      <created>1552441436729</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1552441436729</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TodoView">
@@ -458,22 +526,22 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="3" width="1440" height="877" extended-state="6" />
+    <frame x="231" y="399" width="800" height="577" extended-state="0" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.2394822" visible="true" weight="0.12332629" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.2394822" weight="0.22001588" />
       <window_info id="Favorites" order="1" side_tool="true" />
-      <window_info id="Structure" order="2" sideWeight="0.7605178" weight="0.27277514" />
+      <window_info active="true" id="Structure" order="2" sideWeight="0.7605178" visible="true" weight="0.14890885" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.329718" />
-      <window_info anchor="bottom" id="Run" order="2" visible="true" weight="0.3091309" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.16938111" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.5628866" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.34591195" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
-      <window_info anchor="bottom" id="TODO" order="6" weight="0.32899022" />
-      <window_info anchor="bottom" id="Version Control" order="7" sideWeight="0.49894515" weight="0.35796177" />
-      <window_info anchor="bottom" id="Terminal" order="8" />
+      <window_info anchor="bottom" id="TODO" order="6" weight="0.32866243" />
+      <window_info anchor="bottom" id="Version Control" order="7" sideWeight="0.49894515" weight="0.355414" />
+      <window_info anchor="bottom" id="Terminal" order="8" weight="0.32866243" />
       <window_info anchor="bottom" id="Event Log" order="9" sideWeight="0.5010548" side_tool="true" weight="0.35939196" />
-      <window_info anchor="bottom" id="Python Console" order="10" weight="0.35643566" />
+      <window_info anchor="bottom" id="Python Console" order="10" weight="0.34649682" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.24959481" />
@@ -545,7 +613,8 @@
     <MESSAGE value="restored solar inst tariff" />
     <MESSAGE value="moved project files" />
     <MESSAGE value="remove superfluous data and output files" />
-    <option name="LAST_COMMIT_MESSAGE" value="remove superfluous data and output files" />
+    <MESSAGE value="remove win32 functionality in utility module for osx" />
+    <option name="LAST_COMMIT_MESSAGE" value="remove win32 functionality in utility module for osx" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -577,16 +646,6 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/morePVs.py</url>
-          <line>1270</line>
-          <option name="timeStamp" value="69" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/morePVs.py</url>
-          <line>1278</line>
-          <option name="timeStamp" value="70" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/morePVs.py</url>
           <line>1088</line>
           <option name="timeStamp" value="82" />
         </line-breakpoint>
@@ -615,6 +674,61 @@
           <url>file://$PROJECT_DIR$/morePVs.py</url>
           <line>342</line>
           <option name="timeStamp" value="117" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_variability_stats_plots_ttest.py</url>
+          <line>21</line>
+          <option name="timeStamp" value="118" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays.py</url>
+          <line>151</line>
+          <option name="timeStamp" value="121" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays.py</url>
+          <line>52</line>
+          <option name="timeStamp" value="124" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays.py</url>
+          <line>79</line>
+          <option name="timeStamp" value="125" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays.py</url>
+          <line>81</line>
+          <option name="timeStamp" value="126" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays.py</url>
+          <line>83</line>
+          <option name="timeStamp" value="127" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/morePVs.py</url>
+          <line>2493</line>
+          <option name="timeStamp" value="129" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/morePVs.py</url>
+          <line>2494</line>
+          <option name="timeStamp" value="130" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/morePVs.py</url>
+          <line>42</line>
+          <option name="timeStamp" value="131" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/morePVs.py</url>
+          <line>2468</line>
+          <option name="timeStamp" value="132" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/morePVs.py</url>
+          <line>2471</line>
+          <option name="timeStamp" value="133" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
@@ -660,234 +774,6 @@
     </expressions>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/../py_projects/utilities/utility_module.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="238">
-          <caret line="30" column="28" selection-start-line="30" selection-start-column="28" selection-end-line="30" selection-end-column="28" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/utilities/SAM_generated_code/PySSC.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="16" column="12" selection-start-line="16" selection-start-column="12" selection-end-line="16" selection-end-column="12" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays_wwapi.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="578">
-          <caret line="41" column="55" selection-start-line="41" selection-start-column="55" selection-end-line="41" selection-end-column="55" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/WF_Processing/Scripts/run_sam_pvwatts.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="476">
-          <caret line="38" column="40" selection-start-line="38" selection-start-column="40" selection-end-line="38" selection-end-column="40" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://C:/ProgramData/Anaconda3/envs/pycon36/Lib/site-packages/pandas/core/apply.py" />
-    <entry file="file://$PROJECT_DIR$/../py_projects/isf/run_sam_pvwatts_isf.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="211">
-          <caret line="61" column="73" lean-forward="true" selection-start-line="61" selection-start-column="12" selection-end-line="61" selection-end-column="73" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://C:/ProgramData/Anaconda3/envs/pycon36/Lib/site-packages/pandas/core/indexing.py" />
-    <entry file="file://$PROJECT_DIR$/../py_projects/WWAPI/fill_bondi.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="181">
-          <caret line="181" column="40" lean-forward="true" selection-start-line="181" selection-start-column="40" selection-end-line="181" selection-end-column="40" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/sgsc_mnlr_v2.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/sgsc_mnlr_v1.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/check_dailE_calcs.ipynb">
-      <provider selected="true" editor-type-id="ipnb-editor">
-        <state>
-          <selected id="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/sgsc_variability_calc_v4.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="15" lean-forward="true" selection-start-line="15" selection-end-line="15" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_data_stats3.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_daily_load_v2.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="442">
-          <caret line="39" column="52" lean-forward="true" selection-start-line="39" selection-start-column="52" selection-end-line="39" selection-end-column="52" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/wwapi_variability_stats_plots_ttest.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="459">
-          <caret line="40" column="47" lean-forward="true" selection-start-line="40" selection-start-column="47" selection-end-line="40" selection-end-column="47" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_variability_stats_plots_ttest.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1455" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/utilities/scratch.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/morePVs_output.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="328">
-          <caret line="82" column="51" selection-start-line="82" selection-start-column="51" selection-end-line="82" selection-end-column="51" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_process_plot.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_variability_calc_v3.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="126">
-          <caret line="111" column="82" lean-forward="true" selection-start-line="111" selection-start-column="82" selection-end-line="111" selection-end-column="82" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_compare_div_var_plot_UNITS_ONLY.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1112">
-          <caret line="64" column="39" lean-forward="true" selection-start-line="64" selection-start-column="39" selection-end-line="64" selection-end-column="39" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_variability_plot_v3.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="58">
-          <caret line="44" column="42" lean-forward="true" selection-start-line="44" selection-start-column="42" selection-end-line="44" selection-end-column="42" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/utilities/plotting_module.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="367">
-          <caret line="757" column="19" lean-forward="true" selection-start-line="757" selection-start-column="19" selection-end-line="757" selection-end-column="19" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_self_consumption_plots_ttest.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-918" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_ttest_and_plots_load.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2448">
-          <caret line="157" column="32" lean-forward="true" selection-start-line="157" selection-start-column="32" selection-end-line="157" selection-end-column="32" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/wwapi_variability_calc_v4.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="646">
-          <caret line="119" column="21" lean-forward="true" selection-start-line="114" selection-end-line="119" selection-end-column="21" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters2.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="323">
-          <caret line="119" column="18" lean-forward="true" selection-start-line="119" selection-start-column="18" selection-end-line="119" selection-end-column="18" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_plot_averages_2.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="22" column="11" selection-start-line="22" selection-start-column="11" selection-end-line="22" selection-end-column="11" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/wwapi_SGSC_plot_averages_2.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="986">
-          <caret line="65" selection-start-line="65" selection-end-line="65" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/wwapi_plot_vs_sgsc_clusters2.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="816">
-          <caret line="114" column="62" selection-start-line="113" selection-start-column="78" selection-end-line="114" selection-end-column="62" />
-          <folding>
-            <element signature="e#145#188#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/WWAPI/fill_WWAPI.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="381">
-          <caret line="191" column="60" lean-forward="true" selection-start-line="191" selection-start-column="60" selection-end-line="191" selection-end-column="60" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/AppData/Local/Continuum/anaconda3/envs/venva37/Lib/site-packages/pandas/io/common.py" />
-    <entry file="file://$PROJECT_DIR$/../py_projects/WWAPI/fill_WWAPI_v2_testing.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="367">
-          <caret line="206" lean-forward="true" selection-start-line="206" selection-end-line="206" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/WWAPI/fill_WWAPI_v2_last_resample only.py" />
-    <entry file="file://$PROJECT_DIR$/../py_projects/WWAPI/fill_WWAPI_v2_resample only.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="197">
-          <caret line="55" column="28" lean-forward="true" selection-start-line="55" selection-start-column="28" selection-end-line="55" selection-end-column="28" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/WWAPI/fill_WWAPI_v2.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1700">
-          <caret line="106" column="16" selection-start-line="106" selection-start-column="16" selection-end-line="106" selection-end-column="16" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../py_projects/isf/isf_shading_and _saveCsv.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="246">
-          <caret line="148" selection-start-line="148" selection-end-line="148" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/_pydev_imps/_pydev_execfile.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="289">
-          <caret line="17" selection-start-line="17" selection-end-line="17" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/pydevd.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="143">
-          <caret line="346" selection-start-line="346" selection-end-line="346" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/.jupyter/jupyter_notebook_config.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-682">
@@ -910,20 +796,306 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/morePVs.py">
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/Graphs/temp.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/Graphs/plot_loads_per_occ_from_csv.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/Graphs/plot_frequency.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="40170">
-          <caret line="2689" selection-start-line="2689" selection-end-line="2689" />
+        <state relative-caret-position="-1162" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/Graphs/plot_stats.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="578">
+          <caret line="46" column="11" lean-forward="true" selection-start-line="46" selection-start-column="11" selection-end-line="46" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/Graphs/plot_frequency_updated.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1275">
+          <caret line="83" column="37" lean-forward="true" selection-start-line="83" selection-start-column="37" selection-end-line="83" selection-end-column="37" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/wwapi_SGSC_plot_averages_2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="578">
+          <caret line="65" selection-start-line="65" selection-end-line="65" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/sort_final_list.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_ttime_of_peak.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="298">
+          <caret line="34" column="38" lean-forward="true" selection-start-line="34" selection-start-column="38" selection-end-line="34" selection-end-column="38" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_self_consumption_plots_ttest.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="137">
+          <caret line="57" column="17" selection-start-line="57" selection-start-column="12" selection-end-line="57" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_plot_averages.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-306" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_data_stats3.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="135">
+          <caret line="9" column="16" lean-forward="true" selection-start-line="9" selection-start-column="16" selection-end-line="9" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_ttest_and_plots_load.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="679">
+          <caret line="68" column="47" lean-forward="true" selection-start-line="68" selection-start-column="47" selection-end-line="68" selection-end-column="47" />
           <folding>
-            <element signature="e#788#806#0" expanded="true" />
+            <element signature="e#288#297#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_daily_load.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="271">
+          <caret line="53" column="47" selection-start-line="53" selection-start-column="47" selection-end-line="53" selection-end-column="47" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_daily_load_v2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-306">
+          <caret line="89" column="30" lean-forward="true" selection-start-line="89" selection-start-column="30" selection-end-line="89" selection-end-column="30" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/fill_SGSC/filling_stats_SGSC.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/select_groups.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret line="8" selection-start-line="8" selection-end-line="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_variability_plot_v3.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-443">
+          <caret line="59" column="5" selection-start-line="59" selection-end-line="59" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_create_aggregations_v4.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-408" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/sgsc_slice_for_training.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="85">
+          <caret line="56" column="108" lean-forward="true" selection-start-line="56" selection-start-column="107" selection-end-line="56" selection-end-column="108" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/sgsc_mnlr_v2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="526">
+          <caret line="214" column="21" lean-forward="true" selection-start-line="214" selection-start-column="21" selection-end-line="214" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_create_v4.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_create_v5.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-51" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_create_v6.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1339">
+          <caret line="118" column="31" lean-forward="true" selection-start-line="118" selection-start-column="31" selection-end-line="118" selection-end-column="31" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_self_consumption_calc_v2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="693">
+          <caret line="55" lean-forward="true" selection-start-line="55" selection-end-line="55" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_variability_calc_v3.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1207">
+          <caret line="41" column="20" lean-forward="true" selection-start-line="41" selection-start-column="20" selection-end-line="41" selection-end-column="20" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/fill_SGSC/fill_SGSC_11_NOT_hpc_lastts_ONLY.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="578">
+          <caret line="39" column="14" lean-forward="true" selection-start-line="39" selection-start-column="14" selection-end-line="39" selection-end-column="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/fill_SGSC/fill_SGSC_11_NOT_hpc.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/fill_SGSC/fill_SGSC_10_NOT_hpc.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_compare_div_var_plot.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="204">
+          <caret line="54" column="62" lean-forward="true" selection-start-line="54" selection-start-column="62" selection-end-line="54" selection-end-column="62" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/fill_SGSC/fill_SGSC_11_hpc.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="680">
+          <caret line="124" column="98" lean-forward="true" selection-start-line="124" selection-start-column="98" selection-end-line="124" selection-end-column="98" />
+          <folding>
+            <element signature="e#1569#1588#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="289">
+          <caret line="147" column="11" selection-start-line="147" selection-start-column="8" selection-end-line="147" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="68">
+          <caret line="4" column="35" lean-forward="true" selection-start-line="4" selection-start-column="35" selection-end-line="4" selection-end-column="35" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_self_consumption_calc_test.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_variability_stats_plots_ttest.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="221">
+          <caret line="28" column="83" selection-start-line="28" selection-start-column="83" selection-end-line="28" selection-end-column="83" />
+          <folding>
+            <element signature="e#364#373#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_plot_averages_2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1071">
+          <caret line="70" column="64" selection-start-line="70" selection-start-column="63" selection-end-line="70" selection-end-column="64" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_calc_ave_profiles_v2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1496">
+          <caret line="97" selection-start-line="97" selection-end-line="97" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters_revisedEnergypaper.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="374">
+          <caret line="41" column="16" selection-start-line="41" selection-start-column="16" selection-end-line="41" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/plotclusters2_revisedEnergypaper.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="731">
+          <caret line="107" column="100" lean-forward="true" selection-start-line="107" selection-start-column="100" selection-end-line="107" selection-end-column="100" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/look_at_bom.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$APPLICATION_CONFIG_DIR$/scratches/scratch.py" />
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/clusterpaperplots_jup/energy_paper_plot_variability_metrics.ipynb">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays_mac_abbot.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="183">
+          <caret line="44" column="50" selection-start-line="44" selection-start-column="50" selection-end-line="44" selection-end-column="50" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/en_utilities.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="210">
-          <caret line="15" column="31" selection-start-line="15" selection-start-column="31" selection-end-line="15" selection-end-column="31" />
+        <state relative-caret-position="261">
+          <caret line="248" column="4" selection-start-line="248" selection-start-column="4" selection-end-line="248" selection-end-column="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/utilities/plotting_module.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="4815">
+          <caret line="338" column="4" selection-start-line="338" selection-start-column="4" selection-end-line="338" selection-end-column="4" />
+          <folding>
+            <element signature="e#129#148#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/utilities/utility_module.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="600">
+          <caret line="56" selection-start-line="56" selection-end-line="62" selection-end-column="42" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2025">
+          <caret line="142" column="35" selection-start-line="142" selection-start-column="35" selection-end-line="142" selection-end-column="35" />
+          <folding>
+            <element signature="e#221#242#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/morePVs_setup_instructions.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="45">
+            <caret line="10" column="21" selection-start-line="10" selection-start-column="21" selection-end-line="10" selection-end-column="21" />
+          </first_editor>
+          <second_editor />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/morePVs.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="48">
+          <caret line="2467" column="36" selection-start-line="2467" selection-start-column="36" selection-end-line="2467" selection-end-column="36" />
+          <folding>
+            <element signature="e#788#806#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

@@ -338,7 +338,7 @@ class Tariff():
             self.is_solar_inst = False
 
         # # Get solar tariff data:
-        # SOLAR BLOCK TARIFF IMPLEMENTATION INCORRECT but code below aalso used for solar instantaneous
+        # SOLAR BLOCK TARIFF IMPLEMENTATION INCORRECT but code below also used for solar instantaneous
         # # NB solar block tariff period is NOT adjusted for DST
         if tariff_id in scenario.solar_list:
             for name, parameter in study.tariff_data.tou_rate_list.items():
@@ -2400,9 +2400,9 @@ class Study():
             self.timeseries_path = os.path.join(self.output_path, 'timeseries_b')
             os.makedirs(self.timeseries_path, exist_ok=True)
 
-        # --------------
+        # ---------------
         #  Locate pv data
-        # --------------
+        # ---------------
         self.pv_path = os.path.join(self.base_path, 'pv_profiles')
         if os.path.exists(self.pv_path):
             self.pv_list = os.listdir(self.pv_path)
@@ -2453,6 +2453,7 @@ class Study():
 
         self.load_path = os.path.join(self.base_path, 'load_profiles', self.study_parameters.loc[self.study_parameters.index[0], 'load_folder'])
         self.load_list = os.listdir(self.load_path)
+        self.load_list = [f for f in self.load_list if f != '.DS_Store']
         if len(self.load_list) == 0:
             logging.info('***************** Load folder %s is empty *************************', self.load_path)
             sys.exit("Missing load data")
@@ -2683,10 +2684,12 @@ if __name__ == "__main__":
     # -------------------------------------------------------
     # Set up defaults here: base_path, project and study name
     # --------------------------------------------------------
-    #default_base_path = 'C:\\Users\\z5044992\\OneDrive - UNSW\\python\\en\\DATA_EN_5'  #(Mike's PC)
+    #default_base_path = 'C:\\Users\\z5044992\\Documents\\mainDATA\\DATA_EN_5'  #(Mike's PC)
+    # default_project = 'siteC'
+    # default_study = 'C2'
     default_base_path = '/Users/mikeroberts/OneDrive - UNSW/python/en/DATA_EN_5'  #(Mike's Mac)
-    default_project = 'demonstrations'
-    default_study = 'demo_k1'
+    default_project = 'hugh'
+    default_study = '1'
 
 
     default_use_threading = 'False'

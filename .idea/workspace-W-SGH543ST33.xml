@@ -1,0 +1,993 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="575cb9b5-85bf-4baa-a8bc-373adc054006" name="Default" comment="remove superfluous data and output files">
+      <change afterPath="$PROJECT_DIR$/../py_projects/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/Misc/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/Misc/byron-battery-model-master/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/WF_Processing/Scripts/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/WF_Processing/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/WWAPI/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/WWAPI/not_current_but_will_be_again/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/WWAPI/wwapi_plots/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/en_bits_and_bobs/en2_post_processing/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters_revisedEnergypaper.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/utilities/conversion_utilities/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays_mac_abbot.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/reference/capex_pv_calc_casestudies.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/reference/capex_pv_calc_casestudies.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/reference/capex_pv_lookup.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/reference/capex_pv_lookup.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/reference/tariff_lookup.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/reference/tariff_lookup.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/demo_k1_customer_results.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/demo_k1_customer_results.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/demo_k1_results.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/demo_k1_results.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/demo_k1_results_std_dev.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/demo_k1_results_std_dev.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/saved_tariffs/static_export_tariffs.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/saved_tariffs/static_export_tariffs.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/saved_tariffs/static_import_tariffs.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/saved_tariffs/static_import_tariffs.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/saved_tariffs/static_solar_import_tariffs.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/saved_tariffs/static_solar_import_tariffs.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_001.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_001.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_002.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_002.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_003.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_003.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_004.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_004.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_005.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_005.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_006.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_006.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_007.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_007.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_008.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_008.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_009.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_009.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_010.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_5/studies/demonstrations/outputs/demo_k1/scenarios/demo_k1_010.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/morePVs.py" beforeDir="false" afterPath="$PROJECT_DIR$/morePVs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/.idea/py_projects.iml" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/.idea/py_projects.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/isf/.idea/isf.iml" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/isf/.idea/isf.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters2.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_daily_load_v2.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_daily_load_v2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_plot_averages_2.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_plot_averages_2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_self_consumption_plots_ttest.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_self_consumption_plots_ttest.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_ttest_and_plots_load.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_ttest_and_plots_load.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_ttime_of_peak.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_ttime_of_peak.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_variability_stats_plots_ttest.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_variability_stats_plots_ttest.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/fill_SGSC/SGSC_genload_filled_44.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/utilities/plotting_module.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/utilities/plotting_module.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/utilities/utility_module.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/utilities/utility_module.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../py_projects/virtual_buildings/vb_variability_calc_v3.py" beforeDir="false" afterPath="$PROJECT_DIR$/../py_projects/virtual_buildings/vb_variability_calc_v3.py" afterDir="false" />
+    </list>
+    <ignored path="$PROJECT_DIR$/venv/" />
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../py_projects/utilities/plotting_module.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="155">
+              <caret line="338" column="4" selection-start-line="338" selection-start-column="4" selection-end-line="338" selection-end-column="4" />
+              <folding>
+                <element signature="e#129#148#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../py_projects/utilities/utility_module.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="221">
+              <caret line="56" selection-start-line="56" selection-end-line="62" selection-end-column="42" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/morePVs.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="380">
+              <caret line="2708" column="9" selection-start-line="2708" selection-start-column="9" selection-end-line="2708" selection-end-column="9" />
+              <folding>
+                <element signature="e#788#806#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="303">
+              <caret line="142" column="35" selection-start-line="142" selection-start-column="35" selection-end-line="142" selection-end-column="35" />
+              <folding>
+                <element signature="e#221#242#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>result_list</find>
+      <find>.results</find>
+      <find>.total_building_export</find>
+      <find>exports</find>
+      <find>total_building_export</find>
+      <find>tou_rate_list</find>
+      <find>solar_rate_name)</find>
+      <find>solar_rate_name</find>
+      <find>z50</find>
+      <find>win32</find>
+      <find>win32api</find>
+      <find>win</find>
+      <find>plots1</find>
+      <find>fileT</find>
+      <find>fileH</find>
+      <find>plot_file</find>
+      <find>E_per_occ_freq</find>
+      <find>plot_</find>
+      <find>plot_com</find>
+      <find>to_csv</find>
+      <find>CY13_final</find>
+      <find>print</find>
+      <find>seasons</find>
+      <find>_sc</find>
+      <find>solar_sc</find>
+      <find>cost</find>
+      <find>abbo</find>
+      <find>DST</find>
+      <find>weather_file</find>
+      <find>13</find>
+    </findStrings>
+    <replaceStrings>
+      <replace>allunits</replace>
+      <replace>dfw</replace>
+    </replaceStrings>
+    <dirStrings>
+      <dir>C:\Users\z5044992\OneDrive - UNSW\python\py_projects\py_sgsc\Scripts\SGSC Processing</dir>
+      <dir>C:\Users\z5044992\OneDrive - UNSW\python\py_projects\py_sgsc\Scripts\fill_SGSC</dir>
+    </dirStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="dynamic_tariffs" />
+      </map>
+    </option>
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/../py_projects/utilities/SAM_generated_code/PySSC.py" />
+        <option value="$PROJECT_DIR$/../py_projects/utilities/run_sam_pvwatts_isf.py" />
+        <option value="$PROJECT_DIR$/../py_projects/isf/isf_shading_and _saveCsv.py" />
+        <option value="$PROJECT_DIR$/../py_projects/WWAPI/fill_bondi.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/wwapi_variability_calc_v4.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/wwapi_SGSC_plot_averages_2.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/wwapi_plot_vs_sgsc_clusters2.py" />
+        <option value="$PROJECT_DIR$/../py_projects/WWAPI/fill_WWAPI_v2_testing.py" />
+        <option value="$PROJECT_DIR$/../py_projects/WWAPI/fill_WWAPI_v2_resample only.py" />
+        <option value="$PROJECT_DIR$/../py_projects/WWAPI/fill_WWAPI_v2.py" />
+        <option value="$USER_HOME$/.jupyter/jupyter_notebook_config.py" />
+        <option value="$PROJECT_DIR$/en_utilities.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_self_consumption_plots_ttest.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_plot_averages_2.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_daily_load_v2.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_variability_stats_plots_ttest.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_ttest_and_plots_load.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_ttime_of_peak.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters2.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/plotclusters_revisedEnergypaper.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/plotclusters2_revisedEnergypaper.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters.py" />
+        <option value="$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/look_at_bom.py" />
+        <option value="$APPLICATION_CONFIG_DIR$/scratches/scratch.py" />
+        <option value="$PROJECT_DIR$/../py_projects/utilities/plotting_module.py" />
+        <option value="$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays_mac_abbot.py" />
+        <option value="$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays.py" />
+        <option value="$PROJECT_DIR$/../py_projects/utilities/utility_module.py" />
+        <option value="$PROJECT_DIR$/morePVs.py" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectFrameBounds">
+    <option name="x" value="140" />
+    <option name="y" value="23" />
+    <option name="width" value="1547" />
+    <option name="height" value="1057" />
+  </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="en" type="b2602c69:ProjectViewProjectNode" />
+              <item name="py_projects" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="en" type="b2602c69:ProjectViewProjectNode" />
+              <item name="py_projects" type="462c0819:PsiDirectoryNode" />
+              <item name="utilities" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+      <pane id="Scope" />
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="com.intellij.ide.scratch.LRUPopupBuilder$1/New Scratch File" value="Python" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="restartRequiresConfirmation" value="false" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+  </component>
+  <component name="PyConsoleOptionsProvider">
+    <option name="myPythonConsoleState">
+      <console-settings module-name="isf" is-module-sdk="true">
+        <option name="myUseModuleSdk" value="true" />
+        <option name="myModuleName" value="isf" />
+      </console-settings>
+    </option>
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/../py_projects/utilities" />
+      <recent name="C:\Users\z5044992\OneDrive - UNSW\python\py_projects\py_sgsc\Scripts\SGSC Clustering" />
+      <recent name="C:\Users\z5044992\Documents\python\py_projects\WWAPI" />
+      <recent name="C:\Users\z5044992\Documents\python\py_projects\py_sgsc\Scripts\SGSC Processing" />
+      <recent name="C:\Users\z5044992\Documents\python\py_projects\py_sgsc\Scripts\SGSC Clustering" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\z5044992\OneDrive - UNSW\python" />
+      <recent name="C:\Users\z5044992\OneDrive - UNSW" />
+      <recent name="C:\Users\z5044992\Documents\python\en\DATA_EN_5" />
+      <recent name="C:\Users\z5044992\Documents\python\py_projects\isf" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager" selected="Python.morePVs">
+    <list>
+      <item itemvalue="Python.create_pv_profile_subarrays" />
+      <item itemvalue="Python.create_pv_profile_subarrays_mac_abbot" />
+      <item itemvalue="Python.morePVs" />
+      <item itemvalue="Python.plotclusters2_revisedEnergypaper" />
+      <item itemvalue="Python.plotclusters_revisedEnergypaper" />
+      <item itemvalue="Python.scratch" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.create_pv_profile_subarrays" />
+        <item itemvalue="Python.create_pv_profile_subarrays_mac_abbot" />
+        <item itemvalue="Python.scratch" />
+        <item itemvalue="Python.scratch" />
+        <item itemvalue="Python.plotclusters2_revisedEnergypaper" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="StructureViewFactory">
+    <option name="ACTIVE_ACTIONS" value=",SHOW_INHERITED" />
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <created>1521160371092</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1521160371092</updated>
+    </task>
+    <task id="LOCAL-00001" summary="after pc rebuild">
+      <created>1541569847823</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1541569847823</updated>
+    </task>
+    <task id="LOCAL-00002" summary="fixed daily block tariff">
+      <created>1541749163886</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1541749163886</updated>
+    </task>
+    <task id="LOCAL-00003" summary="customer names as strings">
+      <created>1541901495185</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1541901495185</updated>
+    </task>
+    <task id="LOCAL-00004" summary="block quarterly tested">
+      <created>1541911888415</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1541911888415</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Fixed bug with scaleable pv and load_dependent pv allocation">
+      <created>1543227829654</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1543227829654</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Bits and Pieces">
+      <created>1543227866129</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1543227866129</updated>
+    </task>
+    <task id="LOCAL-00007" summary="Non-scaleable pv_capex with scaleable pv">
+      <created>1543279474389</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1543279474389</updated>
+    </task>
+    <task id="LOCAL-00008" summary="Solar Block Tariff implemented">
+      <created>1543465752172</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1543465752172</updated>
+    </task>
+    <task id="LOCAL-00009" summary="Solar Block Daily Removed - incorrect implementation">
+      <created>1543646103012</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1543646103012</updated>
+    </task>
+    <task id="LOCAL-00010" summary="added data files">
+      <created>1545086692502</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1545086692502</updated>
+    </task>
+    <task id="LOCAL-00011" summary="added data files2">
+      <created>1545087618196</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1545087618196</updated>
+    </task>
+    <task id="LOCAL-00012" summary="restored solar inst tariff">
+      <created>1548204654255</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1548204654255</updated>
+    </task>
+    <task id="LOCAL-00013" summary="moved project files">
+      <created>1548205541874</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1548205541874</updated>
+    </task>
+    <task id="LOCAL-00014" summary="remove superfluous data and output files">
+      <created>1551997403342</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1551997403342</updated>
+    </task>
+    <task id="LOCAL-00015" summary="remove win32 functionality in utility module for osx">
+      <created>1552441436729</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1552441436729</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
+    <servers />
+  </component>
+  <component name="TodoView">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
+    <layout>
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.2394822" visible="true" weight="0.19528179" />
+      <window_info id="Favorites" order="1" side_tool="true" />
+      <window_info id="Structure" order="2" sideWeight="0.7605178" weight="0.36011276" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.329718" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.4408252" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.5464968" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" weight="0.32866243" />
+      <window_info anchor="bottom" id="Version Control" order="7" sideWeight="0.49894515" weight="0.355414" />
+      <window_info anchor="bottom" id="Terminal" order="8" weight="0.32866243" />
+      <window_info anchor="bottom" id="Event Log" order="9" sideWeight="0.5010548" side_tool="true" weight="0.35939196" />
+      <window_info anchor="bottom" id="Python Console" order="10" weight="0.34649682" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.24959481" />
+    </layout>
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="RECENTLY_FILTERED_USER_GROUPS">
+                <collection />
+              </option>
+              <option name="RECENTLY_FILTERED_BRANCH_GROUPS">
+                <collection />
+              </option>
+              <option name="COLUMN_ORDER">
+                <list>
+                  <option value="0" />
+                  <option value="1" />
+                  <option value="2" />
+                  <option value="3" />
+                </list>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="RECENT_FILTERS">
+      <map>
+        <entry key="Branch">
+          <value>
+            <list>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="master" />
+                </option>
+              </RecentGroup>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="HEAD" />
+                </option>
+              </RecentGroup>
+            </list>
+          </value>
+        </entry>
+        <entry key="User">
+          <value>
+            <list />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="after pc rebuild" />
+    <MESSAGE value="fixed daily block tariff" />
+    <MESSAGE value="customer names as strings" />
+    <MESSAGE value="block quarterly tested" />
+    <MESSAGE value="Fixed bug with scaleable pv and load_dependent pv allocation" />
+    <MESSAGE value="Bits and Pieces" />
+    <MESSAGE value="Non-scaleable pv_capex with scaleable pv" />
+    <MESSAGE value="Solar Block Tariff implemented" />
+    <MESSAGE value="Solar Block Daily Removed - incorrect implementation" />
+    <MESSAGE value="added data files" />
+    <MESSAGE value="added data files2" />
+    <MESSAGE value="restored solar inst tariff" />
+    <MESSAGE value="moved project files" />
+    <MESSAGE value="remove superfluous data and output files" />
+    <MESSAGE value="remove win32 functionality in utility module for osx" />
+    <option name="LAST_COMMIT_MESSAGE" value="remove win32 functionality in utility module for osx" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/../py_projects/WWAPI/fill_WWAPI_v2.py</url>
+          <line>203</line>
+          <option name="timeStamp" value="38" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/../py_projects/isf/run_sam_pvwatts_isf.py</url>
+          <line>54</line>
+          <option name="timeStamp" value="39" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/../py_projects/WWAPI/fill_WWAPI_v2_testing.py</url>
+          <line>152</line>
+          <option name="timeStamp" value="55" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/../py_projects/WWAPI/fill_WWAPI_v2_testing.py</url>
+          <line>160</line>
+          <option name="timeStamp" value="56" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/../py_projects/WWAPI/fill_WWAPI_v2_testing.py</url>
+          <line>201</line>
+          <option name="timeStamp" value="61" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/morePVs.py</url>
+          <line>1088</line>
+          <option name="timeStamp" value="82" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/morePVs.py</url>
+          <line>988</line>
+          <option name="timeStamp" value="85" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/morePVs.py</url>
+          <line>1535</line>
+          <option name="timeStamp" value="95" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/morePVs.py</url>
+          <line>2195</line>
+          <option name="timeStamp" value="105" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/morePVs.py</url>
+          <line>1779</line>
+          <option name="timeStamp" value="113" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <condition expression="'ppa' in tariff_id " language="Python" />
+          <url>file://$PROJECT_DIR$/morePVs.py</url>
+          <line>342</line>
+          <option name="timeStamp" value="117" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_variability_stats_plots_ttest.py</url>
+          <line>21</line>
+          <option name="timeStamp" value="118" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays.py</url>
+          <line>151</line>
+          <option name="timeStamp" value="121" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays.py</url>
+          <line>52</line>
+          <option name="timeStamp" value="124" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays.py</url>
+          <line>79</line>
+          <option name="timeStamp" value="125" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays.py</url>
+          <line>81</line>
+          <option name="timeStamp" value="126" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays.py</url>
+          <line>83</line>
+          <option name="timeStamp" value="127" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/morePVs.py</url>
+          <line>2492</line>
+          <option name="timeStamp" value="129" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/morePVs.py</url>
+          <line>2493</line>
+          <option name="timeStamp" value="130" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/morePVs.py</url>
+          <line>42</line>
+          <option name="timeStamp" value="131" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+    <watches-manager>
+      <configuration name="PythonConfigurationType">
+        <watch expression="self.resident" language="Python" />
+        <watch expression="self.solar_rate" />
+        <watch expression="cumulative_energy" />
+        <watch expression="self.solar_allocation" />
+        <watch expression=".total_building_export" />
+      </configuration>
+    </watches-manager>
+  </component>
+  <component name="debuggerHistoryManager">
+    <expressions id="breakpointCondition">
+      <expression>
+        <expression-string>'ppa' in tariff_id</expression-string>
+        <language-id>Python</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>self.name=='W18'</expression-string>
+        <language-id>Python</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>c&gt;='W18'</expression-string>
+        <language-id>Python</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>c=='W18'</expression-string>
+        <language-id>Python</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+    </expressions>
+    <expressions id="watch">
+      <expression>
+        <expression-string>self.resident</expression-string>
+        <language-id>Python</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+    </expressions>
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$USER_HOME$/.jupyter/jupyter_notebook_config.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-682">
+          <caret line="245" column="64" selection-start-line="245" selection-start-column="48" selection-end-line="245" selection-end-column="64" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/DATA_EN_5/studies/ww1/inputs/readme.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="15">
+          <caret line="1" column="15" selection-start-line="1" selection-start-column="15" selection-end-line="1" selection-end-column="15" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/README.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor />
+          <second_editor />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/Graphs/temp.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/Graphs/plot_loads_per_occ_from_csv.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/Graphs/plot_frequency.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1162" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/Graphs/plot_stats.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="578">
+          <caret line="46" column="11" lean-forward="true" selection-start-line="46" selection-start-column="11" selection-end-line="46" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/Graphs/plot_frequency_updated.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1275">
+          <caret line="83" column="37" lean-forward="true" selection-start-line="83" selection-start-column="37" selection-end-line="83" selection-end-column="37" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/wwapi_SGSC_plot_averages_2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="578">
+          <caret line="65" selection-start-line="65" selection-end-line="65" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/sort_final_list.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_ttime_of_peak.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="298">
+          <caret line="34" column="38" lean-forward="true" selection-start-line="34" selection-start-column="38" selection-end-line="34" selection-end-column="38" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_self_consumption_plots_ttest.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="137">
+          <caret line="57" column="17" selection-start-line="57" selection-start-column="12" selection-end-line="57" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_plot_averages.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-306" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_data_stats3.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="135">
+          <caret line="9" column="16" lean-forward="true" selection-start-line="9" selection-start-column="16" selection-end-line="9" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_ttest_and_plots_load.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="679">
+          <caret line="68" column="47" lean-forward="true" selection-start-line="68" selection-start-column="47" selection-end-line="68" selection-end-column="47" />
+          <folding>
+            <element signature="e#288#297#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_daily_load.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="271">
+          <caret line="53" column="47" selection-start-line="53" selection-start-column="47" selection-end-line="53" selection-end-column="47" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_daily_load_v2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-306">
+          <caret line="89" column="30" lean-forward="true" selection-start-line="89" selection-start-column="30" selection-end-line="89" selection-end-column="30" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/fill_SGSC/filling_stats_SGSC.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/select_groups.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret line="8" selection-start-line="8" selection-end-line="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_variability_plot_v3.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-443">
+          <caret line="59" column="5" selection-start-line="59" selection-end-line="59" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_create_aggregations_v4.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-408" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/sgsc_slice_for_training.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="85">
+          <caret line="56" column="108" lean-forward="true" selection-start-line="56" selection-start-column="107" selection-end-line="56" selection-end-column="108" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/sgsc_mnlr_v2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="526">
+          <caret line="214" column="21" lean-forward="true" selection-start-line="214" selection-start-column="21" selection-end-line="214" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_create_v4.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_create_v5.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-51" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_create_v6.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1339">
+          <caret line="118" column="31" lean-forward="true" selection-start-line="118" selection-start-column="31" selection-end-line="118" selection-end-column="31" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_self_consumption_calc_v2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="693">
+          <caret line="55" lean-forward="true" selection-start-line="55" selection-end-line="55" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_variability_calc_v3.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1207">
+          <caret line="41" column="20" lean-forward="true" selection-start-line="41" selection-start-column="20" selection-end-line="41" selection-end-column="20" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/fill_SGSC/fill_SGSC_11_NOT_hpc_lastts_ONLY.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="578">
+          <caret line="39" column="14" lean-forward="true" selection-start-line="39" selection-start-column="14" selection-end-line="39" selection-end-column="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/fill_SGSC/fill_SGSC_11_NOT_hpc.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/fill_SGSC/fill_SGSC_10_NOT_hpc.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_compare_div_var_plot.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="204">
+          <caret line="54" column="62" lean-forward="true" selection-start-line="54" selection-start-column="62" selection-end-line="54" selection-end-column="62" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/fill_SGSC/fill_SGSC_11_hpc.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="680">
+          <caret line="124" column="98" lean-forward="true" selection-start-line="124" selection-start-column="98" selection-end-line="124" selection-end-column="98" />
+          <folding>
+            <element signature="e#1569#1588#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="289">
+          <caret line="147" column="11" selection-start-line="147" selection-start-column="8" selection-end-line="147" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="68">
+          <caret line="4" column="35" lean-forward="true" selection-start-line="4" selection-start-column="35" selection-end-line="4" selection-end-column="35" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/virtual_buildings/vb_self_consumption_calc_test.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_variability_stats_plots_ttest.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="221">
+          <caret line="28" column="83" selection-start-line="28" selection-start-column="83" selection-end-line="28" selection-end-column="83" />
+          <folding>
+            <element signature="e#364#373#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_plot_averages_2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1071">
+          <caret line="70" column="64" selection-start-line="70" selection-start-column="63" selection-end-line="70" selection-end-column="64" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Processing/SGSC_calc_ave_profiles_v2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1496">
+          <caret line="97" selection-start-line="97" selection-end-line="97" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/SGSC_plot_clusters_revisedEnergypaper.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="374">
+          <caret line="41" column="16" selection-start-line="41" selection-start-column="16" selection-end-line="41" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/plotclusters2_revisedEnergypaper.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="731">
+          <caret line="107" column="100" lean-forward="true" selection-start-line="107" selection-start-column="100" selection-end-line="107" selection-end-column="100" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/SGSC Clustering/look_at_bom.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$APPLICATION_CONFIG_DIR$/scratches/scratch.py" />
+    <entry file="file://$PROJECT_DIR$/../py_projects/py_sgsc/Scripts/clusterpaperplots_jup/energy_paper_plot_variability_metrics.ipynb">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays_mac_abbot.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="183">
+          <caret line="44" column="50" selection-start-line="44" selection-start-column="50" selection-end-line="44" selection-end-column="50" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/utilities/plotting_module.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="155">
+          <caret line="338" column="4" selection-start-line="338" selection-start-column="4" selection-end-line="338" selection-end-column="4" />
+          <folding>
+            <element signature="e#129#148#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/utilities/create_pv_profile_subarrays.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="303">
+          <caret line="142" column="35" selection-start-line="142" selection-start-column="35" selection-end-line="142" selection-end-column="35" />
+          <folding>
+            <element signature="e#221#242#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/en_utilities.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="261">
+          <caret line="248" column="4" selection-start-line="248" selection-start-column="4" selection-end-line="248" selection-end-column="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../py_projects/utilities/utility_module.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="221">
+          <caret line="56" selection-start-line="56" selection-end-line="62" selection-end-column="42" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/morePVs_setup_instructions.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="-2349">
+            <caret line="8" column="31" selection-start-line="8" selection-start-column="31" selection-end-line="8" selection-end-column="31" />
+          </first_editor>
+          <second_editor />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/morePVs.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="380">
+          <caret line="2708" column="9" selection-start-line="2708" selection-start-column="9" selection-end-line="2708" selection-end-column="9" />
+          <folding>
+            <element signature="e#788#806#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>
