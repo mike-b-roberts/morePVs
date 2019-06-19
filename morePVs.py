@@ -19,7 +19,6 @@ import os
 import pdb, traceback
 import pandas as pd
 import en_utilities as um
-import threading
 import concurrent.futures
 import datetime as dt
 import pathlib
@@ -1795,12 +1794,8 @@ class Scenario():
         self.name = scenario_name
         self.label = study.name + '_' + "{:03}".format(int(self.name))
 
-        # Copy all scenario parameters to allow for threading:
-        if use_threading == 'True':
-            with lock:
-                self.parameters = study.study_parameters.loc[self.name].copy()
-        else:
-            self.parameters = study.study_parameters.loc[self.name].copy()
+        # Copy all scenario parameters :
+        self.parameters = study.study_parameters.loc[self.name].copy()
         # --------------------------------------------
         # Set up network arrangement for this scenario
         # --------------------------------------------
@@ -1914,11 +1909,7 @@ class Scenario():
                 logging.info('Missing tariff data for all_residents in study csv')
             else:  # read tariff for each customer
                 for c in self.households:
-                    if use_threading == 'True':
-                        with lock:
-                            self.parameters[c] = self.parameters['all_residents']
-                    else:
-                        self.parameters[c] = self.parameters['all_residents']
+                    self.parameters[c] = self.parameters['all_residents']
         # --------------------------------------------
         # Create list of tariffs used in this scenario
         # --------------------------------------------
@@ -2617,17 +2608,13 @@ def runScenario(scenario_name):
             eno.logTimeseriesBrief(scenario)
 
     # collate / log data for all loads in scenario
-    if use_threading == 'True':
-        with lock:
-            scenario.logScenarioData()
-    else:
-        scenario.logScenarioData()
+    scenario.logScenarioData()
 
     logging.info('Completed Scenario %i', scenario_name)
 # ------------
 # MAIN PROGRAM
 # ------------
-def main(base_path,project,study_name, override_output = '', use_threading = 'False'):
+def main(base_path,project,study_name, override_output = ''):
 
    # set up script logging
     pyname = os.path.basename(__file__)
@@ -2640,29 +2627,13 @@ def main(base_path,project,study_name, override_output = '', use_threading = 'Fa
         # Initialise and load data for the study
         # --------------------------------------
         logging.info("study_name = %s", study_name)
-        logging.info("Thread variable is %s", use_threading)
         study = Study(base_path=base_path,
                       project=project,
                       study_name=study_name,
                       dst_region=dst_region,
                       override_output=override_output)
-
-        if use_threading == 'True':   # NB use_threading is a string so need to compare with string
-            # -------------
-            # Use Threading
-            # -------------
-            logging.info("THREADING")
-            global lock
-            num_worker_threads = num_threads
-            lock = threading.Lock()
-            with concurrent.futures.ThreadPoolExecutor(max_workers=num_worker_threads) as x:
-                results = list(x.map(runScenario, study.scenario_list))
-        else:
-            # WITHOUT Threads (simpler to debug):
-            # ----------------------------------
-            logging.info("NOT THREADING")
-            for s in study.scenario_list:
-                runScenario(s)
+        for s in study.scenario_list:
+            runScenario(s)
 
         study.logStudyData()
 
@@ -2691,9 +2662,6 @@ if __name__ == "__main__":
     default_project = 'hugh'
     default_study = '1'
 
-
-    default_use_threading = 'False'
-    num_threads = 6
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
     opts = {}
@@ -2709,10 +2677,7 @@ if __name__ == "__main__":
         study = opts['-s']
     else:
         study = default_study
-    if '-t' in opts:
-        use_threading = opts['-t']
-    else:
-        use_threading = default_use_threading
+
     # base_path for all input data
     if '-b' in opts:
         base_path = opts['-b']
@@ -2735,7 +2700,6 @@ if __name__ == "__main__":
     main(project=project,
          study_name=study,
          base_path=base_path,
-         use_threading=use_threading,
          override_output=override_output)
 
 
