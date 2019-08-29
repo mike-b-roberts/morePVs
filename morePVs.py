@@ -995,10 +995,6 @@ class Customer():
         self.exports[step] = self.flows[step].clip(0)
         self.imports[step] = (-1 * self.flows[step]).clip(0)
 
-        # Calculate local quota here??
-        # # Solar allocation is for solar_instantaneous tariff
-        # self.solar_allocation[step] = np.minimum(self.imports[step], self.local_quota[step])
-
         # Local Consumption is PV self-consumed by customer (which is charged for in btm_p arrangement)
         self.local_consumption[step] = np.minimum(self.generation[step], self.load[step])
 
@@ -1216,7 +1212,8 @@ class Network(Customer):
     def allocatePV(self, scenario, pv):
         """set up and allocate pv generation for this scenario."""
 
-        # PV allocation is used to allocate PV capex costs for some arrangements
+        # This PV allocation is also used to allocate PV capex costs
+        # for some arrangements (btm_i_c only?)
         # Copy profile from scenario and then allocate
         # Allocation happens here as the Customers are part of the Network (not scenario)
         self.pv_exists = scenario.pv_exists
@@ -1302,48 +1299,6 @@ class Network(Customer):
         # os.makedirs(pvpath, exist_ok=True)
         # pvFile = os.path.join(pvpath, self.name + '_pv_' + str(scenario.name) +'_' + scenario.arrangement + '.csv')
         # um.df_to_csv(self.pv, pvFile)
-
-
-    # def initialiseDailySolarBlockQuotas(self, scenario):
-    #     # REMOVED - IMPLEMENTATION NEEDS CORRECTION
-    #     """For Solar Block Daily tariff, share allocation of central PV generation amongst all residents."""
-    #     # Intended for `en` arrangement
-    #     # Check that all residents have same solar_cp_allocation basis , otherwise raise an exception:
-    #     allocation_list = list(set((self.resident[c].tariff.solar_cp_allocation for c in self.resident_list)))
-    #     if len(allocation_list) > 1:
-    #         sys.exit("Inconsistent cp allocation of local generation")
-    #     else:
-    #         solar_cp_allocation = allocation_list[0]
-    #     # Calc daily quotas for cp and households based on proportion of annual PV generation:
-    #     self.resident['cp'].daily_local_quota = self.pv.loc[
-    #                                                 self.resident['cp'].tariff.solar_period, 'central'].sum() * solar_cp_allocation / 365
-    #     for c in self.households:
-    #         self.resident[c].daily_local_quota = self.pv.loc[self.resident[c].tariff.solar_period, 'central'].sum() * (
-    #                     1 - solar_cp_allocation) / (365 * len(self.households))
-
-    # def initialiseSolarInstQuotas(self, scenario):
-    #     """Calculate local quotas for solar instantaneous tariffs in an EN."""
-    #     # CURRENTLY NOT IMPLEMENTED
-    #     # -------------------------
-    #     # (NB PV allocation is fixed and PV has already been initialised.)
-    #     # Quota is equal share of pv generation at this timestep
-    #     # Applies to EN arrangements only
-    #     # This is for instantaneous solar tariff.
-    #     self.solar_instantaneous_quota = np.zeros(ts.num_steps)
-    #     self.retailer.solar_instantaneous_quota = np.zeros(ts.num_steps)
-    #     if 'en' in scenario.arrangement:
-    #         for c in self.resident_list:
-    #             if self.resident[c].tariff.is_solar_inst:
-    #                 self.resident[c].solar_instantaneous_quota = np.where((self.pv['central'] > self.resident['cp'].load),\
-    #                                                         (self.pv['central'] - self.resident['cp'].load) / len(
-    #                                                         self.households), 0)
-    #             else:
-    #                 self.resident[c].solar_instantaneous_quota = np.zeros(ts.num_steps)
-    #     else:
-    #         for c in self.resident_list:
-    #             self.resident[c].solar_instantaneous_quota = np.zeros(ts.num_steps)
-
-
 
     def initialiseAllBatteries(self, scenario):
         """Initialise central and individual batteries as required."""
@@ -1564,7 +1519,7 @@ class Network(Customer):
 
     def allocateAllCapex(self, scenario):
         """ Allocates capex repayments and opex to customers according to arrangement"""
-        # For some arrangements, this depends on pv allocation, so must FOLLOW allocatePV call
+        # For some arrangements, this depends on pv allocation, so must FOLLOW allocatePV() call
         # Called once per load profile where capex is allocated according to load; once per scenario otherwise
         # Moved from start of iterations to end to incorporate battery lifecycle impacts
 
@@ -1612,16 +1567,29 @@ class Network(Customer):
         # Allocate network, pv and battery capex & opex payments depending on network arrangements
         # ----------------------------------------------------------------------------------------
         # TODO Allocation of capex needs refining. e.g in some `btm_s` arrangements, capex is payable by owners, not residents
+        pv_owners = self.scenario.pv_capex.keys()
         if 'en' in scenario.arrangement:
-            # For en, all capex & opex are borne by the ENO
+            # For en, all en capex & opex are borne by the ENO
+            # For en_pv, all central pv capex is borne by the ENO
+            # For en, all central bess capex  borne by the ENO
+            # individual pv and bess capex is borne by individuals
+            # cp??
             self.en_opex = scenario.en_opex
-            self.pv_capex_repayment = scenario.pv_capex_repayment
+            self.pv_capex_repayment = scenario.pv_capex_repayment ['central']
             self.en_capex_repayment = scenario.en_capex_repayment
             self.bat_capex_repayment = central_bat_capex_repayment
+            for c in self.resident_list:
+                if c in pv_owners:
+                    self.resident[c].pv_capex_repayment = scenario.pv_capex_repayment[c]
+                else:
+                    self.resident[c].pv_capex_repayment = 0
 
-        elif 'cp_only' in scenario.arrangement:
+        elif 'cp' in scenario.arrangement:
             # pv and central battery capex allocated to customer 'cp' (ie strata)
-            self.resident['cp'].pv_capex_repayment = scenario.pv_capex_repayment
+            if 'cp' in pv_owners:
+                self.resident['cp'].pv_capex_repayment = scenario.pv_capex_repayment['cp']
+            else:
+                self.resident['cp'].pv_capex_repayment = scenario.pv_capex_repayment['total_system']
             self.resident['cp'].bat_capex_repayment += central_bat_capex_repayment
 
         elif 'btm_i' in scenario.arrangement:
@@ -1634,7 +1602,7 @@ class Network(Customer):
             # For btm_s_c, apportion capex costs equally between units and cp.
             # (Not ideal - needs more sophisticated analysis of practical btm_s arrangements)
             for c in self.resident_list:
-                self.resident[c].pv_capex_repayment = scenario.pv_capex_repayment / len(self.resident_list)
+                self.resident[c].pv_capex_repayment = scenario.pv_capex_repayment['central'] / len(self.resident_list)
                 self.resident[c].en_capex_repayment = scenario.en_capex_repayment / len(self.resident_list)
                 self.resident[c].en_opex = scenario.en_opex / len(self.resident_list)
                 self.resident[c].bat_capex_repayment += central_bat_capex_repayment / len(self.resident_list)
@@ -1643,14 +1611,14 @@ class Network(Customer):
             # For btm_s_u, apportion capex costs equally between units only
             # (Not ideal - needs more sophisticated analysis of practical btm_s arrangements)
             for c in self.households:
-                self.resident[c].pv_capex_repayment = scenario.pv_capex_repayment / len(self.households)
+                self.resident[c].pv_capex_repayment = scenario.pv_capex_repayment['central'] / len(self.households)
                 self.resident[c].en_opex = scenario.en_opex / len(self.households)
                 self.resident[c].en_capex_repayment = scenario.en_capex_repayment / len(self.households)
                 self.resident[c].bat_capex_repayment += central_bat_capex_repayment / len(self.households)
 
         elif 'btm_p' in scenario.arrangement:
             # all solar and btm capex costs paid by solar retailer
-            self.solar_retailer.pv_capex_repayment = scenario.pv_capex_repayment
+            self.solar_retailer.pv_capex_repayment = scenario.pv_capex_repayment['central']
             self.solar_retailer.en_capex_repayment = scenario.en_capex_repayment
             self.solar_retailer.en_opex = scenario.en_opex
             self.solar_retailer.bat_capex_repayment = central_bat_capex_repayment
@@ -2053,46 +2021,94 @@ class Scenario():
         else:
             self.en_opex = 0
         # --------------------------------------------------------
+        # Read pv capex rates
+        #
         # Calc total annual capex repayments for pv in this scenario
         # --------------------------------------------------------
+
+        # @@@@@
         self.pv_cap_id = self.parameters['pv_cap_id']
         if not self.pv_exists:
             self.pv_capex_repayment = 0
         else:
-            # Calculate pv capex
-            # ------------------
-            # PV capex includes inverter replacement if amortization period > inverter lifetime
-            self.pv_capex = study.pv_capex_table.loc[self.pv_cap_id, 'pv_capex'] + \
+            self.pv_capex = {}
+            # PV capex settings with mutiple $/W rates set by price point
+            if any(p in self.pv_cap_id for p in ['price_point', 'pricepoint']):
+                pv_capex_system_bands = [c for c in study.pv_capex_table.columns if 'sys_' in c]
+                pv_capex_inverter_bands = [c for c in study.pv_capex_table.columns if 'inv_' in c]
+
+                # System costs ($/W)
+                self.pv_sys_capex_rates = [[int(b.split('_')[1]),
+                                            int(b.split('_')[2]),
+                                            study.pv_capex_table.loc[self.pv_cap_id,b]
+                                            ] for b in pv_capex_system_bands]
+
+                # Inverter Costs ($/W)
+                self.pv_inv_capex_rates = [[int(b.split('_')[1]),
+                                            int(b.split('_')[2]),
+                                            study.pv_capex_table.loc[self.pv_cap_id,b]
+                                            ] for b in pv_capex_inverter_bands]
+                print(self.pv_sys_capex_rates)
+                print(self.pv_inv_capex_rates)
+                # read pv system sizes and calc total capex for each system
+                pv_systems = [c for c in self.parameters.index if
+                                 any(k in c for k in ['kWp', 'kwp'])]
+                for pv in pv_systems:
+                    pv_owner = pv.split('_')[0]
+                    pv_capacity = self.parameters[pv]
+                    system_rate = 0
+                    inverter_rate =0
+                    for band in self.pv_sys_capex_rates:
+                        if pv_capacity > band[0] and pv_capacity <= band[1]:
+                            system_rate = band[2]
+                    for band in self.pv_inv_capex_rates:
+                        if pv_capacity > band[0] and pv_capacity <= band[1]:
+                            inverter_rate = band[2]
+                    # PV capex includes inverter replacement if amortization period > inverter lifetime
+                    self.pv_capex[pv_owner] = system_rate * pv_capacity *1000 + \
                             (int(self.a_term / study.pv_capex_table.loc[self.pv_cap_id, 'inverter_life'] - 0.01) * \
-                             study.pv_capex_table.loc[self.pv_cap_id, 'inverter_cost'])
-
-            #  Option to use standard 1kW PV output and scale
-            #  with pv_capex and inverter cost given as $/kW
-            self.pv_scaleable = ('pv_scaleable' in self.parameters.index) and \
-                                self.parameters.fillna(False)['pv_scaleable']
-            # pv capex is scaleable if pv is scaleable....
-            if self.pv_scaleable:
-                self.pv_capex_scaleable = True
+                             inverter_rate * pv_capacity * 1000)
+                if 'central' not in pv_systems:
+                    self.pv_capex['central'] = 0
             else:
-                self.pv_capex_scaleable = False
-            # .... unless otherwise specified ....
-            if ('pv_capex_scaleable' in self.parameters.index):
-                if self.parameters.fillna('missing')['pv_capex_scaleable']!='missing':
-                    self.pv_capex_scaleable = self.parameters['pv_capex_scaleable']
+                # Legacy - backward compatibility with no price points and `pv_capex` as single total system and inv costs
+                # for all pv system(s)
+                # PV capex includes inverter replacement if amortization period > inverter lifetime
+                self.pv_capex['total_system'] = study.pv_capex_table.loc[self.pv_cap_id, 'pv_capex'] + \
+                                (int(self.a_term / study.pv_capex_table.loc[self.pv_cap_id, 'inverter_life'] - 0.01) * \
+                                 study.pv_capex_table.loc[self.pv_cap_id, 'inverter_cost'])
+                #  Option to use standard 1kW PV output and scale
+                #  with pv_capex and inverter cost given as $/kW
+                self.pv_scaleable = ('pv_scaleable' in self.parameters.index) and \
+                                    self.parameters.fillna(False)['pv_scaleable']
+                # pv capex is scaleable if pv is scaleable....
+                if self.pv_scaleable:
+                    self.pv_capex_scaleable = True
+                else:
+                    self.pv_capex_scaleable = False
+                # .... unless otherwise specified ....
+                if ('pv_capex_scaleable' in self.parameters.index):
+                    if self.parameters.fillna('missing')['pv_capex_scaleable']!='missing':
+                        self.pv_capex_scaleable = self.parameters['pv_capex_scaleable']
 
-            if self.pv_capex_scaleable:
-                self.pv_capex = self.pv_capex * self.pv_kW_peak
+                if self.pv_capex_scaleable:
+                    self.pv_capex['total_system'] = self.pv_capex['total_system'] * self.pv_kW_peak
+                self.pv_capex['central'] = self.pv_capex['total_system']
 
             # Calculate annual repayments
             # ---------------------------
-            if self.pv_capex>0:
-                self.pv_capex_repayment = -12 * np.pmt(rate=self.a_rate/12,
-                                                 nper=12 * self.a_term,
-                                                 pv=self.pv_capex,
-                                                 fv=0,
-                                                 when='end')
-            else:
-                self.pv_capex_repayment=0
+            self.pv_capex_repayment ={}
+            print(self.pv_capex)
+            for pv_system in self.pv_capex.keys():
+                if self.pv_capex[pv_system]>0:
+                    self.pv_capex_repayment[pv_system] = -12 * np.pmt(rate=self.a_rate/12,
+                                                         nper=12 * self.a_term,
+                                                         pv=self.pv_capex[pv_system],
+                                                         fv=0,
+                                                         when='end')
+                else:
+                    self.pv_capex_repayment[pv_system] = 0
+            print(self.pv_capex_repayment)
 
     def calcFinancials(self, net):
         """ Calculates financial results for specific net within scenario.
@@ -2560,15 +2576,11 @@ def runScenario(scenario_name):
     if scenario.pv_allocation == 'fixed':
         eno.allocatePV(scenario, scenario.pv)
 
-    # if scenario.has_solar_block:
-    #     eno.initialiseDailySolarBlockQuotas(scenario)
-
     # Iterate through all load profiles for this scenario:
     for load_name in scenario.load_list:
         eno.initialiseBuildingLoads(load_name, scenario)
         if scenario.pv_allocation == 'load_dependent':  # ie. for btm_i_c, btm_s and btm_p arrangements
             eno.allocatePV(scenario, scenario.pv)
-        # eno.initialiseSolarInstQuotas(scenario)  # depends on load and pv - not implemented. Solar Inst for EN
 
         # If no battery, calc all internal energy flows statically (i.e. as single df calculation)
         # ----------------------------------------------------------------------------------------
@@ -2655,12 +2667,12 @@ if __name__ == "__main__":
     # -------------------------------------------------------
     # Set up defaults here: base_path, project and study name
     # --------------------------------------------------------
-    #default_base_path = 'C:\\Users\\z5044992\\Documents\\mainDATA\\DATA_EN_5'  #(Mike's PC)
-    # default_project = 'siteC'
-    # default_study = 'C2'
-    default_base_path = '/Users/mikeroberts/OneDrive - UNSW/python/en/DATA_EN_5'  #(Mike's Mac)
-    default_project = 'hugh'
-    default_study = '1'
+    default_base_path = 'C:\\Users\\z5044992\\Documents\\mainDATA\\DATA_EN_5'  #(Mike's PC)
+    default_project = 'tests'
+    default_study = 'test_capex1'
+    # default_base_path = '/Users/mikeroberts/OneDrive - UNSW/python/en/DATA_EN_5'  #(Mike's Mac)
+    # default_project = 'hugh'
+    # default_study = '1'
 
     # Import arguments - allows multi-processing from command line
     # ------------------------------------------------------------
@@ -2677,13 +2689,11 @@ if __name__ == "__main__":
         study = opts['-s']
     else:
         study = default_study
-
     # base_path for all input data
     if '-b' in opts:
         base_path = opts['-b']
     else:
         base_path = default_base_path
-
     # daylight savings:
     if '-dst' in opts:
         dst_region = opts['-dst']
