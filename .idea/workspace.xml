@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="daed3c6b-7ce2-4dea-ac23-fa23d79b806d" name="Default Changelist" comment="Add">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="daed3c6b-7ce2-4dea-ac23-fa23d79b806d" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -27,7 +25,9 @@
     <option name="ROOT_SYNC" value="DONT_SYNC" />
   </component>
   <component name="ProjectId" id="1PU0KdCqnqK8WvqcbrIn40ltfzF" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="PropertiesComponent">
     <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
@@ -366,7 +366,14 @@
       <option name="project" value="LOCAL" />
       <updated>1567123358252</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="Add test data">
+      <created>1567123852730</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1567123852730</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -408,6 +415,7 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
+    <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
     <MESSAGE value="after pc rebuild" />
     <MESSAGE value="fixed daily block tariff" />
     <MESSAGE value="customer names as strings" />
@@ -425,7 +433,8 @@
     <MESSAGE value="remove win32 functionality in utility module for osx" />
     <MESSAGE value="pv capex by pricepoint, individual pv in EN, incomplete" />
     <MESSAGE value="Add" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add" />
+    <MESSAGE value="Add test data" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add test data" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
