@@ -1,5 +1,5 @@
-#morePVs model
-morePVs Copyright (C) 2018 Mike B Roberts
+#morePVs v2 model
+morePVs v2 Copyright (C) 2018/2019 Mike B Roberts
 
 multi-occupancy residential electricity with PV and storage model
 
@@ -7,6 +7,25 @@ multi-occupancy residential electricity with PV and storage model
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
 Contact: m.roberts@unsw.edu.au*
+
+### Running the script
+Script requires the following input parameters.
+These can be set using default parameters (allocated after `if __name__ == "__main__": in script`) or using switches as shown in the table.
+
+
+ | Parameter   | description | default variable | switch |  
+ |----|-------|----------| ------------ | 
+ | base path | root directory for all data | `default_base_path` | `-b' |
+ | project | subfolder containing data for multiple studies | `default_project` | `-p` |
+ | study | Name of study Input parameters for every scenario are in `study_xxxx.csv` where `xxxx` is the stady name | `default_study` | `-s` |
+ | DST region | identifier for DST time difference and dates | `nsw` | `-d` |
+ | `override_output` | Flag for use when running on UNSW HPC facility to divert output | `False` | `-o` |
+ 
+ 
+ 
+ 
+
+
 
 ###Setup Instructions
 
@@ -25,9 +44,10 @@ PV:
 ---
 Name of pv file - 1 year's output within `DATA_EN_3\pv_profiles`
 
-For `en` or `cp` arrangement, pv file has single column, must be 'cp'
+For `cp_only` arrangement, pv file has single column, (headed 'cp')
 
-For `btm_i` : btm individual:  en has column for each unit, or if not, single 'cp' or 'total' column that is split equally
+For `btm_i` : btm individual:  en has column for each unit, or if not, single 'total' column that is split equally between units 
+(with a proportion equal to the cp ratio applied to cp for `btm_i_c`)
 
 For `btm_i_c` : en has column for each unit and cp. Or, single column: cp gets share according to load share; units get equal share of remainder
 
@@ -36,6 +56,9 @@ For Shared btm inc cp:  `btm_s_c` A single `total` or 'cp' column that is split 
 For Shared btm Units only:`btm_s_u` single `total` or 'cp' column that is split according to instantaneous load between all units EXCLUDING cp
 
 `btm_p_c` and `btm_p_u` are similar, but generation is paid for under a ppa to a solar retailer
+
+For `en_pv` multiple columns are possible, for 'cp', 'central' and each unit (with headings the same as the unit identifiers in the load profile) 
+
 For en_external scenario: `cp tariff != TIDNULL`
 
 Scaleable PV:
@@ -82,6 +105,9 @@ NB if `capex_en_lookup` has duplicate `capex id`s, it all goes to cock. (read_cs
 
 N.B. Different `pv_capex_id` ids required for individual systems (`btm_i_u` and `btm_i_c`)
 to allow for higher $/W costs for smaller systems:
+
+if `pv_capex_id` contains `pricepoint`, then columns must be provided for the total ($/W) system and inverter replacement costs 
+for ranges of system size. e.g. `sys_10_20` and `inv_10_20` are $/W costs for system sizes >10kWp and <= 20kWp
 
 -------
 TARIFFS
