@@ -93,9 +93,10 @@ If so, all good: Add indi PV to en first and then Net Loads will follow....
    - [x] Identify `pv_capex[pv_system]` (for `pv_system` including units, 'cp' and 'central')
    - [x] Calc pv capex repayments for each `pv_system`
    - follow through in `Network` and `Customer` functions to convert `pv_capex` and `pv_capex_repayments` to dicts.
-    -  `Network.allocatePV()`
-        - [x] PV
-        - [] BESS
+    -  `Network.allocatePV()` [x] PV [] BESS
+    -  `Scenario.calcFinancials` [x] PV [] BESS
+    -  `Network.calcEnergyMetrics` [x] PV [] BESS
+    -  `Scenario.logScenarioData()` [x] PV [] BESS
         
    - [] Read battery capex values  - maybe OK?
   
@@ -106,11 +107,11 @@ If so, all good: Add indi PV to en first and then Net Loads will follow....
     -  [] Need to test en with indi PV
     
     
-   - [] `Customer.initialiseCustomerPV()` 
-   - [] `Customer.calcCashFlow()` 
+   - [x] `Customer.initialiseCustomerPV()`
+   - [x] `Customer.calcCashFlow()`
    - [] **`Network.allocateAllCapex()`**    *Here is the key change.*
-       - [] Add individual pv and battery capex for each resident in `en` arrangement
-       - [] Change calc of pv capex for `btm_i` with individual pv's - will also need changes to `Scenario.__init__`
+       - Add individual pv [x] and battery [] capex for each resident in `en` arrangement
+       - [x] Change calc of pv capex for `btm_i` with individual pv's - will also need changes to `Scenario.__init__`
   
   
   

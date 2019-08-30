@@ -1,0 +1,31 @@
+30/08/2019 11:27:12 AM Python Script is: morePVs.py
+30/08/2019 11:27:12 AM study_name = test_capex2
+30/08/2019 11:27:13 AM Running Scenario number 1 
+30/08/2019 11:27:21 AM **************CHECKSUM ERROR************************
+30/08/2019 11:27:21 AM Study: test_capex2  Scenario: 1 
+30/08/2019 11:27:21 AM Tot Building Cost 27081.094010 Checksum -27081.094010
+30/08/2019 11:27:21 AM Completed Scenario 1
+30/08/2019 11:27:21 AM Running Scenario number 2 
+30/08/2019 11:29:51 AM 
+
+
+ Exception !!!!!!
+Traceback (most recent call last):
+  File "/Users/mikeroberts/Documents/python/morePVs/morePVs.py", line 2656, in main
+    runScenario(s)
+  File "/Users/mikeroberts/Documents/python/morePVs/morePVs.py", line 2619, in runScenario
+    eno.allocateAllCapex(scenario)  # per load profile to allow for scenarios where capex allocation depends on load
+  File "/Users/mikeroberts/Documents/python/morePVs/morePVs.py", line 1599, in allocateAllCapex
+    for c in self.pv_customers:
+  File "/Users/mikeroberts/Documents/python/morePVs/morePVs.py", line 1599, in allocateAllCapex
+    for c in self.pv_customers:
+  File "_pydevd_bundle/pydevd_cython_darwin_37_64.pyx", line 1029, in _pydevd_bundle.pydevd_cython_darwin_37_64.SafeCallWrapper.__call__
+  File "_pydevd_bundle/pydevd_cython_darwin_37_64.pyx", line 557, in _pydevd_bundle.pydevd_cython_darwin_37_64.PyDBFrame.trace_dispatch
+  File "_pydevd_bundle/pydevd_cython_darwin_37_64.pyx", line 831, in _pydevd_bundle.pydevd_cython_darwin_37_64.PyDBFrame.trace_dispatch
+  File "_pydevd_bundle/pydevd_cython_darwin_37_64.pyx", line 822, in _pydevd_bundle.pydevd_cython_darwin_37_64.PyDBFrame.trace_dispatch
+  File "_pydevd_bundle/pydevd_cython_darwin_37_64.pyx", line 279, in _pydevd_bundle.pydevd_cython_darwin_37_64.PyDBFrame.do_wait_suspend
+  File "/Applications/PyCharm CE.app/Contents/helpers/pydev/pydevd.py", line 1082, in do_wait_suspend
+    self._do_wait_suspend(thread, frame, event, arg, suspend_type, from_this_thread)
+  File "/Applications/PyCharm CE.app/Contents/helpers/pydev/pydevd.py", line 1097, in _do_wait_suspend
+    time.sleep(0.01)
+KeyboardInterrupt

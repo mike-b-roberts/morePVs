@@ -1283,7 +1283,7 @@ class Network(Customer):
         if not self.pv_exists:
             self.pv_customers = []
         else:
-            self.pv_customers = [c for c in self.pv.columns if self.pv[c].sum() >0]
+            self.pv_customers = [c for c in self.pv.columns if self.pv[c].sum() >0 and c != 'central']
         # Add blank columns for all residents with no pv and for central
         blank_columns = [x for x in(self.resident_list + ['central']) if x not in self.pv.columns]
         self.pv = pd.concat([self.pv, pd.DataFrame(columns=blank_columns)], sort=False).fillna(0)
@@ -1593,9 +1593,15 @@ class Network(Customer):
             self.resident['cp'].bat_capex_repayment += central_bat_capex_repayment
 
         elif 'btm_i' in scenario.arrangement:
-            # For btm_i apportion pv AND central bat capex costs according to pv allocation
+            # For btm_i with individual pv profiles, allocate pv capex to owner
+            # For btm_i with single pv profile apportioned, apportion pv capex in same way
+            # For btm_i, apportion central bat capex costs according to pv allocation
+
             for c in self.pv_customers:
-                self.resident[c].pv_capex_repayment = self.pv[c].sum() / self.pv.sum().sum() * scenario.pv_capex_repayment
+                if c in pv_owners:
+                    self.resident[c].pv_capex_repayment = scenario.pv_capex_repayment[c]
+                else:
+                    self.resident[c].pv_capex_repayment = self.pv[c].sum() / self.pv.sum().sum() * scenario.pv_capex_repayment['total_system']
                 self.resident[c].bat_capex_repayment += self.pv[c].sum() / self.pv.sum().sum() * central_bat_capex_repayment
 
         elif 'btm_s_c' in scenario.arrangement:
@@ -2025,13 +2031,14 @@ class Scenario():
         #
         # Calc total annual capex repayments for pv in this scenario
         # --------------------------------------------------------
-
         # @@@@@
         self.pv_cap_id = self.parameters['pv_cap_id']
+        self.pv_capex = {}
+        self.pv_capex_repayment = {}
         if not self.pv_exists:
-            self.pv_capex_repayment = 0
+            self.pv_capex['central'] = 0
+            self.pv_capex['total_system'] = 0
         else:
-            self.pv_capex = {}
             # PV capex settings with mutiple $/W rates set by price point
             if any(p in self.pv_cap_id for p in ['price_point', 'pricepoint']):
                 pv_capex_system_bands = [c for c in study.pv_capex_table.columns if 'sys_' in c]
@@ -2070,6 +2077,9 @@ class Scenario():
                              inverter_rate * pv_capacity * 1000)
                 if 'central' not in pv_systems:
                     self.pv_capex['central'] = 0
+                if 'total_system' not in self.pv_capex.keys():
+                    self.pv_capex['total_system'] = sum(self.pv_capex.values())
+
             else:
                 # Legacy - backward compatibility with no price points and `pv_capex` as single total system and inv costs
                 # for all pv system(s)
@@ -2095,19 +2105,18 @@ class Scenario():
                     self.pv_capex['total_system'] = self.pv_capex['total_system'] * self.pv_kW_peak
                 self.pv_capex['central'] = self.pv_capex['total_system']
 
-            # Calculate annual repayments
-            # ---------------------------
-            self.pv_capex_repayment ={}
-            print(self.pv_capex)
-            for pv_system in self.pv_capex.keys():
-                if self.pv_capex[pv_system]>0:
-                    self.pv_capex_repayment[pv_system] = -12 * np.pmt(rate=self.a_rate/12,
-                                                         nper=12 * self.a_term,
-                                                         pv=self.pv_capex[pv_system],
-                                                         fv=0,
-                                                         when='end')
-                else:
-                    self.pv_capex_repayment[pv_system] = 0
+        # Calculate annual repayments
+        # ---------------------------
+        print(self.pv_capex)
+        for pv_system in self.pv_capex.keys():
+            if self.pv_capex[pv_system]>0:
+                self.pv_capex_repayment[pv_system] = -12 * np.pmt(rate=self.a_rate/12,
+                                                     nper=12 * self.a_term,
+                                                     pv=self.pv_capex[pv_system],
+                                                     fv=0,
+                                                     when='end')
+            else:
+                self.pv_capex_repayment[pv_system] = 0
             print(self.pv_capex_repayment)
 
     def calcFinancials(self, net):
@@ -2171,7 +2180,7 @@ class Scenario():
                                      + net.total_payment - net.receipts_from_residents
         net.checksum_total_payments = net.retailer_receipt \
             + net.solar_retailer_profit \
-            + (self.en_opex + self.en_capex_repayment + self.pv_capex_repayment \
+            + (self.en_opex + self.en_capex_repayment + self.pv_capex_repayment['central'] \
                + self.total_battery_capex_repayment)*100 - net.total_building_payment
 
         # #TODO sort out battery capex for 'cp_only'
@@ -2290,7 +2299,8 @@ class Scenario():
         # ----------------------------------------
         study.op.loc[self.name, 'en_opex'] = self.en_opex
         study.op.loc[self.name, 'en_capex_repayment'] = self.en_capex_repayment
-        study.op.loc[self.name, 'pv_capex_repayment'] = self.pv_capex_repayment
+        print(self.name, self.pv_capex_repayment.keys())
+        study.op.loc[self.name, 'pv_capex_repayment'] = self.pv_capex_repayment['total_system']
 
         # ----------------------------------------------------------------
         # Customer payments averaged for all residents, all load profiles:
@@ -2670,7 +2680,7 @@ if __name__ == "__main__":
     # default_base_path = 'C:\\Users\\z5044992\\Documents\\python\\morePVs\\DATA_EN_5'  #(Mike's PC)
     default_base_path = '/Users/mikeroberts/Documents/python/morePVs/DATA_EN_5'  # (Mike's Mac)
     default_project = 'tests'
-    default_study = 'test_capex1'
+    default_study = 'test_capex2'
     # default_base_path = '/Users/mikeroberts/OneDrive - UNSW/python/en/DATA_EN_5'  #(Mike's Mac)
     # default_project = 'hugh'
     # default_study = '1'

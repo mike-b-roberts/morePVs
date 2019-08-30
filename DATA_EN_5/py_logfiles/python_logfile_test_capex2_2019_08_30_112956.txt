@@ -1,0 +1,25 @@
+30/08/2019 11:29:56 AM Python Script is: morePVs.py
+30/08/2019 11:29:56 AM study_name = test_capex2
+30/08/2019 11:29:56 AM Running Scenario number 1 
+30/08/2019 11:29:58 AM 
+
+
+ Exception !!!!!!
+Traceback (most recent call last):
+  File "/Users/mikeroberts/Documents/python/morePVs/morePVs.py", line 2656, in main
+    runScenario(s)
+  File "/Users/mikeroberts/Documents/python/morePVs/morePVs.py", line 2576, in runScenario
+    scenario = Scenario(scenario_name=scenario_name)
+  File "/Users/mikeroberts/Documents/python/morePVs/morePVs.py", line 2061, in __init__
+    for pv in pv_systems:
+  File "/Users/mikeroberts/Documents/python/morePVs/morePVs.py", line 2061, in __init__
+    for pv in pv_systems:
+  File "_pydevd_bundle/pydevd_cython_darwin_37_64.pyx", line 1439, in _pydevd_bundle.pydevd_cython_darwin_37_64.ThreadTracer.__call__
+  File "_pydevd_bundle/pydevd_cython_darwin_37_64.pyx", line 831, in _pydevd_bundle.pydevd_cython_darwin_37_64.PyDBFrame.trace_dispatch
+  File "_pydevd_bundle/pydevd_cython_darwin_37_64.pyx", line 822, in _pydevd_bundle.pydevd_cython_darwin_37_64.PyDBFrame.trace_dispatch
+  File "_pydevd_bundle/pydevd_cython_darwin_37_64.pyx", line 279, in _pydevd_bundle.pydevd_cython_darwin_37_64.PyDBFrame.do_wait_suspend
+  File "/Applications/PyCharm CE.app/Contents/helpers/pydev/pydevd.py", line 1082, in do_wait_suspend
+    self._do_wait_suspend(thread, frame, event, arg, suspend_type, from_this_thread)
+  File "/Applications/PyCharm CE.app/Contents/helpers/pydev/pydevd.py", line 1097, in _do_wait_suspend
+    time.sleep(0.01)
+KeyboardInterrupt
