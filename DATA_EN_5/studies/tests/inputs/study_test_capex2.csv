@@ -1,4 +1,0 @@
-scenario,pv_filename,load_folder,arrangement,pv_cap_id,cp,all_residents,parent,network_tariff,en_capex_id,a_term,a_rate,central_kWp,1_kWp,2_kWp,cp_kWp
-1,test_2day_pv,test_2day2,en_pv,testcap_pricepoint,EASO_TOU_15pc,EASO_TOU_15pc,TIDNULL,TIDNULL,capex_null,20,0.06,4,0.5,1,2
-2,test_2day_pv,test_2day2,btm_i_c,testcap_pricepoint,EASO_TOU_15pc,EASO_TOU_15pc,TIDNULL,TIDNULL,capex_null,20,0.06,,0.5,1,2
-0,,test_2day2,bau,,EASO_TOU_15pc,EASO_TOU_15pc,TIDNULL,TIDNULL,capex_null,20,0.06,,,,

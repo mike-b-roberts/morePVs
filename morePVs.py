@@ -1374,15 +1374,15 @@ class Network(Customer):
                         if bat_capacity in scenario.parameters.index:
                             if not pd.isnull(scenario.parameters[bat_capacity]):
                                 battery_capacity_kWh = scenario.parameters[bat_capacity]
-                    self.resident[c].battery = Battery(scenario=scenario,
+                        self.resident[c].battery = Battery(scenario=scenario,
                                                        battery_id=scenario.parameters[bat_name],
                                                        battery_strategy=scenario.parameters[bat_strategy],
                                                        battery_capacity=battery_capacity_kWh)
-                    self.tot_ind_bat_capacity += self.resident[c].battery.capacity_kWh
+                        self.tot_ind_bat_capacity += self.resident[c].battery.capacity_kWh
+                    else:
+                        self.resident[c].has_battery = False
                 else:
                     self.resident[c].has_battery = False
-            else:
-                self.resident[c].has_battery = False
 
         # No individual household batteries
         # ---------------------------------
@@ -1553,7 +1553,7 @@ class Network(Customer):
             # individual pv and bess capex is borne by individuals
             # cp??
             self.en_opex = scenario.en_opex
-            self.pv_capex_repayment = scenario.pv_capex_repayment ['central']
+            self.pv_capex_repayment = scenario.pv_capex_repayment['central']
             self.en_capex_repayment = scenario.en_capex_repayment
             self.bat_capex_repayment = central_bat_capex_repayment
             for c in self.resident_list:
@@ -1571,11 +1571,17 @@ class Network(Customer):
             self.resident['cp'].bat_capex_repayment += central_bat_capex_repayment
 
         elif 'btm_i' in scenario.arrangement:
-            # For btm_i apportion pv AND central bat capex costs according to pv allocation
+
+            # For btm_i apportion central bat (AND PV for leagcy pv capex cases) capex costs according to pv allocation
             # which is (proportional to cp ratio for `_c`) and then equally between residents
             for c in self.pv_customers:
-                self.resident[c].pv_capex_repayment = self.pv[c].sum() / self.pv.sum().sum() * scenario.pv_capex_repayment
-                self.resident[c].bat_capex_repayment += self.pv[c].sum() / self.pv.sum().sum() * central_bat_capex_repayment
+                self.resident[c].bat_capex_repayment += self.pv[
+                                                            c].sum() / self.pv.sum().sum() * central_bat_capex_repayment
+                if self.legacy_pv_capex:
+                    self.resident[c].pv_capex_repayment = self.pv[c].sum() / self.pv.sum().sum() * scenario.pv_capex_repayment
+                else:
+                    self.resident[c].pv_capex_repayment = self.scenario.pv_capex_repayment[c]
+
 
         elif 'btm_s_c' in scenario.arrangement:
             # For btm_s_c, apportion capex costs equally between units and cp.
@@ -2004,12 +2010,14 @@ class Scenario():
         # --------------------------------------------------------
 
         self.pv_cap_id = self.parameters['pv_cap_id']
+        self.pv_capex = {}
         if not self.pv_exists:
-            self.pv_capex_repayment = 0
+            self.pv_capex['central'] = 0
+            self.pv_capex['total_system'] = 0
         else:
-            self.pv_capex = {}
             # PV capex settings with mutiple $/W rates set by price point
             if any(p in self.pv_cap_id for p in ['price_point', 'pricepoint']):
+                self.legacy_pv_capex = False
                 pv_capex_system_bands = [c for c in study.pv_capex_table.columns if 'sys_' in c]
                 pv_capex_inverter_bands = [c for c in study.pv_capex_table.columns if 'inv_' in c]
 
@@ -2027,11 +2035,12 @@ class Scenario():
                 print(self.pv_sys_capex_rates)
                 print(self.pv_inv_capex_rates)
                 # read pv system sizes and calc total capex for each system
-                pv_systems = [c for c in self.parameters.index if
+                pv_headers = [c for c in self.parameters.index if
                                  any(k in c for k in ['kWp', 'kwp'])]
+                pv_systems = [c.split('_')[0] for c in pv_headers if not np.isnan(self.parameters[c])]
                 for pv in pv_systems:
-                    pv_owner = pv.split('_')[0]
-                    pv_capacity = self.parameters[pv]
+                    pv_owner = pv
+                    pv_capacity = self.parameters[pv+'_kWp']
                     system_rate = 0
                     inverter_rate =0
                     for band in self.pv_sys_capex_rates:
@@ -2046,9 +2055,12 @@ class Scenario():
                              inverter_rate * pv_capacity * 1000)
                 if 'central' not in pv_systems:
                     self.pv_capex['central'] = 0
+                if 'total_system' not in self.pv_capex.keys():
+                    self.pv_capex['total_system'] = sum(self.pv_capex.values())
             else:
                 # Legacy - backward compatibility with no price points and `pv_capex` as single total system and inv costs
                 # for all pv system(s)
+                self.legacy_pv_capex = True
                 # PV capex includes inverter replacement if amortization period > inverter lifetime
                 self.pv_capex['total_system'] = study.pv_capex_table.loc[self.pv_cap_id, 'pv_capex'] + \
                                 (int(self.a_term / study.pv_capex_table.loc[self.pv_cap_id, 'inverter_life'] - 0.01) * \
@@ -2071,20 +2083,20 @@ class Scenario():
                     self.pv_capex['total_system'] = self.pv_capex['total_system'] * self.pv_kW_peak
                 self.pv_capex['central'] = self.pv_capex['total_system']
 
-            # Calculate annual repayments
-            # ---------------------------
-            self.pv_capex_repayment ={}
-            print(self.pv_capex)
-            for pv_system in self.pv_capex.keys():
-                if self.pv_capex[pv_system]>0:
-                    self.pv_capex_repayment[pv_system] = -12 * np.pmt(rate=self.a_rate/12,
-                                                         nper=12 * self.a_term,
-                                                         pv=self.pv_capex[pv_system],
-                                                         fv=0,
-                                                         when='end')
-                else:
-                    self.pv_capex_repayment[pv_system] = 0
-            print(self.pv_capex_repayment)
+        # Calculate annual repayments
+        # ---------------------------
+        self.pv_capex_repayment ={}
+        print(self.pv_capex)
+        for pv_system in self.pv_capex.keys():
+            if self.pv_capex[pv_system]>0:
+                self.pv_capex_repayment[pv_system] = -12 * np.pmt(rate=self.a_rate/12,
+                                                     nper=12 * self.a_term,
+                                                     pv=self.pv_capex[pv_system],
+                                                     fv=0,
+                                                     when='end')
+            else:
+                self.pv_capex_repayment[pv_system] = 0
+        print(self.pv_capex_repayment)
 
     def calcFinancials(self, net):
         """ Calculates financial results for specific net within scenario.
@@ -2147,7 +2159,7 @@ class Scenario():
                                      + net.total_payment - net.receipts_from_residents
         net.checksum_total_payments = net.retailer_receipt \
             + net.solar_retailer_profit \
-            + (self.en_opex + self.en_capex_repayment + self.pv_capex_repayment \
+            + (self.en_opex + self.en_capex_repayment + self.pv_capex_repayment['total_system']\
                + self.total_battery_capex_repayment)*100 - net.total_building_payment
 
         # #TODO sort out battery capex for 'cp_only'
@@ -2266,7 +2278,7 @@ class Scenario():
         # ----------------------------------------
         study.op.loc[self.name, 'en_opex'] = self.en_opex
         study.op.loc[self.name, 'en_capex_repayment'] = self.en_capex_repayment
-        study.op.loc[self.name, 'pv_capex_repayment'] = self.pv_capex_repayment
+        study.op.loc[self.name, 'pv_capex_repayment'] = self.pv_capex_repayment['total_system']
 
         # ----------------------------------------------------------------
         # Customer payments averaged for all residents, all load profiles:
@@ -2532,7 +2544,7 @@ class Study():
             um.df_to_csv(op_std, opstdFile)
         else:
             # if no multiple loads, remove '_mean' tags
-            self.op.columns = self.op.columns.str.replac('_mean', '')
+            self.op.columns = self.op.columns.str.replace('_mean', '')
 
         # Save remaining results for all scenarios
         opFile = os.path.join(self.output_path, self.name + '_results.csv')
@@ -2548,6 +2560,7 @@ def runScenario(scenario_name):
     logging.info("Running Scenario number %i ", scenario_name)
     # Initialise scenario
     scenario = Scenario(scenario_name=scenario_name)
+    print("Scenario ",scenario.name)
     eno = Network(scenario=scenario)
     # N.B. in embedded network scenarios, eno is the actual embedded network operator,
     # but in other scenarios, it is a virtual intermediary to organise energy and cash flows
@@ -2652,7 +2665,7 @@ if __name__ == "__main__":
     default_base_path = 'C:\\Users\\z5044992\\Documents\\python\\morePVs\\DATA_EN_6'  #(Mike's PC)
     # default_base_path = '/Users/mikeroberts/Documents/python/morePVs/DATA_EN_6'  # (Mike's Mac)
     default_project = 'tests'
-    default_study = 'test_capex1'
+    default_study = 'test_en_mk2'
     # default_base_path = '/Users/mikeroberts/OneDrive - UNSW/python/en/DATA_EN_6'  #(Mike's Mac)
     # default_project = 'hugh'
     # default_study = '1'

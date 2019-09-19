@@ -13,7 +13,8 @@ Contact: m.roberts@unsw.edu.au*
 #multi-occupancy residential electricity with PV and storage model
 
 
-### Running the script
+Running the script
+---------
 Written in Python 3.7\
 Script requires the following input parameters.
 These can be set using default parameters (allocated after `if __name__ == "__main__": in script`) or using switches as shown in the table.
@@ -26,9 +27,67 @@ These can be set using default parameters (allocated after `if __name__ == "__ma
  | DST region | identifier for DST time difference and dates | `'nsw'` | `-d` |
  | `override_output` | Flag for use when running on UNSW HPC facility to divert output | `False` | `-o` |
  
- 
-###Setup Instructions
+Sample Directory Structure
+----------
 
+```
+DATA_EN_6
+|
+|-  load_profiles
+|   |-  siteA
+|   |       siteA_load_profiles.csv
+|   |
+|   |-  siteB
+|   |       siteB_load_profiles_v1.csv
+|   |       siteB_load_profiles_v1.csv
+|   |       siteB_load_profiles_v1.csv
+|   |
+|   |-  anotherFolderOfLoadFiles
+|           LoadFile.csv
+|    
+|-  pv_profiles
+|       pv_profiles_siteA.csv
+|       pv_profiles_siteB_v1.csv
+|       pv_profiles_siteB_v2.csv
+| 
+|-  reference
+|       battery_control_strategies.csv
+|       battery_lookup.csv
+|       capex_en_lookup.csv
+|       capex_pv_lookup.csv
+|       dst_lookup.csv
+|       tariff_lookup.csv
+|       
+|-  studies
+|   |-  my_energy_project
+|       |-  inputs
+|       |      study_demo2.csv  
+|       |      study_demo3.csv
+|       |
+|       |-  outputs
+|              |-  study_demo2
+|              |   |   demo2_customer_results.csv
+|              |   |   demo1_results.csv
+|              |   |   demo1_results_std_dev.csv
+|              |   |
+|              |   |-  saved_tariffs
+|              |   |-  scenarios
+|              |          demo2_001.csv
+|              |          demo2_002.csv
+|              |          demo2_003.csv
+|              |          demo2_004.csv
+|              |     
+|              |- study_demo3
+```
+**Notes:**
+ - All the files shown in `reference` folder are required
+ - Load profiles, pv profiles and study files are user specified
+ - `studies/my_project/` must contain folders for `inputs` and `outputs`
+
+
+---------
+Setup Instructions
+---------
 All input parameters for each study are contained or referenced in `study_xxxx.csv` file,\
 located at `base_path/studies/`'project_name'`/inputs`
 
@@ -105,7 +164,8 @@ PV:
  - For Shared btm Units only:`btm_s_u` single `total` column that is split according to instantaneous load between all units EXCLUDING cp
  - `btm_p_c` and `btm_p_u` are similar to `btm_s_u` and `btm_s_c`,\
   but generation is paid for under a ppa to a solar retailer
-For `en_pv`:
+  
+ - For `en_pv`:
     - a single column indicates (labelled 'central') indicates a single central PV system\
     connected between parent and child meters
     - multiple columns are also possible, for 'cp', 'central' and each unit\
@@ -175,6 +235,8 @@ This references a row in reference file `reference\en_capex_lookup.csv`
 - NB if `capex_en_lookup` has duplicate `en_capex_id`s, it all goes to cock. (read_csv returns a series instead of single value).
 
 ###BESS Capex
+
+- TBC....
 
 -------
 TARIFFS
