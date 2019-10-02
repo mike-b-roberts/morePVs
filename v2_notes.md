@@ -128,3 +128,10 @@ N.B. this will need to allow for individual AND central PV in the same pv profil
 
 ##BIG QUESTION
 Will it work with `en_pv` arrangement with individual pv but no central pv.
+
+Testing: `http://localhost:8888/notebooks/en_notebooks/Mk20tests/Plot%20Timeseries%20Test.ipynb`
+
+Looking at timeseries plots from:
+`C:\Users\z5044992\Documents\python\morePVs\DATA_EN_6\studies\tests\inputs\study_test_en_mk2.csv`
+
+Looks OK. 
