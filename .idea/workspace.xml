@@ -1,34 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="4c9ef9fb-c6dc-4992-b65e-329a3942e38c" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/py_logfiles/python_logfile_test_en_mk2_2019_09_25_155210.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/py_logfiles/python_logfile_test_en_mk2_2019_09_25_155343.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/plots/test_en_mk2_000_bau_test_2day3.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/plots/test_en_mk2_001_en_test_2day3.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/plots/test_en_mk2_002_en_pv_test_2day3.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/plots/test_en_mk2_003_en_pv_test_2day3.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/plots/test_en_mk2_004_en_pv_test_2day3.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/plots/test_en_mk2_005_en_pv_test_2day3.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/plots/test_en_mk2_006_en_pv_test_2day3.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/plots/test_en_mk2_007_en_pv_test_2day3.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/plots/test_en_mk2_008_en_pv_test_2day3.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/plots/test_en_mk2_009_en_pv_test_2day3.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/plots/test_en_mk2_010_en_pv_test_2day3.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/test_en_mk2_000_bau_test_2day3.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/test_en_mk2_001_en_test_2day3.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/test_en_mk2_002_en_pv_test_2day3.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/test_en_mk2_003_en_pv_test_2day3.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/test_en_mk2_004_en_pv_test_2day3.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/test_en_mk2_005_en_pv_test_2day3.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/test_en_mk2_006_en_pv_test_2day3.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/test_en_mk2_007_en_pv_test_2day3.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/test_en_mk2_008_en_pv_test_2day3.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/test_en_mk2_009_en_pv_test_2day3.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/outputs/test_en_mk2/timeseries_d/test_en_mk2_010_en_pv_test_2day3.csv" afterDir="false" />
+    <list default="true" id="fad5bd08-1473-4e40-92a7-ee27280c46d4" name="Default Changelist" comment="resolve git issue">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DATA_EN_6/studies/tests/inputs/study_test_en_mk2.csv" beforeDir="false" afterPath="$PROJECT_DIR$/DATA_EN_6/studies/tests/inputs/study_test_en_mk2.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2_notes.md" beforeDir="false" afterPath="$PROJECT_DIR$/v2_notes.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -274,7 +249,7 @@
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="4c9ef9fb-c6dc-4992-b65e-329a3942e38c" name="Default Changelist" comment="" />
+      <changelist id="fad5bd08-1473-4e40-92a7-ee27280c46d4" name="Default Changelist" comment="resolve git issue" />
       <created>1521160371092</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
