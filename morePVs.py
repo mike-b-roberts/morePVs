@@ -1120,9 +1120,10 @@ class Network(Customer):
     In other scenarios, it has no meaning irw, just passes energy and $ between other players"""
 
     def __init__(self, scenario):
+        self.scenario = scenario
         self.resident_list = scenario.resident_list.copy() # all residents plus cp
         self.households = scenario.households.copy()  # just residents, not cp
-        self.battery_list = [] # residents (inc cp) with batteries - initial state
+        self.battery_list = []  # residents (inc cp) with batteries - initial state
         # (these may change later if different_loads)
         #initialise characteristics of the network as a customer:
         super().__init__('network')
@@ -1574,7 +1575,7 @@ class Network(Customer):
             for c in self.pv_customers:
                 self.resident[c].bat_capex_repayment += self.pv[
                                                             c].sum() / self.pv.sum().sum() * central_bat_capex_repayment
-                if self.legacy_pv_capex:
+                if self.scenario.legacy_pv_capex:
                     self.resident[c].pv_capex_repayment = self.pv[c].sum() / self.pv.sum().sum() * scenario.pv_capex_repayment
                 else:
                     self.resident[c].pv_capex_repayment = self.scenario.pv_capex_repayment[c]
@@ -1845,7 +1846,6 @@ class Scenario():
                     self.pv_kW_peak = self.parameters['pv_kW_peak']
                     self.pv = self.pv * self.pv_kW_peak
             if self.pv.sum().sum() == 0:
-                self.pv_exists = False
                 self.pv = pd.DataFrame(index=ts.timeseries, columns=self.resident_list).fillna(0)
 
         # ---------------------------------------
