@@ -1573,10 +1573,9 @@ class Network(Customer):
             # For btm_i apportion central bat (AND PV for leagcy pv capex cases) capex costs according to pv allocation
             # which is (proportional to cp ratio for `_c`) and then equally between residents
             for c in self.pv_customers:
-                self.resident[c].bat_capex_repayment += self.pv[
-                                                            c].sum() / self.pv.sum().sum() * central_bat_capex_repayment
+                self.resident[c].bat_capex_repayment += self.pv[c].sum() / self.pv.sum().sum() * central_bat_capex_repayment
                 if self.scenario.legacy_pv_capex:
-                    self.resident[c].pv_capex_repayment = self.pv[c].sum() / self.pv.sum().sum() * scenario.pv_capex_repayment
+                    self.resident[c].pv_capex_repayment = self.pv[c].sum() / self.pv.sum().sum() * self.pv.sum().sum()
                 else:
                     self.resident[c].pv_capex_repayment = self.scenario.pv_capex_repayment[c]
 
@@ -2659,10 +2658,10 @@ if __name__ == "__main__":
     # -------------------------------------------------------
     # Set up defaults here: base_path, project and study name
     # --------------------------------------------------------
-    default_base_path = 'C:\\Users\\z5044992\\Documents\\python\\morePVs\\DATA_EN_6'  #(Mike's PC)
-    # default_base_path = '/Users/mikeroberts/Documents/python/morePVs/DATA_EN_6'  # (Mike's Mac)
-    default_project = 'tests'
-    default_study = 'test_en_mk2'
+    # default_base_path = 'C:\\Users\\z5044992\\Documents\\python\\morePVs\\DATA_EN_6'  #(Mike's PC)
+    default_base_path = '/Users/mikeroberts/Documents/python/morePVs/DATA_EN_6'  # (Mike's Mac)
+    default_project = 'demonstrations'
+    default_study = 'demo_w2'
     # default_base_path = '/Users/mikeroberts/OneDrive - UNSW/python/en/DATA_EN_6'  #(Mike's Mac)
     # default_project = 'hugh'
     # default_study = '1'
