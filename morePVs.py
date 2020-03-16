@@ -1575,7 +1575,7 @@ class Network(Customer):
             for c in self.pv_customers:
                 self.resident[c].bat_capex_repayment += self.pv[c].sum() / self.pv.sum().sum() * central_bat_capex_repayment
                 if self.scenario.legacy_pv_capex:
-                    self.resident[c].pv_capex_repayment = self.pv[c].sum() / self.pv.sum().sum() * self.pv.sum().sum()
+                    self.resident[c].pv_capex_repayment = self.pv[c].sum() / self.pv.sum().sum() * self.scenario.pv_capex_repayment['total_system']
                 else:
                     self.resident[c].pv_capex_repayment = self.scenario.pv_capex_repayment[c]
 
