@@ -221,8 +221,8 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.create_pv_profile_subarrays_mac_abbot" />
       <item itemvalue="Python.morePVs" />
+      <item itemvalue="Python.create_pv_profile_subarrays_mac_abbot" />
       <item itemvalue="Python.plotclusters2_revisedEnergypaper" />
       <item itemvalue="Python.plotclusters_revisedEnergypaper" />
     </list>
