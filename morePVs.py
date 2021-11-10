@@ -27,6 +27,7 @@ import pathlib
 
 # Classes
 class Timeseries():
+    
     """DateTimeIndex & related parameters used throughout."""
 
     def __init__(self,
@@ -34,6 +35,7 @@ class Timeseries():
                  dst_lookup,
                  dst_region
                  ):
+                 
         self.timeseries = load.index
         self.num_steps = len(self.timeseries)
         self.interval = \
@@ -418,6 +420,7 @@ class Battery():
                  battery_id,
                  battery_strategy,
                  battery_capacity):
+                 
         self.battery_id = battery_id
         self.scenario = scenario
 
